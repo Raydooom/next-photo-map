@@ -10,3 +10,13 @@ export interface PagerResponse<T> {
   size: number;
   total: number;
 }
+
+export interface PagerRequest {
+  page: number;
+  pageSize: number;
+  [key: string]: any;
+}
+
+export interface RequestOptions {
+  [key: string]: any;
+}

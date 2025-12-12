@@ -1,11 +1,11 @@
-import { CommonResponse } from '@/types';
+import { CommonResponse, RequestOptions } from '@/types';
 class FetchService {
   BASE_URL: string = '';
 
   constructor(BASE_URL: string) {
     this.BASE_URL = BASE_URL;
   }
-  async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  async request<T>(url: string, options: RequestOptions): Promise<T> {
     const response = await fetch(this.BASE_URL + url, options);
     if (!response.ok) {
       throw new Error(response.statusText);
@@ -16,6 +16,29 @@ class FetchService {
     }
 
     return jsonRes.data;
+  }
+
+  async get<T>(url: string, options: RequestOptions): Promise<T> {
+    if (!options.params) {
+      options.params = {};
+    }
+    const queryString = new URLSearchParams(options.params).toString();
+    return await this.request(url + '?' + queryString, {
+      ...options,
+      method: 'GET'
+    });
+  }
+
+  async post<T>(url: string, options: RequestOptions): Promise<T> {
+    if (!options.body) {
+      options.body = {};
+    }
+    options.body = JSON.stringify(options.body);
+
+    return await this.request(url, {
+      ...options,
+      method: 'POST'
+    });
   }
 }
 
