@@ -1,8 +1,10 @@
 import baseFetch from './http';
-import { Photo, PagerResponse } from '@/types';
+import { PhotoItem, PagerResponse, PagerRequest } from '@/types';
 
 export default class Service {
-  static async getPhotos() {
-    return await baseFetch.request<PagerResponse<Photo>>('/admin/photo');
+  static async getPhotos(params: PagerRequest) {
+    return await baseFetch.get<PagerResponse<PhotoItem>>('/admin/photo', {
+      params
+    });
   }
 }

@@ -1,15 +1,15 @@
-import { title } from '@/components/primitives';
 import Service from '@/services/';
-import { Image } from '@heroui/image';
+import { MasonryGrid } from './_components/MasonryGrid';
 
 export default async function DocsPage() {
-  const { list } = await Service.getPhotos();
+  const { list } = await Service.getPhotos({
+    page: 1,
+    pageSize: 10000
+  });
 
   return (
-    <div>
-      {list.map(photo => (
-        <Image key={photo.id} src={photo.url} alt={photo.name} />
-      ))}
+    <div className="p-2">
+      <MasonryGrid items={list}></MasonryGrid>
     </div>
   );
 }

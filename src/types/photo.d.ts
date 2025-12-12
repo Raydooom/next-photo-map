@@ -1,4 +1,4 @@
-export interface Photo {
+export interface PhotoItem {
   createTime: string;
   exposureTime: string;
   ext: string;
