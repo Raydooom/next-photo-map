@@ -9,8 +9,8 @@ export const siteConfig = {
       href: "/",
     },
     {
-      label: "Album",
-      href: "/album",
+      label: "Photos",
+      href: "/photos",
     },
     {
       label: "Pricing",

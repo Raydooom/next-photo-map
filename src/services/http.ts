@@ -18,7 +18,7 @@ class FetchService {
     return jsonRes.data;
   }
 
-  async get<T>(url: string, options: RequestOptions): Promise<T> {
+  async get<T>(url: string, options: RequestOptions = {}): Promise<T> {
     if (!options.params) {
       options.params = {};
     }

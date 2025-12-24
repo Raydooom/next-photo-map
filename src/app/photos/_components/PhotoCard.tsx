@@ -1,7 +1,6 @@
 'use client';
 import { PhotoItem } from '@/types';
 import clsx from 'clsx';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Chip } from '@heroui/chip';
 import { useMemo, useRef, useState } from 'react';
@@ -20,23 +19,17 @@ import {
   formatFileSize
 } from '@/utils/exif';
 
-const Masonry = dynamic(() => import('masonic').then(mod => mod.Masonry), {
-  ssr: false
-});
-
-export const MasonryGrid = ({ items }: { items: PhotoItem[] }) => {
-  return (
-    <Masonry
-      items={items}
-      columnGutter={4}
-      columnWidth={260}
-      overscanBy={5}
-      render={PhotoCard as any}
-    />
-  );
-};
-
-const PhotoCard = ({ data }: { data: PhotoItem }) => {
+export const PhotoCard = ({
+  data,
+  index,
+  onClick,
+  className
+}: {
+  data: PhotoItem;
+  index: number;
+  onClick: (item: { data: PhotoItem; index: number }) => void;
+  className?: string;
+}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const exifTags = useMemo(
@@ -71,22 +64,32 @@ const PhotoCard = ({ data }: { data: PhotoItem }) => {
   const onMouseEnter = () => {
     setIsHovered(true);
     if (data.videoUrl) {
+      setIsVideoEnded(false);
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play();
       }
     }
   };
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const onVideoEnded = () => {
+    setIsVideoEnded(true);
+  };
 
+  const [loading, setLoading] = useState(true);
   return (
     <div
-      className="overflow-hidden relative cursor-pointer bg-black"
+      className={clsx('overflow-hidden relative cursor-pointer', className)}
+      style={{
+        background: data.mainColor || '#000'
+      }}
       onMouseEnter={() => onMouseEnter()}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onClick({ data, index })}
     >
       <Image
         className={clsx(
-          'w-full h-full object-cover transition-all ease-in-out duration-300',
+          'z-1 w-full h-auto object-contain transition-all ease-in-out duration-300',
           isHovered && !data.videoUrl
             ? 'scale-105 opacity-85'
             : 'scale-100 opacity-100'
@@ -95,8 +98,7 @@ const PhotoCard = ({ data }: { data: PhotoItem }) => {
         height={data.height}
         src={data.url}
         alt={data.name}
-        blurDataURL={data.url}
-        placeholder="blur" // 加载时可选的模糊效果
+        onLoad={() => setLoading(false)}
       />
       {data.videoUrl && (
         <video
@@ -104,6 +106,7 @@ const PhotoCard = ({ data }: { data: PhotoItem }) => {
             'absolute z-10 top-0 left-0 w-full h-full object-cover',
             isHovered ? 'block' : 'hidden'
           )}
+          onEnded={() => onVideoEnded()}
           ref={videoRef}
           muted={true}
           src={data.videoUrl}
@@ -130,7 +133,9 @@ const PhotoCard = ({ data }: { data: PhotoItem }) => {
       <div
         className={clsx(
           'flex flex-col gap-2 px-3 pb-2 pt-10 w-full absolute bottom-0 left-0 z-40 transition-all duration-300 bg-gradient-to-t from-black/70 to-transparent',
-          isHovered && !data.videoUrl ? 'opacity-100' : 'opacity-0'
+          (isHovered && !data.videoUrl) || (isHovered && isVideoEnded)
+            ? 'opacity-100'
+            : 'opacity-0'
         )}
       >
         <h4 className="font-bold text-sm text-white text-ellipsis whitespace-nowrap overflow-hidden max-h-3/4">

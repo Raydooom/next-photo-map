@@ -12,6 +12,8 @@ export interface PhotoItem {
   mime: string;
   name: string;
   originName: string;
+  placeholder: string;
+  mainColor: string;
   parentId: number;
   path: string;
   shares: number;
