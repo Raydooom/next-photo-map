@@ -7,4 +7,8 @@ export default class Service {
       params
     });
   }
+
+  static async getPhotoDetail(id: number) {
+    return await baseFetch.get<PhotoItem>(`/admin/photo/${id}`);
+  }
 }
