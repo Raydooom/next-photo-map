@@ -26,3 +26,78 @@ export interface PhotoItem {
   views: number;
   width: number;
 }
+
+export interface ExifType {
+  EXIFAperturevalue: number;
+  EXIFBrightnessvalue: number;
+  EXIFColorspace: string;
+  EXIFComponentsconfiguration: string;
+  EXIFDatetimedigitized: string;
+  EXIFDatetimeoriginal: string;
+  EXIFExifimagelength: number;
+  EXIFExifimagewidth: number;
+  EXIFExifversion: string;
+  EXIFExposurebiasvalue: number;
+  EXIFExposuremode: string;
+  EXIFExposureprogram: string;
+  EXIFExposuretime: number;
+  EXIFFlash: string;
+  EXIFFlashpixversion: string;
+  EXIFFnumber: number;
+  EXIFFocallength: number;
+  EXIFFocallengthin35Mmfilm: number;
+  EXIFIsospeedratings: number;
+  EXIFLensmake: string;
+  EXIFLensmodel: string;
+  EXIFLensspecification: number[];
+  EXIFMeteringmode: string;
+  EXIFOffsettime: string;
+  EXIFOffsettimedigitized: string;
+  EXIFOffsettimeoriginal: string;
+  EXIFScenecapturetype: string;
+  EXIFScenetype: string;
+  EXIFSensingmethod: string;
+  EXIFShutterspeedvalue: number;
+  EXIFSubjectarea: number[];
+  EXIFSubsectimedigitized: string;
+  EXIFSubsectimeoriginal: string;
+  EXIFTag0Xa460: number;
+  EXIFWhitebalance: string;
+  GPSGpsaltitude: number;
+  GPSGpsaltituderef: number;
+  GPSGpsdate: string;
+  GPSGpsdestbearing: number;
+  GPSGpsdestbearingref: string;
+  GPSGpsimgdirection: number;
+  GPSGpsimgdirectionref: string;
+  GPSGpslatitude: number[];
+  GPSGpslatituderef: string;
+  GPSGpslongitude: number[];
+  GPSGpslongituderef: string;
+  GPSGpsspeed: number;
+  GPSGpsspeedref: string;
+  GPSGpstimestamp: number[];
+  GPSTag0X001F: number;
+  ImageDatetime: string;
+  ImageExifoffset: number;
+  ImageGpsinfo: string;
+  ImageHostcomputer: string;
+  ImageMake: string;
+  ImageModel: string;
+  ImageOrientation: string;
+  ImageResolutionunit: string;
+  ImageSoftware: string;
+  ImageXresolution: number;
+  ImageYcbcrpositioning: string;
+  ImageYresolution: number;
+  ThumbnailCompression: string;
+  ThumbnailJpeginterchangeformat: number;
+  ThumbnailJpeginterchangeformatlength: number;
+  ThumbnailResolutionunit: string;
+  ThumbnailXresolution: number;
+  ThumbnailYresolution: number;
+}
+
+export interface PhotoDetail extends PhotoItem {
+  exif: Partial<ExifType>;
+}

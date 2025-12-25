@@ -1,5 +1,5 @@
 import Service from '@/services/';
-import { MasonryGrid } from './_components/MasonryGrid';
+import MasonryGrid from './_components/MasonryGrid';
 
 export default async function DocsPage() {
   const { list } = await Service.getPhotos({
