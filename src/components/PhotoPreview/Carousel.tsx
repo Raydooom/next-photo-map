@@ -1,0 +1,194 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { EmblaOptionsType } from 'embla-carousel';
+import useEmblaCarousel from 'embla-carousel-react';
+import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
+import { PhotoDetail, PhotoItem } from '@/types';
+import clsx from 'clsx';
+import { Image } from '@heroui/image';
+import LivePhotoIndicate from '../modules/LivePhotoIndicate';
+import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
+import { ExifInfo } from '../modules/ExifInfo';
+import { AnimatePresence, motion } from 'framer-motion';
+
+type PropType = {
+  slides: PhotoDetail[];
+  options?: EmblaOptionsType;
+  currentIndex: number;
+};
+
+const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
+  const { slides, options, currentIndex, onClose } = props;
+  const [selectedIndex, setSelectedIndex] = useState(currentIndex);
+  const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options);
+  const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel(
+    {
+      containScroll: 'keepSnaps',
+      dragFree: true
+    },
+    [WheelGesturesPlugin({ forceWheelAxis: 'y' })]
+  );
+
+  // 当current变化时，更新选中索引（仅在非用户操作时）
+  useEffect(() => {
+    if (!slides.length || !emblaMainApi) return;
+
+    if (currentIndex !== selectedIndex) {
+      // 使用setTimeout确保在用户操作后不会立即覆盖
+      setTimeout(() => {
+        if (emblaMainApi.selectedScrollSnap() !== currentIndex) {
+          emblaMainApi.scrollTo(currentIndex);
+        }
+      }, 0);
+    }
+  }, [currentIndex, emblaMainApi]);
+
+  const onThumbClick = useCallback(
+    (index: number) => {
+      if (!emblaMainApi || !emblaThumbsApi) return;
+      // 确保点击不同的缩略图
+      if (index !== selectedIndex) {
+        emblaMainApi.scrollTo(index);
+      }
+    },
+    [emblaMainApi, emblaThumbsApi, selectedIndex]
+  );
+
+  const onSelect = useCallback(() => {
+    if (!emblaMainApi || !emblaThumbsApi) return;
+    const newIndex = emblaMainApi.selectedScrollSnap();
+    setSelectedIndex(newIndex);
+    emblaThumbsApi.scrollTo(newIndex);
+  }, [emblaMainApi, emblaThumbsApi]);
+
+  useEffect(() => {
+    if (!emblaMainApi) return;
+
+    // 初始化时设置选中状态
+    setSelectedIndex(currentIndex);
+
+    // 设置事件监听
+    onSelect();
+    emblaMainApi.on('select', onSelect).on('reInit', onSelect);
+  }, [emblaMainApi, onSelect]);
+
+  // 初始化完成后滚动到指定位置
+  useEffect(() => {
+    if (!emblaMainApi || !slides.length) return;
+
+    if (currentIndex !== -1) {
+      emblaMainApi.scrollTo(currentIndex, false);
+    }
+  }, [emblaMainApi, slides, currentIndex]);
+
+  const [showExif, setShowExif] = useState(true);
+
+  return (
+    <aside
+      className="bg-cover bg-center h-full w-full flex relative"
+      style={{
+        backgroundImage: slides[selectedIndex]
+          ? `url(${slides[selectedIndex].placeholder})`
+          : undefined
+      }}
+    >
+      {/* 背景亮度遮罩 */}
+      <div className="absolute inset-0 bg-black/20 z-0 backdrop-blur-2xl" />
+
+      <section className="flex-[1_1_auto] flex flex-col relative z-1">
+        <section
+          className=" flex-[1_1_auto] h-full overflow-hidden"
+          ref={emblaMainRef}
+        >
+          <div className="flex h-full">
+            {slides.map(item => (
+              <div
+                className="flex-[0_0_100%] relative flex justify-center align-center overflow-hidden"
+                key={item.id}
+              >
+                {/* livephoto 图标 */}
+                {item.videoUrl && (
+                  <div className="absolute top-4 left-4 z-10 cursor-pointer">
+                    <LivePhotoIndicate />
+                  </div>
+                )}
+
+                <Image
+                  removeWrapper
+                  radius="none"
+                  src={item.url}
+                  alt={item.name}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+        {/* 缩略图 */}
+        <div
+          className="h-[100px] bg-background/20 p-2 backdrop-blur-2xl w-full overflow-hidden"
+          ref={emblaThumbsRef}
+        >
+          <div className="h-full flex flex-no-wrap gap-1">
+            {slides.map((item, index) => (
+              <div
+                key={item.id}
+                className={clsx(
+                  'h-full flex-[0_0_auto] rounded-sm overflow-hidden cursor-pointer transition-all bg-black',
+                  selectedIndex === index ? 'mx-2 scale-110' : 'mx-0'
+                )}
+                onClick={() => onThumbClick(index)}
+              >
+                <img
+                  className={clsx(
+                    'h-full w-auto transition-opacity duration-300 hover:opacity-100',
+                    selectedIndex === index ? 'opacity-100' : 'opacity-80'
+                  )}
+                  src={item.url}
+                  alt={item.name}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* 操作栏 */}
+        <div className="absolute top-5 right-5 z-10 flex gap-4">
+          <InfoIcon onClick={() => setShowExif(!showExif)} />
+          <CloseIcon
+            onClick={() => {
+              setShowExif(false);
+              onClose();
+            }}
+          />
+        </div>
+        {/* 左右切换按钮 */}
+        <div className="absolute bottom-24 right-5 z-10 flex gap-2">
+          <LeftIcon onClick={() => emblaMainApi?.scrollPrev()} />
+          <RightIcon onClick={() => emblaMainApi?.scrollNext()} />
+        </div>
+      </section>
+      <AnimatePresence>
+        {showExif && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              y: 20,
+              transition: { duration: 0.2, ease: 'easeInOut' }
+            }}
+            className={clsx(
+              'absolute top-16 right-5 z-10 max-h-[78vh] overflow-hidden'
+            )}
+          >
+            <ExifInfo
+              setIsOpen={setShowExif}
+              photoDetail={slides[selectedIndex]}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </aside>
+  );
+};
+
+export default EmblaCarousel;
