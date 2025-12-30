@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { EmblaOptionsType } from 'embla-carousel';
 import useEmblaCarousel from 'embla-carousel-react';
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
-import { PhotoDetail, PhotoItem } from '@/types';
+import { PhotoItem } from '@/types';
 import clsx from 'clsx';
-import { Image } from '@heroui/image';
-import LivePhotoIndicate from '../modules/LivePhotoIndicate';
 import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
 import { ExifInfo } from '../modules/ExifInfo';
 import { AnimatePresence, motion } from 'framer-motion';
+import { SlideItem } from './SlideItem';
 
 type PropType = {
   slides: PhotoItem[];
@@ -83,10 +82,13 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
 
   const [showExif, setShowExif] = useState(false);
 
-  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>(currentPreview);
+  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>(
+    currentPreview
+  );
   useEffect(() => {
     setActiveSlide(slides[selectedIndex]);
   }, [selectedIndex, slides]);
+
   return (
     <aside
       className="bg-cover bg-center h-full w-full flex relative"
@@ -106,25 +108,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
         >
           <div className="flex h-full">
             {slides.map(item => (
-              <div
-                className="flex-[0_0_100%] relative flex justify-center align-center overflow-hidden"
-                key={item.id}
-              >
-                {/* livephoto 图标 */}
-                {item.videoUrl && (
-                  <div className="absolute top-4 left-4 z-10 cursor-pointer">
-                    <LivePhotoIndicate />
-                  </div>
-                )}
-
-                <Image
-                  removeWrapper
-                  radius="none"
-                  src={item.url}
-                  alt={item.name}
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
-                />
-              </div>
+              <SlideItem key={item.id} item={item} />
             ))}
           </div>
         </section>
@@ -181,9 +165,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
               y: 20,
               transition: { duration: 0.2, ease: 'easeInOut' }
             }}
-            className={clsx(
-              'absolute top-16 right-5 z-10'
-            )}
+            className={clsx('absolute top-16 right-5 z-10')}
           >
             <ExifInfo setIsOpen={setShowExif} photo={activeSlide} />
           </motion.div>
