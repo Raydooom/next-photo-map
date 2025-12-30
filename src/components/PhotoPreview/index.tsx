@@ -8,7 +8,7 @@ export default function PhotoPreview({
   isOpen,
   onClose
 }: {
-  current: PhotoDetail | null;
+  current: PhotoDetail | undefined;
   list: PhotoItem[];
   isOpen: boolean;
   onClose: () => void;
@@ -28,7 +28,7 @@ export default function PhotoPreview({
       }}
     >
       <ModalContent>
-        <Carousel slides={list} currentIndex={currentIndex} onClose={onClose} />
+        <Carousel slides={list} currentPreview={current} currentIndex={currentIndex} onClose={onClose} />
       </ModalContent>
     </Modal>
   );

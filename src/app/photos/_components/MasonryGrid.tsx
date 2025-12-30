@@ -4,7 +4,6 @@ import { PhotoItem, PhotoDetail } from '@/types';
 import { PhotoCard } from './PhotoCard';
 import { Masonry } from 'masonic';
 import { useCallback, useEffect, useState } from 'react';
-import * as Actions from '../actions';
 import PhotoPreview from '@/components/PhotoPreview';
 
 export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
@@ -14,11 +13,10 @@ export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
     setMounted(true);
   }, []);
 
-  const [previewItem, setPreviewItem] = useState<PhotoDetail | null>(null);
+  const [previewItem, setPreviewItem] = useState<PhotoDetail | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
   const onClickItem = useCallback(async (item: { data: PhotoItem }) => {
-    const detail = await Actions.getPhotoDetail(item.data.id);
-    setPreviewItem(detail);
+    setPreviewItem(item.data);
     setIsOpen(true);
   }, []);
 

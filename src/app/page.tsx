@@ -5,7 +5,7 @@ import { button as buttonStyles } from "@heroui/theme";
 
 import { siteConfig } from "@/config/site";
 import { title, subtitle } from "@/components/primitives";
-import { GithubIcon } from "@/components/IconButtons/icons";
+import { GithubIcon } from "@/components/Icons/icon";
 
 export default function Home() {
   return (
