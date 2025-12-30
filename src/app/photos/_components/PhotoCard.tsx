@@ -31,35 +31,6 @@ export const PhotoCard = memo(
     onClickItem: (item: { data: PhotoItem }) => void;
   }) => {
     const [isHovered, setIsHovered] = useState(false);
-
-    // const exifTags = useMemo(
-    //   () => [
-    //     {
-    //       label: '焦距',
-    //       value: formatFocalLength(
-    //         data.focalLengthIn35MmFilm || data.focalLength
-    //       ),
-    //       icon: <FocalLengthIcon color="#fff" />
-    //     },
-    //     {
-    //       label: '快门速度',
-    //       value: formatExposureTime(data.exposureTime),
-    //       icon: <ShutterSpeedIcon color="#fff" />
-    //     },
-    //     {
-    //       label: '光圈',
-    //       value: formatFNumber(data.fNumber),
-    //       icon: <FNumberIcon color="#fff" />
-    //     },
-    //     {
-    //       label: 'ISO',
-    //       value: formatIso(data.iso),
-    //       icon: <IsoIcon color="#fff" />
-    //     }
-    //   ],
-    //   [data]
-    // );
-
     const videoRef = useRef<HTMLVideoElement>(null);
     const playVideo = () => {
       if (data.videoUrl) {

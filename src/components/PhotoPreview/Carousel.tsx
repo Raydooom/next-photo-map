@@ -11,13 +11,14 @@ import { ExifInfo } from '../modules/ExifInfo';
 import { AnimatePresence, motion } from 'framer-motion';
 
 type PropType = {
-  slides: PhotoDetail[];
+  slides: PhotoItem[];
   options?: EmblaOptionsType;
+  currentPreview?: PhotoItem;
   currentIndex: number;
 };
 
 const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
-  const { slides, options, currentIndex, onClose } = props;
+  const { slides, options, currentPreview, currentIndex, onClose } = props;
   const [selectedIndex, setSelectedIndex] = useState(currentIndex);
   const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options);
   const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel(
@@ -76,12 +77,16 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
     if (!emblaMainApi || !slides.length) return;
 
     if (currentIndex !== -1) {
-      emblaMainApi.scrollTo(currentIndex, false);
+      emblaMainApi.scrollTo(currentIndex, true);
     }
   }, [emblaMainApi, slides, currentIndex]);
 
-  const [showExif, setShowExif] = useState(true);
+  const [showExif, setShowExif] = useState(false);
 
+  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>(currentPreview);
+  useEffect(() => {
+    setActiveSlide(slides[selectedIndex]);
+  }, [selectedIndex, slides]);
   return (
     <aside
       className="bg-cover bg-center h-full w-full flex relative"
@@ -167,7 +172,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
         </div>
       </section>
       <AnimatePresence>
-        {showExif && (
+        {showExif && activeSlide && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -177,13 +182,10 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
               transition: { duration: 0.2, ease: 'easeInOut' }
             }}
             className={clsx(
-              'absolute top-16 right-5 z-10 max-h-[78vh] overflow-hidden'
+              'absolute top-16 right-5 z-10'
             )}
           >
-            <ExifInfo
-              setIsOpen={setShowExif}
-              photoDetail={slides[selectedIndex]}
-            />
+            <ExifInfo setIsOpen={setShowExif} photo={activeSlide} />
           </motion.div>
         )}
       </AnimatePresence>
