@@ -43,6 +43,10 @@ export const PhotoCard = memo(
     };
     const [isPlaying, setIsPlaying] = useState(false);
     const onVideoEnded = () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
       setIsPlaying(false);
     };
 
@@ -59,13 +63,10 @@ export const PhotoCard = memo(
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         layout
+        onClick={() => onClickItem({ data })}
       >
-        <motion.button
-          className="w-full h-full absolute top-0 left-0 z-30 cursor-pointer"
-          layoutId={`photo-item-${data.id}`} // 关键 ID
-          onClick={() => onClickItem({ data })}
-        ></motion.button>
         <motion.div
+          layoutId={`photo-item-${data.id}`}
           initial={{ filter: 'blur(20px)', opacity: 0 }}
           animate={!loading ? { filter: 'blur(0px)', opacity: 1 } : {}}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -99,7 +100,11 @@ export const PhotoCard = memo(
 
         {/* livephoto 图标 */}
         {data.videoUrl && (
-          <div className="absolute top-2 left-2 z-40" onClick={playVideo}>
+          <div
+            className="absolute top-2 left-2 z-40"
+            onMouseEnter={playVideo}
+            onMouseLeave={onVideoEnded}
+          >
             <LivePhotoIndicate isPlaying={isPlaying} />
           </div>
         )}

@@ -78,7 +78,7 @@ export const ExifInfo = memo(
     }, [photo.id]);
 
     return (
-      <div className="relative w-[300px] max-h-[70vh] bg-background/40 backdrop-blur-[40px] rounded-[2.2rem] border border-foreground/[0.1] shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-[300px] max-h-[70vh] bg-background/60 backdrop-blur-[40px] rounded-[2.2rem] border border-foreground/[0.1] shadow-2xl overflow-hidden flex flex-col">
         <div className="p-4 pb-3 border-b border-foreground/[0.1]">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
@@ -199,11 +199,11 @@ export const ExifInfo = memo(
           </section>
         </div>
 
-        <div className="mt-auto px-6 py-4 bg-white/[0.02] border-t border-white/[0.05] flex justify-between items-center">
-          <span className="text-xs text-white/20 font-bold uppercase tracking-widest">
+        <div className="mt-auto px-6 py-4 bg-background/[0.02] border-t border-foreground/[0.05] flex justify-between items-center">
+          <span className="text-xs text-foreground/20 font-bold uppercase tracking-widest">
             Captured
           </span>
-          <span className="text-xs text-white/50 font-mono">
+          <span className="text-xs text-foreground/50 font-mono">
             {extendData?.EXIFDatetimeoriginal}
           </span>
         </div>
