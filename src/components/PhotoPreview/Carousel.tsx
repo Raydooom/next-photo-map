@@ -5,7 +5,7 @@ import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { PhotoItem } from '@/types';
 import clsx from 'clsx';
 import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
-import { ExifInfo } from '../modules/ExifInfo';
+import { ExtendInfo } from '../modules/ExifInfo';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SlideItem } from './SlideItem';
 
@@ -167,7 +167,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
             }}
             className={clsx('absolute top-16 right-5 z-10')}
           >
-            <ExifInfo setIsOpen={setShowExif} photo={activeSlide} />
+            <ExtendInfo setIsOpen={setShowExif} photo={activeSlide} />
           </motion.div>
         )}
       </AnimatePresence>

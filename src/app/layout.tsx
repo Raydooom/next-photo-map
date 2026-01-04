@@ -58,6 +58,7 @@ export default function RootLayout({
             </footer>
           </div>
         </Providers>
+        <script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=omdCxGga1olQLcpbGMMs01W6A0VX9gWQ" />
       </body>
     </html>
   );

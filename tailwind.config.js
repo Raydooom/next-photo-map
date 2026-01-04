@@ -9,6 +9,11 @@ const config = {
   ],
   theme: {
     extend: {
+      colors: {
+        brand: {
+          primary: 'rgb(var(--brand-primary) / <alpha-value>)'
+        }
+      },
       fontFamily: {
         sans: ['var(--font-sans)'],
         mono: ['var(--font-mono)']

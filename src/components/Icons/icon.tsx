@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { CgLivePhoto as LivePhotoIcon } from 'react-icons/cg';
+import { HiLocationMarker } from 'react-icons/hi';
+
 import {
   Camera,
   Aperture,
@@ -20,7 +22,8 @@ export {
   BarChart3,
   CircleX,
   Sun as IsoIcon,
-  Focus as FocalLengthIcon
+  Focus as FocalLengthIcon,
+  HiLocationMarker as MarkerIcon
 };
 
 export const GithubIcon: React.FC<IconSvgProps> = ({

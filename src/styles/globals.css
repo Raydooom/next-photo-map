@@ -2,6 +2,18 @@
 
 @config "../../tailwind.config.js";
 
+@layer base {
+  :root {
+    /* 亮色模式变量 */
+    --brand-primary: 59 130 246; /* 蓝色 */
+  }
+
+  .dark {
+    /* 暗色模式变量 */
+    --brand-primary: 21 99 195; /* 深蓝黑 */
+  }
+}
+
 /* 处理 hero Modal size=full 时，强制覆盖 JS 注入到 html 标签上的内联样式 */
 html {
   scrollbar-gutter: auto !important;

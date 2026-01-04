@@ -4,7 +4,8 @@ import {
   CircleX,
   ExposureTimeIcon,
   IsoIcon,
-  FocalLengthIcon
+  FocalLengthIcon,
+  MarkerIcon
 } from '@/components/Icons/icon';
 import {
   formatExposureTime,
@@ -14,12 +15,16 @@ import {
   formatFileSize,
   formatExposurebias,
   formatPixel,
-  formatDimension
+  formatDimension,
+  formatLatLng,
+  formatDirection,
+  formatAltitude
 } from '@/utils/format';
 
 import { PhotoItem, ExifType } from '@/types';
 import { ApertureIcon } from 'lucide-react';
 import * as Actions from '@/services/actions';
+import { Marker } from '../Map';
 
 type IconProps = React.FC<{ size: number; className: string }>;
 const StatItem = ({
@@ -59,7 +64,7 @@ const InfoRow = ({
     </div>
   ) : null;
 
-export const ExifInfo = memo(
+export const ExtendInfo = memo(
   ({
     photo,
     setIsOpen
@@ -67,13 +72,10 @@ export const ExifInfo = memo(
     photo: PhotoItem;
     setIsOpen: (isOpen: boolean) => void;
   }) => {
-    const [extendData, setExtendData] = useState<ExifType | undefined>(
-      undefined
-    );
+    const [exifData, setExifData] = useState<ExifType | undefined>(undefined);
     useEffect(() => {
       Actions.getPhotoExtendInfo(photo.id).then(res => {
-        console.log(res);
-        setExtendData(res.exifData);
+        setExifData(res.exifData);
       });
     }, [photo.id]);
 
@@ -133,40 +135,35 @@ export const ExifInfo = memo(
               <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
                 Shooting
               </h3>
-              <div className="bg-foreground/[0.02] rounded-2xl px-4 py-1 border border-foreground/[0.04]">
-                <InfoRow label="相机" value={extendData?.ImageModel} />
-                <InfoRow label="镜头" value={extendData?.EXIFLensmodel} />
+              <div className="bg-foreground/[0.08] rounded-2xl px-4">
+                <InfoRow label="相机" value={exifData?.ImageModel} />
+                <InfoRow label="镜头" value={exifData?.EXIFLensmodel} />
                 <InfoRow
                   label="焦距"
-                  value={formatFocalLength(extendData?.EXIFFocallength)}
+                  value={formatFocalLength(exifData?.EXIFFocallength)}
                 />
                 <InfoRow
                   label="等效 35mm"
-                  value={formatFocalLength(
-                    extendData?.EXIFFocallengthin35Mmfilm
-                  )}
+                  value={formatFocalLength(exifData?.EXIFFocallengthin35Mmfilm)}
                 />
                 <InfoRow
                   label="曝光补偿"
-                  value={formatExposurebias(extendData?.EXIFExposurebiasvalue)}
+                  value={formatExposurebias(exifData?.EXIFExposurebiasvalue)}
                 />
-                <InfoRow label="白平衡" value={extendData?.EXIFWhitebalance} />
-                <InfoRow
-                  label="测光模式"
-                  value={extendData?.EXIFMeteringmode}
-                />
+                <InfoRow label="白平衡" value={exifData?.EXIFWhitebalance} />
+                <InfoRow label="测光模式" value={exifData?.EXIFMeteringmode} />
                 <InfoRow
                   label="尺寸"
                   value={formatDimension(
-                    extendData?.EXIFExifimagewidth,
-                    extendData?.EXIFExifimagelength
+                    exifData?.EXIFExifimagewidth,
+                    exifData?.EXIFExifimagelength
                   )}
                 />
                 <InfoRow
                   label="像素"
                   value={formatPixel(
-                    extendData?.EXIFExifimagewidth,
-                    extendData?.EXIFExifimagelength
+                    exifData?.EXIFExifimagewidth,
+                    exifData?.EXIFExifimagelength
                   )}
                 />
                 <InfoRow
@@ -177,25 +174,25 @@ export const ExifInfo = memo(
             </div>
 
             {/* 地图 */}
-            {/* <div className="px-1">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
-                    Geo tagging
-                  </h3>
-                  <span className="text-[9px] text-white/20 font-mono">
-                    {ExifData.coordinates}
-                  </span>
-                </div>
-                <div className="relative h-20 bg-white/[0.03] rounded-[1.5rem] border border-white/[0.06] overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_white] border-[2px] border-indigo-600/50" />
-                    <span className="text-[9px] font-bold text-white/60 mt-1.5 px-2 py-0.5 bg-white/[0.05] backdrop-blur-md rounded-full">
-                      {ExifData.location}
-                    </span>
-                  </div>
-                </div>
-              </div> */}
+            <div className="px-1">
+              <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
+                Location
+              </h3>
+              <div className="bg-foreground/[0.08] rounded-2xl px-4">
+                <InfoRow label="经纬度" value={formatLatLng(exifData)} />
+                <InfoRow
+                  label="海拔"
+                  value={formatAltitude(exifData?.GPSGpsaltitude)}
+                />
+                <InfoRow
+                  label="拍摄朝向"
+                  value={formatDirection(exifData?.GPSGpsimgdirection)}
+                />
+              </div>
+              <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
+                <Marker exifData={exifData} />
+              </div>
+            </div>
           </section>
         </div>
 
@@ -204,7 +201,7 @@ export const ExifInfo = memo(
             Captured
           </span>
           <span className="text-xs text-foreground/50 font-mono">
-            {extendData?.EXIFDatetimeoriginal}
+            {exifData?.EXIFDatetimeoriginal}
           </span>
         </div>
       </div>
