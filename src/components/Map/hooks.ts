@@ -20,7 +20,7 @@ interface BaiduMapProps {
   };
 }
 
-export const UseBaiduMap = ({
+export const useBaiduMap = ({
   center = { lng: 116.404, lat: 39.915 },
   config = {},
   onMapLoad
@@ -45,7 +45,6 @@ export const UseBaiduMap = ({
 
   useEffect(() => {
     if (mapInstance) {
-      console.log('theme', theme);
       mapInstance?.setMapStyleV2({
         styleId:
           theme === 'dark'
@@ -60,44 +59,11 @@ export const UseBaiduMap = ({
       new window.BMapGL.Point(center.lng, center.lat),
       config.zoom ?? 11
     );
-  }, [mapInstance, center, config.zoom]);
+  }, [center, config.zoom]);
 
   useEffect(() => {
     config.enableScrollWheelZoom ?? mapInstance?.enableScrollWheelZoom(true);
   }, [mapInstance, config.enableScrollWheelZoom]);
 
   return { mapRef, mapInstance };
-};
-
-// 将 EXIF 数据转换为百度地图坐标
-export const UseBMapPointConverter = (exifData?: ExifType) => {
-  const [point, setPoint] = useState(undefined);
-  const {
-    GPSGpslongitude,
-    GPSGpslongituderef,
-    GPSGpslatitude,
-    GPSGpslatituderef
-  } = exifData || {};
-  useEffect(() => {
-    if (!GPSGpslatitude || !GPSGpslongitude) {
-      return;
-    }
-    var convertor = new window.BMapGL.Convertor();
-    var point = new window.BMapGL.Point(
-      convertToDecimal(GPSGpslongitude, GPSGpslongituderef),
-      convertToDecimal(GPSGpslatitude, GPSGpslatituderef)
-    );
-    convertor.translate(
-      [point],
-      1,
-      5,
-      (data: { status: number; points: SetStateAction<undefined>[] }) => {
-        if (data.status === 0) {
-          setPoint(data.points[0]);
-        }
-      }
-    );
-  }, [GPSGpslatitude, GPSGpslongitude]);
-
-  return point;
 };
