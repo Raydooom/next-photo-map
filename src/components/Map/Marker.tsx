@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MarkerComponentProps } from './type';
-import { UseBaiduMap, UseBMapPointConverter } from './hooks';
+import { useBaiduMap } from './hooks';
 import { renderToString } from 'react-dom/server';
-import { getLucideOverlayClass } from './helper';
+import { getLucideOverlayClass, coordTransform } from './helper';
 
 export const Marker = (props: MarkerComponentProps) => {
   const { exifData } = props;
@@ -11,15 +11,24 @@ export const Marker = (props: MarkerComponentProps) => {
     lng: number;
     lat: number;
   }>();
-  const { mapRef, mapInstance } = UseBaiduMap({
+  const { mapRef, mapInstance } = useBaiduMap({
     center: markerPoint,
     config: {
       zoom: 18,
       enableScrollWheelZoom: false
     }
   });
+  const point = useCallback(() => {
+    const pointArr = coordTransform.transformToBaidu(
+      exifData!.GPSGpslatitude,
+      exifData!.GPSGpslongitude
+    );
+    return {
+      lat: pointArr[0],
+      lng: pointArr[1]
+    };
+  }, [exifData]);
 
-  const point = UseBMapPointConverter(exifData);
   useEffect(() => {
     if (point) {
       mapInstance?.clearOverlays();
@@ -39,12 +48,12 @@ export const Marker = (props: MarkerComponentProps) => {
         </div>
       );
 
-      const customMarker = new LucideOverlay(point, svgString, {
+      const customMarker = new LucideOverlay(point(), svgString, {
         size: 32
       });
       mapInstance?.addOverlay(customMarker);
-
-      setMarkerPoint(point);
+      setMarkerPoint(point());
+      console.log(point());
     }
   }, [point, mapInstance]);
 

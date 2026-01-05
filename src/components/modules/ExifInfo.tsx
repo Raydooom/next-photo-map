@@ -189,9 +189,13 @@ export const ExtendInfo = memo(
                   value={formatDirection(exifData?.GPSGpsimgdirection)}
                 />
               </div>
-              <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                <Marker exifData={exifData} />
-              </div>
+              {exifData &&
+                exifData.GPSGpslatitude &&
+                exifData.GPSGpslongitude && (
+                  <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
+                    <Marker exifData={exifData} />
+                  </div>
+                )}
             </div>
           </section>
         </div>

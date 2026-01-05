@@ -59,7 +59,7 @@ export const Navbar = () => {
                 color="foreground"
                 href={item.href}
               >
-                {item.icon && <item.icon className="w-4 h-4 mr-1" />}  
+                {item.meta?.icon && <item.meta.icon className="w-4 h-4 mr-1" />}
                 {item.label}
               </NextLink>
             </NavbarItem>

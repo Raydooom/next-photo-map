@@ -1,11 +1,11 @@
-import { LayoutPanelTop, MapPinned } from 'lucide-react';
+import { LayoutPanelTop, MapPinned, SquareLibrary } from 'lucide-react';
 
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
   name: 'RAY·DOM',
   description:
-    '旅行游记，摄影作品分享，随笔随想，一起探索世界，一起发现更大的世界。这里是您探索各地之美、感受旅行乐趣与摄影艺术的独特空间。',
+    '光影空间，旅行游记，摄影作品分享，随笔随想，一起探索世界，一起发现更大的世界。这里是您探索各地之美、感受旅行乐趣与摄影艺术的独特空间。',
   navItems: [
     {
       label: 'Home',
@@ -14,16 +14,17 @@ export const siteConfig = {
     {
       label: 'Photos',
       href: '/photos',
-      icon: LayoutPanelTop
+      meta: { icon: LayoutPanelTop }
     },
     {
       label: 'Map',
       href: '/footprint',
-      icon: MapPinned
+      meta: { icon: MapPinned, fullscreen: true }
     },
     {
       label: 'Blog',
-      href: '/blog'
+      href: '/blog',
+      meta: { icon: SquareLibrary }
     },
     {
       label: 'About',
