@@ -4,8 +4,7 @@ import {
   CircleX,
   ExposureTimeIcon,
   IsoIcon,
-  FocalLengthIcon,
-  MarkerIcon
+  FocalLengthIcon
 } from '@/components/Icons/icon';
 import {
   formatExposureTime,

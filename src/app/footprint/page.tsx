@@ -1,4 +1,4 @@
-import { Map } from './_components/MapWrapper';
+import Map from './_components/Map';
 import Service from '@/services/photo';
 import { coordTransform, groupByLocation } from '@/components/Map/helper';
 

@@ -9,7 +9,9 @@ import {
   BarChart3,
   CircleX,
   Sun,
-  Focus
+  Focus,
+  Calendar,
+  MapPin
 } from 'lucide-react';
 
 import { IconSvgProps } from '@/types';
@@ -23,7 +25,9 @@ export {
   CircleX,
   Sun as IsoIcon,
   Focus as FocalLengthIcon,
-  HiLocationMarker as MarkerIcon
+  HiLocationMarker as MarkerIcon,
+  Calendar as DateIcon,
+  MapPin as LocationIcon
 };
 
 export const GithubIcon: React.FC<IconSvgProps> = ({

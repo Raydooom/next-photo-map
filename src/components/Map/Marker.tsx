@@ -4,6 +4,7 @@ import { MarkerComponentProps } from './type';
 import { useBaiduMap } from './hooks';
 import { renderToString } from 'react-dom/server';
 import { getLucideOverlayClass, coordTransform } from './helper';
+import MarkerIcon from './modules/MarkerIcon';
 
 export const Marker = (props: MarkerComponentProps) => {
   const { exifData } = props;
@@ -35,25 +36,14 @@ export const Marker = (props: MarkerComponentProps) => {
 
       const LucideOverlay = getLucideOverlayClass();
       if (!LucideOverlay) return;
-      const svgString = renderToString(
-        <div className="relative flex flex-col items-center group cursor-pointer">
-          {/* 连接处与底部光点 */}
-          <div className="flex flex-col items-center -mt-1">
-            {/* 呼吸灯效果的外圈 */}
-            <div className="relative flex items-center justify-center">
-              <div className="absolute w-4 h-4 bg-brand-primary rounded-full animate-ping opacity-75" />
-              <div className="relative w-3 h-3 bg-white rounded-full border-3 border-brand-primary shadow-[0_0_12px_#fff]" />
-            </div>
-          </div>
-        </div>
-      );
+      const svgString = renderToString(<MarkerIcon />);
 
       const customMarker = new LucideOverlay(point(), svgString, {
-        size: 32
+        size: 32,
+        fixOffset: false
       });
       mapInstance?.addOverlay(customMarker);
       setMarkerPoint(point());
-      console.log(point());
     }
   }, [point, mapInstance]);
 

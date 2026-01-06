@@ -43,9 +43,9 @@ export default function RootLayout({
           src="https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=omdCxGga1olQLcpbGMMs01W6A0VX9gWQ"
         />
         <Script
-          id="mapvgl"
-          strategy="lazyOnload"
-          src="https://unpkg.com/mapvgl@1.0.0-beta.194/dist/mapvgl.min.js"
+          id="baidu-map-cluster"
+          strategy="beforeInteractive"
+          src="//unpkg.com/@bmapgl-plugin/cluster"
         />
       </body>
     </html>
