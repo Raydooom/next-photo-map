@@ -5,7 +5,8 @@ import {
   PagerRequest,
   PhotoDetail,
   ExifType,
-  CommonResponse
+  CommonResponse,
+  ExifData
 } from '@/types';
 
 export default class Service {
@@ -26,8 +27,6 @@ export default class Service {
   }
 
   static async getExtendList() {
-    return await baseFetch.get<
-      { exifData: ExifType; id: number; photoId: number }[]
-    >('/admin/photo/extend');
+    return await baseFetch.get<ExifData[]>('/admin/photo/extend');
   }
 }

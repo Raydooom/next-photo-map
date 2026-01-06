@@ -1,8 +1,8 @@
-import Service from '@/services/';
+import PhotoService from '@/services/photo';
 import MasonryGrid from './_components/MasonryGrid';
 
 export default async function DocsPage() {
-  const { list } = await Service.getPhotos({
+  const { list } = await PhotoService.getPhotos({
     page: 1,
     pageSize: 10000
   });

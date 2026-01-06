@@ -32,9 +32,6 @@ export const useBaiduMap = ({
       const BMapGL = window.BMapGL;
       if (BMapGL) {
         const mapInstance = new BMapGL.Map(mapRef.current);
-        mapInstance?.setMapStyleV2({
-          styleId: 'fef1c39c1f296afc207e545b60f5c60c'
-        });
         setMapInstance(mapInstance);
         onMapLoad?.(mapInstance);
       }

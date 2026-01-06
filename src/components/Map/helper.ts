@@ -1,5 +1,4 @@
-import { ExifData, ExifType } from '@/types';
-import React from 'react';
+import { ExifData } from '@/types';
 
 // 声明类型，防止 TS 报错
 declare const window: any;
@@ -16,21 +15,22 @@ export const getLucideOverlayClass = () => {
     private _point: any;
     private _div: HTMLElement | null = null;
     private _size: number;
-    private _svgString: string;
+    private _htmlString: string;
+    private _fixOffset: boolean;
 
-    constructor(point: any, svgString: string, options: any = {}) {
+    constructor(point: any, htmlString: string, options: any = {}) {
       super();
       this._point = point;
-      this._svgString = svgString;
-      this._color = options.color || '#3b82f6';
-      this._size = options.size || 32;
+      this._htmlString = htmlString;
+      this._size = options?.size || 32;
+      this._fixOffset = options?.fixOffset || true; // 是否修正偏移量，默认 true
     }
 
     initialize(map: any) {
       const div = document.createElement('div');
       div.style.position = 'absolute';
       div.style.zIndex = window.BMapGL.Overlay.getZIndex(this._point.lat);
-      div.innerHTML = this._svgString;
+      div.innerHTML = this._htmlString;
 
       map.getPanes().markerPane.appendChild(div);
       this._div = div;
@@ -40,7 +40,7 @@ export const getLucideOverlayClass = () => {
     draw() {
       const map = (this as any)._map;
       const pixel = map.pointToOverlayPixel(this._point);
-      if (this._div) {
+      if (this._div && this._fixOffset) {
         this._div.style.left = `${pixel.x - this._size / 2}px`;
         this._div.style.top = `${pixel.y - this._size / 2}px`;
       }
@@ -141,7 +141,10 @@ export const coordTransform = {
       3.0;
     return ret;
   },
-  transformToBaidu: function (lng: number[], lat: number[]): number[] {
+  transformToBaidu: function (lng?: number[], lat?: number[]): number[] {
+    if (!lng || !lat) {
+      return [];
+    }
     // 1. 数组转十进制
     const lngWGS = this.exifToDecimal(lng);
     const latWGS = this.exifToDecimal(lat);
