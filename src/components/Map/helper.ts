@@ -1,6 +1,5 @@
-// src/components/Map/helper.ts
-
 import { ExifData, ExifType } from '@/types';
+import React from 'react';
 
 // 声明类型，防止 TS 报错
 declare const window: any;
@@ -16,7 +15,6 @@ export const getLucideOverlayClass = () => {
   return class LucideOverlay extends window.BMapGL.Overlay {
     private _point: any;
     private _div: HTMLElement | null = null;
-    private _color: string;
     private _size: number;
     private _svgString: string;
 

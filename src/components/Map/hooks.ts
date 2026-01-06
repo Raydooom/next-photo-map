@@ -1,6 +1,4 @@
-import { ExifType } from '@/types';
-import { convertToDecimal } from '@/utils/map';
-import { SetStateAction, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 
 declare global {
