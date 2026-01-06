@@ -1,5 +1,6 @@
 import '@/styles/globals.css';
 import { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 
 import { Providers } from './providers';
 
@@ -36,7 +37,16 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
-        <script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=omdCxGga1olQLcpbGMMs01W6A0VX9gWQ" />
+        <Script
+          id="baidu-map-base"
+          strategy="beforeInteractive"
+          src="https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=omdCxGga1olQLcpbGMMs01W6A0VX9gWQ"
+        />
+        <Script
+          id="mapvgl"
+          strategy="lazyOnload"
+          src="https://unpkg.com/mapvgl@1.0.0-beta.194/dist/mapvgl.min.js"
+        />
       </body>
     </html>
   );

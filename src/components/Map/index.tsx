@@ -1,4 +1,5 @@
 'use client';
 export { Marker } from './Marker';
+export * from './hooks';
 export * from './helper';
-export { useBaiduMap } from './hooks';
+export * from './cHelper';
