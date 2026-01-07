@@ -2,6 +2,8 @@
 import { useBaiduMap } from '@/components/Map';
 import { useEffect } from 'react';
 import ClusterPoint from '@/components/Map/modules/ClusterPoint';
+import { BackIcon } from '@/components/Icons/custom';
+import { MapControls } from './MapControls';
 
 interface MapProps {
   markerGroup?: {
@@ -58,8 +60,10 @@ export default function Map({ markerGroup }: MapProps) {
   }, [mapInstance, markerGroup]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-screen h-screen overflow-hidden">
+      <BackIcon className="absolute top-4 left-4 z-10" />
       <div ref={mapRef} className="w-full h-full" />
+      <MapControls mapInstance={mapInstance} />
     </div>
   );
 }

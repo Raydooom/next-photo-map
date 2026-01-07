@@ -2,7 +2,7 @@
 import { PhotoItem } from '@/types';
 import clsx from 'clsx';
 import Image from 'next/image';
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Chip } from '@heroui/chip';
 import {
   IsoIcon,
@@ -43,7 +43,7 @@ export const PhotoCard = memo(
     };
     const [isPlaying, setIsPlaying] = useState(false);
     const onVideoEnded = () => {
-      if (videoRef.current) {
+      if (videoRef.current && isPlaying) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
       }

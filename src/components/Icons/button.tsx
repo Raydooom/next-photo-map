@@ -6,37 +6,41 @@ import {
   AiOutlineLeft,
   AiOutlineRight
 } from 'react-icons/ai';
+import {
+  MdOutlineAdd,
+  MdHorizontalRule,
+  MdOutlineMyLocation
+} from 'react-icons/md';
+import { FaLocationArrow } from 'react-icons/fa6';
+
+import { Button, ButtonProps } from '@heroui/button';
 
 type IconButtonProps = {
-  onClick: () => void;
+  onClick?: () => void;
   className?: string;
-};
+} & ButtonProps;
 
-// 第一步：抽取公共的 Span 容器组件
 const IconButton = ({
   children,
   onClick,
-  className
+  className,
+  ...rest
 }: IconButtonProps & { children: React.ReactNode }) => (
-  <span
+  <Button
+    radius="full"
+    isIconOnly
+    onPress={onClick}
     className={clsx(
-      `
-        inline-block p-2 rounded-full cursor-pointer text-xl
-        bg-background/70
-        backdrop-blur-xl
-        border border-white/20 dark:border-white/10
-        active:opacity-80
-        shadow-[0_4px_24px_0_rgba(0,0,0,0.05)]
-        transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-        hover:bg-background/40 hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]
-        active:scale-110 active:backdrop-blur-[40px]
+      `bg-background/60 
+      backdrop-blur-button shadow-xl text-xl
+      w-[44px] h-[44px]
       `,
       className
     )}
-    onClick={onClick}
+    {...rest}
   >
     {children}
-  </span>
+  </Button>
 );
 
 export const InfoIcon = (props: IconButtonProps) => (
@@ -60,5 +64,29 @@ export const LeftIcon = (props: IconButtonProps) => (
 export const RightIcon = (props: IconButtonProps) => (
   <IconButton {...props}>
     <AiOutlineRight />
+  </IconButton>
+);
+
+export const PlusIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <MdOutlineAdd />
+  </IconButton>
+);
+
+export const MinusIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <MdHorizontalRule />
+  </IconButton>
+);
+
+export const RotationIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <FaLocationArrow className="-rotate-45 translate-y-[2px]" />
+  </IconButton>
+);
+
+export const NavigationIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <MdOutlineMyLocation />
   </IconButton>
 );

@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useIsSSR } from '@react-aria/ssr';
+import { LeftIcon } from './button';
 
 export const Logo: React.FC<{ size?: number }> = ({ size = 32 }) => {
   const { theme } = useTheme();
@@ -13,6 +14,17 @@ export const Logo: React.FC<{ size?: number }> = ({ size = 32 }) => {
       width={size}
       height={size}
       alt="logo"
+    />
+  );
+};
+
+export const BackIcon: React.FC<{ className?: string }> = ({
+  className = ''
+}) => {
+  return (
+    <LeftIcon
+      className={`${className}`}
+      onClick={() => window.history.back()}
     />
   );
 };

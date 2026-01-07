@@ -18,7 +18,7 @@ import clsx from 'clsx';
 import { siteConfig } from '@/config/site';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { GithubIcon } from '@/components/Icons/icon';
-import { Logo } from '@/components/Icons/logo';
+import { Logo } from '@/components/Icons/custom';
 
 export const Navbar = () => {
   const searchInput = (
