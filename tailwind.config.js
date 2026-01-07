@@ -11,8 +11,14 @@ const config = {
     extend: {
       colors: {
         brand: {
-          primary: 'rgb(var(--brand-primary) / <alpha-value>)'
+          primary: 'rgb(var(--brand-primary) / <alpha-value>)' // global.css 中变量
         }
+      },
+      backdropBlur: {
+        button: '4px'
+      },
+      shadow: {
+        button: '0 4px 8px rgba(0, 0, 0, 0.05)'
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

@@ -15,7 +15,7 @@ export const Marker = (props: MarkerComponentProps) => {
   const { mapRef, mapInstance } = useBaiduMap({
     center: markerPoint,
     config: {
-      zoom: 18,
+      zoom: 15,
       enableScrollWheelZoom: false
     }
   });

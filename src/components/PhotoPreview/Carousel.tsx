@@ -165,7 +165,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
               y: 20,
               transition: { duration: 0.2, ease: 'easeInOut' }
             }}
-            className={clsx('absolute top-16 right-5 z-10')}
+            className={clsx('absolute top-17 right-5 z-10')}
           >
             <ExtendInfo setIsOpen={setShowExif} photo={activeSlide} />
           </motion.div>
