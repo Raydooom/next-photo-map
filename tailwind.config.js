@@ -11,7 +11,8 @@ const config = {
     extend: {
       colors: {
         brand: {
-          primary: 'rgb(var(--brand-primary) / <alpha-value>)' // global.css 中变量
+          primary: 'rgb(var(--brand-primary) / <alpha-value>)', // global.css 中变量
+          highlight: 'rgb(var(--brand-highlight) / <alpha-value>)' // global.css 中变量
         }
       },
       backdropBlur: {

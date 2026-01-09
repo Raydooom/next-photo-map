@@ -164,13 +164,14 @@ export const groupByLocation = (
 
     if (!groups[key]) {
       groups[key] = {
+        id: exifData.id,
         point: key.split(',').map(Number),
-        images: [],
+        list: [],
         count: 0
       };
     }
 
-    groups[key].images.push(exifData);
+    groups[key].list.push(exifData);
     groups[key].count++;
     return groups;
   }, {});

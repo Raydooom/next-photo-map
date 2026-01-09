@@ -99,11 +99,11 @@ export interface ExifType {
 }
 
 export interface PhotoDetail extends PhotoItem {
-  exif?: Partial<ExifType>;
+  exifData?: ExifType;
 }
 
 export interface ExifData {
   id: number;
   photoId: number;
-  exifData: Partial<ExifType>;
+  exifData: ExifType;
 }
