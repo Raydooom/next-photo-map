@@ -9,3 +9,7 @@ export const getPhotoExtendInfo = async (id: number) => {
 export const getPhotoDetail = async (id: number) => {
   return await PhotoService.getPhotoDetail(id);
 };
+
+export const getPhotoDetailBatch = async (ids: number[]) => {
+  return await PhotoService.getPhotoDetailBatch(ids);
+};

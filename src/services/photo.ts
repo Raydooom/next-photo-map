@@ -20,6 +20,14 @@ export default class Service {
     return await baseFetch.get<PhotoDetail>(`/admin/photo/${id}`);
   }
 
+  static async getPhotoDetailBatch(ids: number[]) {
+    return await baseFetch.get<PhotoDetail[]>(`/admin/photo/batch`, {
+      params: {
+        ids: ids.join(',')
+      }
+    });
+  }
+
   static async getPhotoExtendInfo(id: number) {
     return await baseFetch.get<{ exifData: ExifType }>(
       `/admin/photo/${id}/extend`

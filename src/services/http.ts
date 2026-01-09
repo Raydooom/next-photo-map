@@ -8,7 +8,7 @@ class FetchService {
   async request<T>(url: string, options: RequestOptions): Promise<T> {
     const response = await fetch(this.BASE_URL + url, options);
     if (!response.ok) {
-      throw new Error(response.statusText);
+      throw new Error(response.statusText, { cause: url });
     }
     const jsonRes = (await response.json()) as CommonResponse<T>;
     if (jsonRes.code !== 0) {

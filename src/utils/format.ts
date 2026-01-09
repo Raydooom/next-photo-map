@@ -59,7 +59,7 @@ export const formatFileSize = (size: number) => {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
 };
 
-export const formatLatLng = (exif?: ExifType | null) => {
+export const formatLatLng = (exif?: ExifType) => {
   const {
     GPSGpslatitude,
     GPSGpslatituderef,

@@ -58,7 +58,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
   return (
     <div className="absolute right-6 bottom-10 flex flex-col items-end gap-3 z-[100]">
       {/* 方向回正按钮 */}
-      <div className="mb-10 flex-col flex">
+      <div className="mb-10 rounded-3xl flex-col flex shadow-xl">
         {/* 放大按钮 */}
         <PlusIcon
           radius="none"
@@ -68,7 +68,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
         {/* 缩小按钮 */}
         <MinusIcon
           radius="none"
-          className="rounded-b-3xl"
+          className="rounded-b-3xl shadow-none"
           onClick={handleZoomOut}
         ></MinusIcon>
       </div>
