@@ -3,22 +3,10 @@ import { PhotoItem } from '@/types';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { memo, useRef, useState } from 'react';
-import { Chip } from '@heroui/chip';
-import {
-  IsoIcon,
-  FNumberIcon,
-  ExposureTimeIcon,
-  FocalLengthIcon
-} from '@/components/Icons/icon';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
-import {
-  formatExposureTime,
-  formatFNumber,
-  formatIso,
-  formatFocalLength,
-  formatFileSize
-} from '@/utils/format';
+import { formatFileSize } from '@/utils/format';
 import { motion } from 'framer-motion';
+import { ExifTagList } from '@/components/modules/ExifTag';
 
 export const PhotoCard = memo(
   ({
@@ -123,46 +111,9 @@ export const PhotoCard = memo(
             {data.ext ? data.ext.toUpperCase() : ''} · {data.width} x{' '}
             {data.height} · {formatFileSize(data.size)}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <ExifTag
-              value={formatExposureTime(data.exposureTime)}
-              Icon={<ExposureTimeIcon size={16} />}
-            />
-            <ExifTag
-              value={formatFNumber(data.fNumber)}
-              Icon={<FNumberIcon size={16} />}
-            />
-            <ExifTag value={formatIso(data.iso)} Icon={<IsoIcon size={16} />} />
-            <ExifTag
-              value={formatFocalLength(
-                data.focalLengthIn35MmFilm || data.focalLength
-              )}
-              Icon={<FocalLengthIcon size={16} />}
-            />
-          </div>
+          <ExifTagList mode="dark" photo={data} />
         </div>
       </motion.div>
     );
   }
 );
-
-const ExifTag = ({
-  value,
-  Icon
-}: {
-  value: string | number;
-  Icon: React.ReactNode;
-}) =>
-  value ? (
-    <Chip
-      size="sm"
-      classNames={{
-        base: 'bg-white/10 text-white/90 backdrop-blur-md p-2 max-w-full'
-      }}
-      radius="sm"
-      variant="flat"
-      startContent={Icon}
-    >
-      &nbsp;&nbsp;{value}
-    </Chip>
-  ) : null;

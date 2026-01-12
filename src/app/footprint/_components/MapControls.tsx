@@ -39,7 +39,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
     if (!mapInstance) return;
     const geolocation = new window.BMapGL.Geolocation();
     geolocation.getCurrentPosition((r: any) => {
-      console.log(geolocation.getStatus());
+      console.log(r);
       if (geolocation.getStatus() === 0) {
         // 0 代表成功
         mapInstance.panTo(r.point);

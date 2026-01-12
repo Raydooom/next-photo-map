@@ -1,15 +1,6 @@
 import React, { useEffect, useState, memo } from 'react';
+import { Camera, CircleX } from '@/components/Icons/icon';
 import {
-  Camera,
-  CircleX,
-  ExposureTimeIcon,
-  IsoIcon,
-  FocalLengthIcon
-} from '@/components/Icons/icon';
-import {
-  formatExposureTime,
-  formatFNumber,
-  formatIso,
   formatFocalLength,
   formatFileSize,
   formatExposurebias,
@@ -21,31 +12,9 @@ import {
 } from '@/utils/format';
 
 import { PhotoItem, ExifType } from '@/types';
-import { ApertureIcon } from 'lucide-react';
 import * as Actions from '@/services/actions';
 import { Marker } from '../Map';
-
-type IconProps = React.FC<{ size: number; className: string }>;
-const StatItem = ({
-  icon: Icon,
-  label,
-  value
-}: {
-  icon: IconProps;
-  label: string;
-  value?: string | number;
-}) =>
-  value ? (
-    <div className="flex flex-col items-center justify-center p-2 bg-foreground/[0.03] backdrop-blur-xl rounded-2xl border border-foreground/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-foreground/[0.08] transition-all duration-300">
-      <Icon size={16} className="text-foreground/50 mb-1.5" />
-      <span className="text-xs text-foreground/50 uppercase font-bold tracking-[0.1em]">
-        {label}
-      </span>
-      <span className="text-xs font-semibold text-foreground mt-0.5">
-        {value}
-      </span>
-    </div>
-  ) : null;
+import { ExifTagList } from './ExifTag';
 
 const InfoRow = ({
   label,
@@ -103,30 +72,7 @@ export const ExtendInfo = memo(
 
         <div className="p-3 space-y-3 overflow-y-auto max-h-[80vh] custom-scrollbar">
           {/* 参数网格 */}
-          <div className="grid grid-cols-2 gap-2">
-            <StatItem
-              icon={ExposureTimeIcon as IconProps}
-              label="快门"
-              value={formatExposureTime(photo.exposureTime)}
-            />
-            <StatItem
-              icon={ApertureIcon as IconProps}
-              label="光圈"
-              value={formatFNumber(photo.fNumber)}
-            />
-            <StatItem
-              icon={IsoIcon as IconProps}
-              label="ISO"
-              value={formatIso(photo.iso)}
-            />
-            <StatItem
-              icon={FocalLengthIcon as IconProps}
-              label="焦距"
-              value={formatFocalLength(
-                photo.focalLengthIn35MmFilm || photo.focalLength
-              )}
-            />
-          </div>
+          <ExifTagList photo={photo} />
 
           {/* 拍摄信息 */}
           <section className="space-y-2">

@@ -26,10 +26,11 @@ export default function ClusterPoint({
   const { data, isCluster, pointCount } = clusterData;
 
   const [isActive, setIsActive] = useState(false);
-  useEffect(() => {
-    const activeItem = data?.list?.find(item => item.id === activeId);
-    setIsActive(Boolean(activeItem));
-  }, [activeId, data, onClick]);
+  // 更新激活点，有错位，暂不高亮
+  // useEffect(() => {
+  //   const activeItem = data?.list?.find(item => item.id === activeId);
+  //   setIsActive(Boolean(activeItem));
+  // }, [activeId, data, onClick]);
 
   return (
     <>

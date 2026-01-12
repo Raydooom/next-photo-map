@@ -56,7 +56,8 @@ export default function Map({ markerGroup }: MapProps) {
   // 点击聚合点，居中显示地图
   const onClickPoint = (clusterData: ClusterPointData['data']) => {
     setViewList(clusterData.list);
-    flyTo(clusterData.point, [-300, 0]);
+    flyTo(clusterData.point, [0, -115]);
+    setActiveId(clusterData.id);
     // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
     const newUrl = `${window.location.pathname}?id=${clusterData.id}`;
     window.history.replaceState(
@@ -65,11 +66,19 @@ export default function Map({ markerGroup }: MapProps) {
       newUrl
     );
   };
-
+  const onCloseDetail = () => {
+    setViewList([]);
+    setActiveId(undefined);
+    const newUrl = `${window.location.pathname}`;
+    window.history.replaceState(
+      { ...window.history.state, as: newUrl, url: newUrl },
+      '',
+      newUrl
+    );
+  };
   // 绘制聚合点
   useEffect(() => {
     if (!mapInstance || !markerGroup) return;
-
     const Cluster = window.Cluster;
     const getHtmlDom = (cluster: ClusterPointData) => {
       const div = document.createElement('div');
@@ -118,12 +127,12 @@ export default function Map({ markerGroup }: MapProps) {
       // 确保清空地图上的相关 Overlay
       mapInstance.clearOverlays();
     };
-  }, [mapInstance, markerGroup, activeId]);
+  }, [mapInstance, markerGroup]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <BackIcon className="absolute top-4 left-4 z-10" />
-      <PointDetail viewList={viewList} />
+      <PointDetail onClose={onCloseDetail} viewList={viewList} />
       <div ref={mapRef} className="w-full h-full" />
       <MapControls mapInstance={mapInstance} />
     </div>

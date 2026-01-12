@@ -1,21 +1,21 @@
 import { ExifType } from '@/types';
 import { convertToDecimal } from '@/utils/map';
 
-export const formatExposureTime = (exposureTime: string) => {
+export const formatExposureTime = (exposureTime?: string) => {
   if (!exposureTime) {
     return '';
   }
   return `1/${Math.round(1 / Number(exposureTime))}s`;
 };
 
-export const formatFNumber = (fNumber: string) => {
+export const formatFNumber = (fNumber?: string) => {
   if (!fNumber) {
     return '';
   }
   return `f/${Number(Number(fNumber).toFixed(2))}`;
 };
 
-export const formatIso = (iso: string) => {
+export const formatIso = (iso?: string) => {
   if (!iso) {
     return '';
   }

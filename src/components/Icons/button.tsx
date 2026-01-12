@@ -12,8 +12,8 @@ import {
   MdOutlineMyLocation
 } from 'react-icons/md';
 import { FaLocationArrow } from 'react-icons/fa6';
-import { IoCameraOutline } from "react-icons/io5";
-
+import { IoCameraOutline } from 'react-icons/io5';
+import { RxOpenInNewWindow } from 'react-icons/rx';
 
 import { Button, ButtonProps } from '@heroui/button';
 
@@ -34,8 +34,8 @@ const IconButton = ({
     onPress={onClick}
     className={clsx(
       `bg-background/60 
-      backdrop-blur-button shadow-xl text-xl
-      w-[44px] h-[44px]
+      backdrop-blur-button shadow-xl text-lg
+      w-10 h-10
       `,
       className
     )}
@@ -96,5 +96,11 @@ export const NavigationIcon = (props: IconButtonProps) => (
 export const ClusterPointIcon = (props: IconButtonProps) => (
   <IconButton {...props}>
     <IoCameraOutline />
+  </IconButton>
+);
+
+export const OpenInNewWindowIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <RxOpenInNewWindow />
   </IconButton>
 );
