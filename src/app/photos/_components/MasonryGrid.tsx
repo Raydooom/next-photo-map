@@ -5,6 +5,7 @@ import { PhotoCard } from './PhotoCard';
 import { Masonry } from 'masonic';
 import { useCallback, useEffect, useState } from 'react';
 import PhotoPreview from '@/components/PhotoPreview';
+import { replaceUrl } from '@/utils/history';
 
 export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
   const [mounted, setMounted] = useState(false);
@@ -13,11 +14,16 @@ export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
     setMounted(true);
   }, []);
 
-  const [previewItem, setPreviewItem] = useState<PhotoDetail | undefined>(undefined);
+  const [previewItem, setPreviewItem] = useState<PhotoDetail | undefined>(
+    undefined
+  );
   const [isOpen, setIsOpen] = useState(false);
   const onClickItem = useCallback(async (item: { data: PhotoItem }) => {
     setPreviewItem(item.data);
     setIsOpen(true);
+
+    // 记录当前点击的图片id
+    replaceUrl(`${window.location.pathname}?photoId=${item.data.id}`);
   }, []);
 
   const renderItem = useCallback(
