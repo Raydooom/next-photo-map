@@ -17,18 +17,22 @@ export default function PhotoPreview({
     ? list.findIndex(item => item.id === current.id)
     : 0;
 
+  const onClickClose = () => {
+    onClose();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       size="full"
-      onClose={onClose}
+      onClose={onClickClose}
       classNames={{
         wrapper: 'scrollbar-gutter-none',
         base: 'w-screen h-screen m-0 max-w-none'
       }}
     >
       <ModalContent>
-        <Carousel slides={list} currentPreview={current} currentIndex={currentIndex} onClose={onClose} />
+        <Carousel slides={list} onClose={onClickClose} />
       </ModalContent>
     </Modal>
   );

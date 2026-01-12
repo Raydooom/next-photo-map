@@ -7,18 +7,17 @@ import clsx from 'clsx';
 import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
 import { ExtendInfo } from '../modules/ExifInfo';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 import { SlideItem } from './SlideItem';
 
 type PropType = {
   slides: PhotoItem[];
   options?: EmblaOptionsType;
-  currentPreview?: PhotoItem;
-  currentIndex: number;
 };
 
 const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
-  const { slides, options, currentPreview, currentIndex, onClose } = props;
-  const [selectedIndex, setSelectedIndex] = useState(currentIndex);
+  const { slides, options, onClose } = props;
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options);
   const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel(
     {
@@ -27,20 +26,28 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
     },
     [WheelGesturesPlugin({ forceWheelAxis: 'y' })]
   );
-
-  // 当current变化时，更新选中索引（仅在非用户操作时）
+  const searchParams = useSearchParams();
+  const photoId = searchParams.get('photoId');
+  console.log('photoId', photoId);
   useEffect(() => {
-    if (!slides.length || !emblaMainApi) return;
-
-    if (currentIndex !== selectedIndex) {
-      // 使用setTimeout确保在用户操作后不会立即覆盖
-      setTimeout(() => {
-        if (emblaMainApi.selectedScrollSnap() !== currentIndex) {
-          emblaMainApi.scrollTo(currentIndex);
-        }
-      }, 0);
+    if (!emblaMainApi) return;
+    // 初始化时设置选中状态
+    if (photoId) {
+      const activeIndex = slides.findIndex(item => item.id === Number(photoId));
+      console.log('activeIndex', activeIndex, photoId);
+      if (activeIndex !== -1) {
+        setSelectedIndex(activeIndex);
+        // 设置事件监听
+        setTimeout(() => {
+          if (emblaMainApi.selectedScrollSnap() !== activeIndex) {
+            emblaMainApi.scrollTo(activeIndex, true);
+          }
+          onSelect();
+          emblaMainApi.on('select', onSelect).on('reInit', onSelect);
+        }, 0);
+      }
     }
-  }, [currentIndex, emblaMainApi]);
+  }, [emblaMainApi, photoId, slides]);
 
   const onThumbClick = useCallback(
     (index: number) => {
@@ -60,31 +67,8 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
     emblaThumbsApi.scrollTo(newIndex);
   }, [emblaMainApi, emblaThumbsApi]);
 
-  useEffect(() => {
-    if (!emblaMainApi) return;
-
-    // 初始化时设置选中状态
-    setSelectedIndex(currentIndex);
-
-    // 设置事件监听
-    onSelect();
-    emblaMainApi.on('select', onSelect).on('reInit', onSelect);
-  }, [emblaMainApi, onSelect]);
-
-  // 初始化完成后滚动到指定位置
-  useEffect(() => {
-    if (!emblaMainApi || !slides.length) return;
-
-    if (currentIndex !== -1) {
-      emblaMainApi.scrollTo(currentIndex, true);
-    }
-  }, [emblaMainApi, slides, currentIndex]);
-
   const [showExif, setShowExif] = useState(false);
-
-  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>(
-    currentPreview
-  );
+  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>();
   useEffect(() => {
     setActiveSlide(slides[selectedIndex]);
   }, [selectedIndex, slides]);

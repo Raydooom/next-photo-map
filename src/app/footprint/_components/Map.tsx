@@ -6,10 +6,11 @@ import ClusterPoint, {
   ClusterPointData
 } from '@/components/Map/modules/ClusterPoint';
 import { BackIcon } from '@/components/Icons/custom';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { MapControls } from './MapControls';
 import { ExifData } from '@/types';
 import { PointDetail } from './PointDetail';
+import { replaceUrl } from '@/utils/history';
 
 interface MapProps {
   markerGroup?: {
@@ -21,18 +22,15 @@ interface MapProps {
 }
 
 export default function Map({ markerGroup }: MapProps) {
-  const router = useRouter();
-
-  const { mapRef, isLoadingTiles, mapInstance, centerAndZoom, flyTo } =
-    useBaiduMap({
-      center: { lng: 116.404, lat: 39.915 },
-      config: { zoom: 11 },
-      events: {
-        onMapLoad: map => {
-          console.log(map);
-        }
+  const { mapRef, mapInstance, centerAndZoom, flyTo } = useBaiduMap({
+    center: { lng: 116.404, lat: 39.915 },
+    config: { zoom: 11 },
+    events: {
+      onMapLoad: map => {
+        console.log(map);
       }
-    });
+    }
+  });
 
   const searchParams = useSearchParams();
   const extendId = searchParams.get('id') || undefined;
@@ -42,7 +40,6 @@ export default function Map({ markerGroup }: MapProps) {
 
   // 根据url参数，居中显示地图
   useEffect(() => {
-    // if (!mapInstance) return;
     const viewMarker = markerGroup?.find(item => item.id === Number(extendId));
     if (viewMarker) {
       setTimeout(() => {
@@ -59,22 +56,12 @@ export default function Map({ markerGroup }: MapProps) {
     flyTo(clusterData.point, [0, -115]);
     setActiveId(clusterData.id);
     // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
-    const newUrl = `${window.location.pathname}?id=${clusterData.id}`;
-    window.history.replaceState(
-      { ...window.history.state, as: newUrl, url: newUrl },
-      '',
-      newUrl
-    );
+    replaceUrl(`${window.location.pathname}?id=${clusterData.id}`);
   };
   const onCloseDetail = () => {
     setViewList([]);
     setActiveId(undefined);
-    const newUrl = `${window.location.pathname}`;
-    window.history.replaceState(
-      { ...window.history.state, as: newUrl, url: newUrl },
-      '',
-      newUrl
-    );
+    replaceUrl(window.location.pathname);
   };
   // 绘制聚合点
   useEffect(() => {
