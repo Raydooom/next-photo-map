@@ -103,8 +103,8 @@ export const useBaiduMap = ({
       const pointObj = new window.BMapGL.Point(lng, lat);
       const pixel = mapInstance.pointToPixel(pointObj);
       if (offset) {
-        pixel.x += offset[0] || 0;
-        pixel.y += offset[1] || 0;
+        pixel.x += offset[1] || 0;
+        pixel.y += offset[0] || 0;
       }
       const pixelObj = mapInstance.pixelToPoint(pixel);
       mapInstance.flyTo(pixelObj);

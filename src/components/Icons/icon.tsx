@@ -1,30 +1,26 @@
 import * as React from 'react';
 import { CgLivePhoto as LivePhotoIcon } from 'react-icons/cg';
 import { HiLocationMarker } from 'react-icons/hi';
-
 import {
-  Camera,
-  Aperture,
-  Timer,
-  BarChart3,
-  CircleX,
-  Sun,
-  Focus,
-  Calendar,
-  MapPin
-} from 'lucide-react';
+  PiApertureLight,
+  PiTimer,
+  PiSunDim,
+  PiCubeFocusLight
+} from 'react-icons/pi';
+
+import { Camera, BarChart3, CircleX, Calendar, MapPin } from 'lucide-react';
 
 import { IconSvgProps } from '@/types';
 
 export {
   LivePhotoIcon,
   Camera,
-  Aperture as FNumberIcon,
-  Timer as ExposureTimeIcon,
+  PiTimer as ExposureTimeIcon,
+  PiApertureLight as ApertureIcon,
+  PiCubeFocusLight as FocalLengthIcon,
+  PiSunDim as IsoIcon,
   BarChart3,
   CircleX,
-  Sun as IsoIcon,
-  Focus as FocalLengthIcon,
   HiLocationMarker as MarkerIcon,
   Calendar as DateIcon,
   MapPin as LocationIcon
