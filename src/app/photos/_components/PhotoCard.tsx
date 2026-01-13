@@ -54,7 +54,6 @@ export const PhotoCard = memo(
         onClick={() => onClickItem({ data })}
       >
         <motion.div
-          layoutId={`photo-item-${data.id}`}
           initial={{ filter: 'blur(20px)', opacity: 0 }}
           animate={!loading ? { filter: 'blur(0px)', opacity: 1 } : {}}
           transition={{ duration: 0.3, ease: 'easeOut' }}

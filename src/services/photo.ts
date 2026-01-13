@@ -29,7 +29,7 @@ export default class Service {
   }
 
   static async getPhotoExtendInfo(id: number) {
-    return await baseFetch.get<{ exifData: ExifType }>(
+    return await baseFetch.get<ExifData>(
       `/admin/photo/${id}/extend`
     );
   }

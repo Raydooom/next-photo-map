@@ -1,30 +1,47 @@
 'use client';
 
-import { PhotoItem, PhotoDetail } from '@/types';
+import { PhotoItem } from '@/types';
 import { PhotoCard } from './PhotoCard';
 import { Masonry } from 'masonic';
 import { useCallback, useEffect, useState } from 'react';
 import PhotoPreview from '@/components/PhotoPreview';
 import { replaceUrl } from '@/utils/history';
+import { useSearchParams } from 'next/navigation';
 
 export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
   const [mounted, setMounted] = useState(false);
 
+  const [previewId, setPreviewId] = useState<number | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const photoId = searchParams.get('photoId');
+
   useEffect(() => {
     setMounted(true);
+    if (photoId === String(previewId)) return;
+    if (photoId && !previewId) {
+      const activeIndex = items.findIndex(item => item.id === Number(photoId));
+      if (activeIndex !== -1) {
+        setPreviewId(Number(photoId));
+        setIsOpen(true);
+      }
+    }
   }, []);
 
-  const [previewItem, setPreviewItem] = useState<PhotoDetail | undefined>(
-    undefined
-  );
-  const [isOpen, setIsOpen] = useState(false);
+  // 点击图片时，设置预览图片id并打开预览弹窗
   const onClickItem = useCallback(async (item: { data: PhotoItem }) => {
-    setPreviewItem(item.data);
+    setPreviewId(item.data.id);
     setIsOpen(true);
-
     // 记录当前点击的图片id
     replaceUrl(`${window.location.pathname}?photoId=${item.data.id}`);
   }, []);
+
+  const onClosePreview = () => {
+    setPreviewId(undefined);
+    setIsOpen(false);
+    replaceUrl(`${window.location.pathname}`);
+  };
 
   const renderItem = useCallback(
     ({ data }: { data: PhotoItem }) => (
@@ -39,10 +56,10 @@ export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
   return (
     <>
       <PhotoPreview
-        current={previewItem}
+        previewId={previewId}
         list={items}
         isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={onClosePreview}
       />
       <Masonry
         items={items}
