@@ -41,9 +41,11 @@ export const ExtendInfo = memo(
     setIsOpen: (isOpen: boolean) => void;
   }) => {
     const [exifData, setExifData] = useState<ExifType | undefined>(undefined);
+    const [extendId, setExtendId] = useState<number | undefined>(undefined);
     useEffect(() => {
       Actions.getPhotoExtendInfo(photo.id).then(res => {
         setExifData(res.exifData);
+        setExtendId(res.id);
       });
     }, [photo.id]);
 
@@ -138,7 +140,7 @@ export const ExtendInfo = memo(
                 exifData.GPSGpslatitude &&
                 exifData.GPSGpslongitude && (
                   <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                    <Marker exifData={exifData} />
+                    <Marker exifData={exifData} extendId={extendId} />
                   </div>
                 )}
             </div>

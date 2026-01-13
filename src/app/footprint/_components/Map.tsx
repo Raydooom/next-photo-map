@@ -22,15 +22,8 @@ interface MapProps {
 }
 
 export default function Map({ markerGroup }: MapProps) {
-  const { mapRef, mapInstance, centerAndZoom, flyTo } = useBaiduMap({
-    center: { lng: 116.404, lat: 39.915 },
-    config: { zoom: 11 },
-    events: {
-      onMapLoad: map => {
-        console.log(map);
-      }
-    }
-  });
+  const { mapRef, mapInstance, isInitialized, setCenterAndZoom, flyTo } =
+    useBaiduMap();
 
   const searchParams = useSearchParams();
   const extendId = searchParams.get('id') || undefined;
@@ -42,18 +35,20 @@ export default function Map({ markerGroup }: MapProps) {
   useEffect(() => {
     const viewMarker = markerGroup?.find(item => item.id === Number(extendId));
     if (viewMarker) {
-      setTimeout(() => {
-        centerAndZoom(viewMarker.point, 18);
-      }, 300);
+      if (mapInstance && isInitialized) {
+        setCenterAndZoom(viewMarker.point, 18);
+      }
       setActiveId(viewMarker.id);
       setViewList(viewMarker.list);
+    } else {
+      setCenterAndZoom(new window.BMapGL.Point(116.404, 39.915), 12);
     }
-  }, [mapInstance, markerGroup]);
+  }, [mapInstance, isInitialized, markerGroup]);
 
   // 点击聚合点，居中显示地图
   const onClickPoint = (clusterData: ClusterPointData['data']) => {
     setViewList(clusterData.list);
-    flyTo(clusterData.point, [0, -115]);
+    flyTo(clusterData.point);
     setActiveId(clusterData.id);
     // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
     replaceUrl(`${window.location.pathname}?id=${clusterData.id}`);
@@ -117,7 +112,7 @@ export default function Map({ markerGroup }: MapProps) {
   }, [mapInstance, markerGroup]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-screen h-screen bg-background overflow-hidden">
       <BackIcon className="absolute top-4 left-4 z-10" />
       <PointDetail onClose={onCloseDetail} viewList={viewList} />
       <div ref={mapRef} className="w-full h-full" />

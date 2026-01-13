@@ -17,13 +17,15 @@ export const getLucideOverlayClass = () => {
     private _size: number;
     private _htmlString: string;
     private _fixOffset: boolean;
+    private _onClick: (e: MouseEvent) => void;
 
     constructor(point: any, htmlString: string, options: any = {}) {
       super();
       this._point = point;
       this._htmlString = htmlString;
       this._size = options?.size || 32;
-      this._fixOffset = options?.fixOffset || true; // 是否修正偏移量，默认 true
+      this._fixOffset = options?.fixOffset === false ? false : true; // 是否修正偏移量，默认 true
+      this._onClick = options?.onClick || (() => {});
     }
 
     initialize(map: any) {
@@ -31,6 +33,7 @@ export const getLucideOverlayClass = () => {
       div.style.position = 'absolute';
       div.style.zIndex = window.BMapGL.Overlay.getZIndex(this._point.lat);
       div.innerHTML = this._htmlString;
+      div.addEventListener('click', this._onClick);
 
       map.getPanes().markerPane.appendChild(div);
       this._div = div;
@@ -40,9 +43,19 @@ export const getLucideOverlayClass = () => {
     draw() {
       const map = (this as any)._map;
       const pixel = map.pointToOverlayPixel(this._point);
-      if (this._div && this._fixOffset) {
-        this._div.style.left = `${pixel.x - this._size / 2}px`;
-        this._div.style.top = `${pixel.y - this._size / 2}px`;
+      const left = this._fixOffset ? pixel.x - this._size / 2 : pixel.x;
+      const top = this._fixOffset ? pixel.y - this._size / 2 : pixel.y;
+      if (this._div) {
+        this._div.style.left = `${left}px`;
+        this._div.style.top = `${top}px`;
+      }
+    }
+
+    destroy() {
+      if (this._div) {
+        this._div.removeEventListener('click', this._onClick);
+        this._div.parentNode?.removeChild(this._div);
+        this._div = null;
       }
     }
   };
@@ -80,13 +93,16 @@ export const coordTransform = {
   },
 
   // GCJ-02 转 BD-09 (百度坐标系)
-  gcj02tobd09: function (lng: number, lat: number): number[] {
+  gcj02tobd09: function ({ lng, lat }: { lng: number; lat: number }): {
+    lng: number;
+    lat: number;
+  } {
     let z =
       Math.sqrt(lng * lng + lat * lat) + 0.00002 * Math.sin(lat * this.X_PI);
     let theta = Math.atan2(lat, lng) + 0.000003 * Math.cos(lng * this.X_PI);
     let bd_lng = z * Math.cos(theta) + 0.0065;
     let bd_lat = z * Math.sin(theta) + 0.006;
-    return [bd_lng, bd_lat];
+    return { lng: bd_lng, lat: bd_lat };
   },
 
   // 核心计算偏移量的方法
@@ -141,15 +157,15 @@ export const coordTransform = {
       3.0;
     return ret;
   },
-  transformToBaidu: function (lng?: number[], lat?: number[]): number[] {
-    if (!lng || !lat) {
-      return [];
-    }
+  transformToBaidu: function ({ lng, lat }: { lng: number[]; lat: number[] }): {
+    lng: number;
+    lat: number;
+  } {
     // 1. 数组转十进制
     const lngWGS = this.exifToDecimal(lng);
     const latWGS = this.exifToDecimal(lat);
     const gcj = this.wgs84togcj02(lngWGS, latWGS);
-    return this.gcj02tobd09(gcj[0], gcj[1]);
+    return this.gcj02tobd09({ lng: gcj[0], lat: gcj[1] });
   }
 };
 

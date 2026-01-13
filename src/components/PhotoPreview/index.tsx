@@ -3,20 +3,16 @@ import { PhotoDetail, PhotoItem } from '@/types';
 import Carousel from './Carousel';
 
 export default function PhotoPreview({
-  current,
   list,
+  previewId,
   isOpen,
   onClose
 }: {
-  current: PhotoDetail | undefined;
+  previewId: number | undefined;
   list: PhotoItem[];
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const currentIndex = current
-    ? list.findIndex(item => item.id === current.id)
-    : 0;
-
   const onClickClose = () => {
     onClose();
   };
@@ -32,7 +28,7 @@ export default function PhotoPreview({
       }}
     >
       <ModalContent>
-        <Carousel slides={list} onClose={onClickClose} />
+        <Carousel slides={list} previewId={previewId} onClose={onClickClose} />
       </ModalContent>
     </Modal>
   );

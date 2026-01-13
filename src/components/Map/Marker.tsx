@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { MarkerComponentProps } from './type';
 import { useBaiduMap } from './hooks';
 import { renderToString } from 'react-dom/server';
@@ -7,47 +7,41 @@ import { getLucideOverlayClass, coordTransform } from './helper';
 import MarkerIcon from './modules/MarkerIcon';
 
 export const Marker = (props: MarkerComponentProps) => {
-  const { exifData } = props;
-  const [markerPoint, setMarkerPoint] = useState<{
-    lng: number;
-    lat: number;
-  }>();
-  const { mapRef, mapInstance } = useBaiduMap({
-    center: markerPoint,
+  const { exifData, extendId } = props;
+  const { mapRef, mapInstance, isInitialized, setCenterAndZoom } = useBaiduMap({
     config: {
-      zoom: 15,
       enableScrollWheelZoom: false
     }
   });
-  const point = useCallback(() => {
-    const pointArr = coordTransform.transformToBaidu(
-      exifData!.GPSGpslatitude,
-      exifData!.GPSGpslongitude
-    );
-    return {
-      lat: pointArr[0],
-      lng: pointArr[1]
-    };
+  const memoizedPoint = useMemo(() => {
+    if (!exifData?.GPSGpslatitude) return null;
+    return coordTransform.transformToBaidu({
+      lng: exifData!.GPSGpslongitude,
+      lat: exifData!.GPSGpslatitude
+    });
   }, [exifData]);
 
   useEffect(() => {
-    if (point) {
+    if (memoizedPoint && isInitialized) {
       mapInstance?.clearOverlays();
 
       const LucideOverlay = getLucideOverlayClass();
       if (!LucideOverlay) return;
       const svgString = renderToString(<MarkerIcon />);
 
-      const customMarker = new LucideOverlay(point(), svgString, {
-        size: 32,
-        fixOffset: false
+      const customMarker = new LucideOverlay(memoizedPoint, svgString, {
+        size: 14,
+        fixOffset: true,
+        onClick: (e: MouseEvent) => {
+          window.open(`/footprint?id=${extendId}`, '_blank');
+        }
       });
       mapInstance?.addOverlay(customMarker);
-      setMarkerPoint(point());
+      setCenterAndZoom(memoizedPoint, 15);
     }
-  }, [point, mapInstance]);
+  }, [memoizedPoint, mapInstance, extendId]);
 
-  if (!markerPoint) {
+  if (!memoizedPoint) {
     return null;
   }
 

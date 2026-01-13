@@ -7,16 +7,18 @@ import clsx from 'clsx';
 import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
 import { ExtendInfo } from '../modules/ExifInfo';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
 import { SlideItem } from './SlideItem';
+import { replaceUrl } from '@/utils/history';
 
 type PropType = {
   slides: PhotoItem[];
   options?: EmblaOptionsType;
+  previewId: number | undefined;
+  onClose: () => void;
 };
 
-const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
-  const { slides, options, onClose } = props;
+const EmblaCarousel: React.FC<PropType> = props => {
+  const { slides, options, previewId, onClose } = props;
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options);
   const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel(
@@ -26,28 +28,32 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
     },
     [WheelGesturesPlugin({ forceWheelAxis: 'y' })]
   );
-  const searchParams = useSearchParams();
-  const photoId = searchParams.get('photoId');
-  console.log('photoId', photoId);
+
   useEffect(() => {
-    if (!emblaMainApi) return;
     // 初始化时设置选中状态
-    if (photoId) {
-      const activeIndex = slides.findIndex(item => item.id === Number(photoId));
-      console.log('activeIndex', activeIndex, photoId);
+    if (previewId) {
+      const activeIndex = slides.findIndex(
+        item => item.id === Number(previewId)
+      );
       if (activeIndex !== -1) {
         setSelectedIndex(activeIndex);
-        // 设置事件监听
-        setTimeout(() => {
-          if (emblaMainApi.selectedScrollSnap() !== activeIndex) {
-            emblaMainApi.scrollTo(activeIndex, true);
-          }
-          onSelect();
-          emblaMainApi.on('select', onSelect).on('reInit', onSelect);
-        }, 0);
       }
+    } else {
     }
-  }, [emblaMainApi, photoId, slides]);
+  }, [previewId, slides]);
+
+  useEffect(() => {
+    if (!emblaMainApi) return;
+    // 设置事件监听
+    if (emblaMainApi.selectedScrollSnap() !== selectedIndex) {
+      emblaMainApi.scrollTo(selectedIndex, true);
+    }
+    onSelect();
+    emblaMainApi.on('select', onSelect).on('reInit', onSelect);
+    return () => {
+      emblaMainApi.off('select', onSelect).off('reInit', onSelect);
+    };
+  }, [emblaMainApi, emblaThumbsApi, previewId, slides]);
 
   const onThumbClick = useCallback(
     (index: number) => {
@@ -65,13 +71,15 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
     const newIndex = emblaMainApi.selectedScrollSnap();
     setSelectedIndex(newIndex);
     emblaThumbsApi.scrollTo(newIndex);
-  }, [emblaMainApi, emblaThumbsApi]);
+
+    // 更新 URL 中的 photoId 参数
+    const item = slides[newIndex];
+    if (item) {
+      replaceUrl(`${window.location.pathname}?photoId=${item.id}`);
+    }
+  }, [emblaMainApi, emblaThumbsApi, slides]);
 
   const [showExif, setShowExif] = useState(false);
-  const [activeSlide, setActiveSlide] = useState<PhotoItem | undefined>();
-  useEffect(() => {
-    setActiveSlide(slides[selectedIndex]);
-  }, [selectedIndex, slides]);
 
   return (
     <aside
@@ -140,7 +148,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
         </div>
       </section>
       <AnimatePresence>
-        {showExif && activeSlide && (
+        {showExif && selectedIndex !== -1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -151,7 +159,7 @@ const EmblaCarousel: React.FC<PropType & { onClose: () => void }> = props => {
             }}
             className={clsx('absolute top-17 right-5 z-10')}
           >
-            <ExtendInfo setIsOpen={setShowExif} photo={activeSlide} />
+            <ExtendInfo setIsOpen={setShowExif} photo={slides[selectedIndex]} />
           </motion.div>
         )}
       </AnimatePresence>

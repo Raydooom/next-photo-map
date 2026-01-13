@@ -14,4 +14,5 @@ interface BaiduMapProps {
 export interface MarkerComponentProps {
   exifData?: ExifType;
   zoom?: number;
+  extendId?: number;
 }
