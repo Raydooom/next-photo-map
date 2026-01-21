@@ -86,7 +86,7 @@ const EmblaCarousel: React.FC<PropType> = props => {
       className="bg-cover bg-center h-full w-full flex relative"
       style={{
         backgroundImage: slides[selectedIndex]
-          ? `url(${slides[selectedIndex].placeholder})`
+          ? `url(${slides[selectedIndex].largeThumbnail})`
           : undefined
       }}
     >
@@ -124,8 +124,8 @@ const EmblaCarousel: React.FC<PropType> = props => {
                     'h-full w-auto transition-opacity duration-300 hover:opacity-100',
                     selectedIndex === index ? 'opacity-100' : 'opacity-80'
                   )}
-                  src={item.url}
-                  alt={item.name}
+                  src={item.largeThumbnail}
+                  alt={item.filename}
                 />
               </div>
             ))}

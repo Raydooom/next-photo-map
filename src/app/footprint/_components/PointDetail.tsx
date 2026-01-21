@@ -90,10 +90,10 @@ export const PointDetail = ({
                     <div className="w-full max-h-80 relative rounded-3xl overflow-hidden flex items-center justify-center shadow-lg">
                       <Image
                         src={photoList[0].url}
-                        alt={photoList[0].name || ''}
+                        alt={photoList[0].filename || ''}
                         width={photoList[0].width}
                         height={photoList[0].height}
-                        blurDataURL={photoList[0].placeholder}
+                        blurDataURL={photoList[0].smallThumbnail || photoList[0].url}
                         placeholder="blur"
                       />
                       <div className="group absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-end justify-end">
@@ -106,20 +106,20 @@ export const PointDetail = ({
                     <div className="p-3">
                       <ExifTagList photo={photoList[0]} />
                       <b className="mt-4 block text-sm">
-                        {photoList[0].exifData?.ImageModel}
+                        {photoList[0].exif?.model}
                       </b>
                       <p className="text-xs text-default-500">
-                        {photoList[0].exifData?.EXIFLensmodel}
+                        {photoList[0].exif?.lensModel}
                       </p>
                       <p className="text-tiny mt-1">
-                        {photoList[0].exifData?.EXIFDatetimeoriginal}
+                        {photoList[0].takenAt}
                       </p>
                       <div className="mt-3 flex flex-col gap-1 items-flex-start">
                         <RowInfo
                           icon={
                             <LocationIcon className="flex-shrink-0" size={14} />
                           }
-                          value={formatLatLng(photoList[0]?.exifData)}
+                          value={formatLatLng(photoList[0]?.exif)}
                         />
                       </div>
                     </div>

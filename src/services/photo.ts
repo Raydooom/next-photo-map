@@ -4,24 +4,23 @@ import {
   PagerResponse,
   PagerRequest,
   PhotoDetail,
-  ExifType,
-  CommonResponse,
-  ExifData
+  ExifData,
+  PhotoExif
 } from '@/types';
 
 export default class Service {
   static async getPhotos(params: PagerRequest) {
-    return await baseFetch.get<PagerResponse<PhotoItem>>('/admin/photo', {
+    return await baseFetch.get<PagerResponse<PhotoItem>>('/photos', {
       params
     });
   }
 
   static async getPhotoDetail(id: number) {
-    return await baseFetch.get<PhotoDetail>(`/admin/photo/${id}`);
+    return await baseFetch.get<PhotoDetail>(`/photos/${id}`);
   }
 
   static async getPhotoDetailBatch(ids: number[]) {
-    return await baseFetch.get<PhotoDetail[]>(`/admin/photo/batch`, {
+    return await baseFetch.get<PhotoDetail[]>(`/photos/batch`, {
       params: {
         ids: ids.join(',')
       }
@@ -29,12 +28,10 @@ export default class Service {
   }
 
   static async getPhotoExtendInfo(id: number) {
-    return await baseFetch.get<ExifData>(
-      `/admin/photo/${id}/extend`
-    );
+    return await baseFetch.get<PhotoExif>(`/photos/${id}/exif`);
   }
 
   static async getExtendList() {
-    return await baseFetch.get<ExifData[]>('/admin/photo/extend');
+    return await baseFetch.get<ExifData[]>('/photos/extend');
   }
 }

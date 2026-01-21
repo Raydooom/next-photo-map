@@ -13,7 +13,7 @@ export const SlideItem = ({ item }: { item: PhotoItem }) => {
     flushSync(() => {
       setShowVideo(true);
     });
-    if (item.videoUrl) {
+    if (item.videoPath) {
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play();
@@ -35,12 +35,12 @@ export const SlideItem = ({ item }: { item: PhotoItem }) => {
       <Image
         removeWrapper
         radius="none"
-        src={item.url}
-        alt={item.name}
+        src={item.largeThumbnail}
+        alt={item.filename}
         className="max-w-full max-h-full w-auto h-auto object-contain"
       />
 
-      {item.videoUrl && (
+      {item.videoPath && (
         <>
           <div
             className="absolute top-4 left-4 z-10 cursor-pointer"
@@ -56,7 +56,7 @@ export const SlideItem = ({ item }: { item: PhotoItem }) => {
               onEnded={() => onVideoEnded()}
               ref={videoRef}
               muted={true}
-              src={item.videoUrl}
+              src={item.videoPath}
             ></video>
           )}
         </>

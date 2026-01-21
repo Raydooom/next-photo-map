@@ -6,7 +6,7 @@ import { memo, useRef, useState } from 'react';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 import { formatFileSize } from '@/utils/format';
 import { motion } from 'framer-motion';
-import { ExifTagList } from '@/components/modules/ExifTag';
+// import { ExifTagList } from '@/components/modules/ExifTag';
 
 export const PhotoCard = memo(
   ({
@@ -21,7 +21,7 @@ export const PhotoCard = memo(
     const [isHovered, setIsHovered] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const playVideo = () => {
-      if (data.videoUrl) {
+      if (data.videoPath) {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
           videoRef.current.play();
@@ -44,7 +44,7 @@ export const PhotoCard = memo(
       <motion.div
         className={clsx('overflow-hidden relative cursor-pointer', className)}
         style={{
-          background: data.mainColor || '#000'
+          background: data.dominantColor || '#000'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -61,17 +61,17 @@ export const PhotoCard = memo(
           <Image
             className={clsx(
               'z-1 w-full h-auto object-contain transition-all ease-in-out duration-300',
-              isHovered && !data.videoUrl
+              isHovered && !data.videoPath
                 ? 'scale-105 opacity-85'
                 : 'scale-100 opacity-100'
             )}
             width={data.width}
             height={data.height}
-            src={data.url}
-            alt={data.name}
+            src={data.largeThumbnail}
+            alt={data.filename}
             onLoad={() => setLoading(false)}
           />
-          {data.videoUrl && (
+          {data.videoPath && (
             <video
               className={clsx(
                 'absolute z-10 top-0 left-0 w-full h-full object-cover',
@@ -80,13 +80,13 @@ export const PhotoCard = memo(
               onEnded={() => onVideoEnded()}
               ref={videoRef}
               muted={true}
-              src={data.videoUrl}
+              src={data.videoPath}
             ></video>
           )}
         </motion.div>
 
         {/* livephoto 图标 */}
-        {data.videoUrl && (
+        {data.videoPath && (
           <div
             className="absolute top-2 left-2 z-40"
             onMouseEnter={playVideo}
@@ -104,13 +104,13 @@ export const PhotoCard = memo(
           )}
         >
           <h4 className="font-bold text-sm text-white text-ellipsis whitespace-nowrap overflow-hidden max-h-3/4">
-            {data.originName}
+            {data.filename}
           </h4>
           <div className="text-xs font-medium text-white/90 ">
-            {data.ext ? data.ext.toUpperCase() : ''} · {data.width} x{' '}
+            {data.filename.split('.').pop()?.toUpperCase()} · {data.width} x{' '}
             {data.height} · {formatFileSize(data.size)}
           </div>
-          <ExifTagList mode="dark" photo={data} />
+          {/* <ExifTagList mode="dark" photo={data} /> */}
         </div>
       </motion.div>
     );
