@@ -12,7 +12,7 @@ class FetchService {
     }
     const jsonRes = (await response.json()) as CommonResponse<T>;
     if (jsonRes.code !== 0) {
-      throw new Error(jsonRes.msg);
+      throw new Error(jsonRes.message);
     }
 
     return jsonRes.data;
@@ -42,4 +42,4 @@ class FetchService {
   }
 }
 
-export default new FetchService('http://localhost:5555');
+export default new FetchService('http://localhost:3000/api/client');

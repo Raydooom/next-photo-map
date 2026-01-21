@@ -7,11 +7,11 @@ import {
   formatPixel,
   formatDimension,
   formatLatLng,
-  formatDirection,
-  formatAltitude
+  formatAltitude,
+  formatTakenDate
 } from '@/utils/format';
 
-import { PhotoItem, ExifType } from '@/types';
+import { PhotoItem, PhotoExif } from '@/types';
 import * as Actions from '@/services/actions';
 import { Marker } from '../Map';
 import { ExifTagList } from './ExifTag';
@@ -21,7 +21,7 @@ const InfoRow = ({
   value
 }: {
   label: string;
-  value: string | number | undefined;
+  value: string | number | undefined | null;
 }) =>
   value ? (
     <div className="flex justify-between items-center py-2.5 border-b border-foreground/[0.04] last:border-0">
@@ -40,12 +40,10 @@ export const ExtendInfo = memo(
     photo: PhotoItem;
     setIsOpen: (isOpen: boolean) => void;
   }) => {
-    const [exifData, setExifData] = useState<ExifType | undefined>(undefined);
-    const [extendId, setExtendId] = useState<number | undefined>(undefined);
+    const [exifData, setExifData] = useState<PhotoExif | undefined>(undefined);
     useEffect(() => {
-      Actions.getPhotoExtendInfo(photo.id).then(res => {
-        setExifData(res.exifData);
-        setExtendId(res.id);
+      Actions.getPhotoExtendInfo(photo.id).then(data => {
+        setExifData(data);
       });
     }, [photo.id]);
 
@@ -68,13 +66,13 @@ export const ExtendInfo = memo(
             />
           </div>
           <h2 className="text-sm font-bold text-foreground/95 tracking-tight">
-            {photo.originName}
+            {photo.filename}
           </h2>
         </div>
 
         <div className="p-3 space-y-3 overflow-y-auto max-h-[80vh] custom-scrollbar">
           {/* 参数网格 */}
-          <ExifTagList photo={photo} />
+          <ExifTagList exifData={exifData} />
 
           {/* 拍摄信息 */}
           <section className="space-y-2">
@@ -83,34 +81,34 @@ export const ExtendInfo = memo(
                 Shooting
               </h3>
               <div className="bg-foreground/[0.08] rounded-2xl px-4">
-                <InfoRow label="相机" value={exifData?.ImageModel} />
-                <InfoRow label="镜头" value={exifData?.EXIFLensmodel} />
+                <InfoRow label="相机" value={exifData?.model} />
+                <InfoRow label="镜头" value={exifData?.lensModel} />
                 <InfoRow
                   label="焦距"
-                  value={formatFocalLength(exifData?.EXIFFocallength)}
+                  value={formatFocalLength(exifData?.focalLength)}
                 />
                 <InfoRow
                   label="等效 35mm"
-                  value={formatFocalLength(exifData?.EXIFFocallengthin35Mmfilm)}
+                  value={formatFocalLength(exifData?.focalLengthIn35mmFormat)}
                 />
                 <InfoRow
                   label="曝光补偿"
-                  value={formatExposurebias(exifData?.EXIFExposurebiasvalue)}
+                  value={formatExposurebias(exifData?.exposureBias)}
                 />
-                <InfoRow label="白平衡" value={exifData?.EXIFWhitebalance} />
-                <InfoRow label="测光模式" value={exifData?.EXIFMeteringmode} />
+                <InfoRow label="白平衡" value={exifData?.whiteBalance} />
+                <InfoRow label="测光模式" value={exifData?.meteringMode} />
                 <InfoRow
                   label="尺寸"
                   value={formatDimension(
-                    exifData?.EXIFExifimagewidth,
-                    exifData?.EXIFExifimagelength
+                    exifData?.exifImageWidth,
+                    exifData?.exifImageHeight
                   )}
                 />
                 <InfoRow
                   label="像素"
                   value={formatPixel(
-                    exifData?.EXIFExifimagewidth,
-                    exifData?.EXIFExifimagelength
+                    exifData?.exifImageWidth,
+                    exifData?.exifImageHeight
                   )}
                 />
                 <InfoRow
@@ -129,20 +127,15 @@ export const ExtendInfo = memo(
                 <InfoRow label="经纬度" value={formatLatLng(exifData)} />
                 <InfoRow
                   label="海拔"
-                  value={formatAltitude(exifData?.GPSGpsaltitude)}
+                  value={formatAltitude(exifData?.altitude)}
                 />
-                <InfoRow
-                  label="拍摄朝向"
-                  value={formatDirection(exifData?.GPSGpsimgdirection)}
-                />
+                <InfoRow label="拍摄朝向" value={exifData?.bearingDirection} />
               </div>
-              {exifData &&
-                exifData.GPSGpslatitude &&
-                exifData.GPSGpslongitude && (
-                  <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                    <Marker exifData={exifData} extendId={extendId} />
-                  </div>
-                )}
+              {exifData?.latitude && exifData?.longitude && (
+                <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
+                  {/* <Marker exifData={exifData} extendId={extendId} /> */}
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -152,7 +145,7 @@ export const ExtendInfo = memo(
             Captured
           </span>
           <span className="text-xs text-foreground/50 font-mono">
-            {exifData?.EXIFDatetimeoriginal}
+            {formatTakenDate(exifData?.gpsTimeStamp)}
           </span>
         </div>
       </div>

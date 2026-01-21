@@ -1,4 +1,4 @@
-import { PhotoItem } from '@/types';
+import { PhotoExif } from '@/types';
 import { Chip } from '@heroui/chip';
 import {
   ExposureTimeIcon,
@@ -19,7 +19,7 @@ export const ExifTag = ({
   Icon,
   mode
 }: {
-  value: string | number;
+  value: string | number | undefined | null;
   Icon: React.ReactNode;
   mode?: 'dark' | 'light';
 }) =>
@@ -44,32 +44,32 @@ export const ExifTag = ({
 
 export const ExifTagList = ({
   mode,
-  photo
+  exifData
 }: {
   mode?: 'dark' | 'light';
-  photo: PhotoItem | undefined;
+  exifData: PhotoExif | undefined;
 }) => (
   <div className="grid grid-cols-2 gap-2">
     <ExifTag
       mode={mode}
       Icon={<ExposureTimeIcon size={16} />}
-      value={formatExposureTime(photo?.exposureTime)}
+      value={exifData?.exposureTime}
     />
     <ExifTag
       mode={mode}
       Icon={<ApertureIcon size={16} />}
-      value={formatFNumber(photo?.fNumber)}
+      value={formatFNumber(exifData?.fNumber)}
     />
     <ExifTag
       mode={mode}
       Icon={<IsoIcon size={16} />}
-      value={formatIso(photo?.iso)}
+      value={formatIso(exifData?.iso)}
     />
     <ExifTag
       mode={mode}
       Icon={<FocalLengthIcon size={16} />}
       value={formatFocalLength(
-        photo?.focalLengthIn35MmFilm || photo?.focalLength
+        exifData?.focalLengthIn35mmFormat || exifData?.focalLength
       )}
     />
   </div>
