@@ -7,17 +7,17 @@ import { getLucideOverlayClass, coordTransform } from './helper';
 import MarkerIcon from './modules/MarkerIcon';
 
 export const Marker = (props: MarkerComponentProps) => {
-  const { exifData, extendId } = props;
+  const { exifData } = props;
   const { mapRef, mapInstance, isInitialized, setCenterAndZoom } = useBaiduMap({
     config: {
       enableScrollWheelZoom: false
     }
   });
   const memoizedPoint = useMemo(() => {
-    if (!exifData?.GPSGpslatitude) return null;
+    if (!exifData?.latitude || !exifData?.longitude) return null;
     return coordTransform.transformToBaidu({
-      lng: exifData!.GPSGpslongitude,
-      lat: exifData!.GPSGpslatitude
+      lng: exifData.longitude,
+      lat: exifData.latitude
     });
   }, [exifData]);
 
@@ -33,13 +33,13 @@ export const Marker = (props: MarkerComponentProps) => {
         size: 14,
         fixOffset: true,
         onClick: (e: MouseEvent) => {
-          window.open(`/footprint?id=${extendId}`, '_blank');
+          window.open(`/footprint?id=${exifData?.photoId}`, '_blank');
         }
       });
       mapInstance?.addOverlay(customMarker);
       setCenterAndZoom(memoizedPoint, 15);
     }
-  }, [memoizedPoint, mapInstance, extendId]);
+  }, [memoizedPoint, mapInstance, exifData]);
 
   if (!memoizedPoint) {
     return null;

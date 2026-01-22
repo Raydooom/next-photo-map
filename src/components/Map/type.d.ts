@@ -1,4 +1,4 @@
-import { ExifType } from './../../types/photo.d';
+import { PhotoExif } from './../../types/photo.d';
 
 interface BaiduMapProps {
   center?: { lng: number; lat: number };
@@ -12,7 +12,6 @@ interface BaiduMapProps {
 }
 
 export interface MarkerComponentProps {
-  exifData?: ExifType;
+  exifData?: PhotoExif;
   zoom?: number;
-  extendId?: number;
 }

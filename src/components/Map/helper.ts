@@ -157,14 +157,14 @@ export const coordTransform = {
       3.0;
     return ret;
   },
-  transformToBaidu: function ({ lng, lat }: { lng: number[]; lat: number[] }): {
+  transformToBaidu: function ({ lng, lat }: { lng: number; lat: number }): {
     lng: number;
     lat: number;
   } {
     // 1. 数组转十进制
-    const lngWGS = this.exifToDecimal(lng);
-    const latWGS = this.exifToDecimal(lat);
-    const gcj = this.wgs84togcj02(lngWGS, latWGS);
+    // const lngWGS = this.exifToDecimal(lng);
+    // const latWGS = this.exifToDecimal(lat);
+    const gcj = this.wgs84togcj02(lng, lat);
     return this.gcj02tobd09({ lng: gcj[0], lat: gcj[1] });
   }
 };
