@@ -145,7 +145,7 @@ export const ExtendInfo = memo(
             Captured
           </span>
           <span className="text-xs text-foreground/50 font-mono">
-            {formatTakenDate(exifData?.gpsTimeStamp)}
+            {formatTakenDate(photo.takenAt)}
           </span>
         </div>
       </div>

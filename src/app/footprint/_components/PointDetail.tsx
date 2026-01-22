@@ -1,11 +1,11 @@
 'use client';
 import { RowInfo } from '@/components/modules/RowInfo';
-import { ExifData, PhotoDetail } from '@/types';
+import { PhotoLocation, PhotoDetail } from '@/types';
 import * as Action from '@/services/actions';
 import { useEffect, useState } from 'react';
 import { Card } from '@heroui/card';
 import { LocationIcon } from '@/components/Icons/icon';
-import { formatLatLng } from '@/utils/format';
+import { formatLatLng, formatTakenDate } from '@/utils/format';
 import Image from 'next/image';
 import { CloseIcon, OpenInNewWindowIcon } from '@/components/Icons/button';
 import { ExifTagList } from '@/components/modules/ExifTag';
@@ -16,7 +16,7 @@ export const PointDetail = ({
   viewList,
   onClose
 }: {
-  viewList: ExifData[];
+  viewList: PhotoLocation[];
   onClose: () => void;
 }) => {
   const [photoList, setPhotoList] = useState<PhotoDetail[]>([]);
@@ -26,7 +26,7 @@ export const PointDetail = ({
   useEffect(() => {
     if (viewList.length === 0) return;
     setIsLoading(true);
-    const photoIds = viewList.map(item => item.photoId);
+    const photoIds = viewList.map(item => item.id);
     Action.getPhotoDetailBatch(photoIds).then(data => {
       setPhotoList(data);
       setIsLoading(false);
@@ -87,13 +87,13 @@ export const PointDetail = ({
                     animate={{ opacity: 1, z: 10 }}
                     transition={{ delay: 0.1 }}
                   >
-                    <div className="w-full max-h-80 relative rounded-3xl overflow-hidden flex items-center justify-center shadow-lg">
+                    <div className="w-full max-h-60 relative rounded-3xl overflow-hidden flex items-center justify-center shadow-lg">
                       <Image
-                        src={photoList[0].url}
+                        src={photoList[0].largeThumbnail}
                         alt={photoList[0].filename || ''}
                         width={photoList[0].width}
                         height={photoList[0].height}
-                        blurDataURL={photoList[0].smallThumbnail || photoList[0].url}
+                        blurDataURL={photoList[0].smallThumbnail}
                         placeholder="blur"
                       />
                       <div className="group absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-end justify-end">
@@ -104,15 +104,15 @@ export const PointDetail = ({
                       </div>
                     </div>
                     <div className="p-3">
-                      <ExifTagList photo={photoList[0]} />
-                      <b className="mt-4 block text-sm">
+                      <ExifTagList exifData={photoList[0].exif} />
+                      <b className="mt-2 block text-sm">
                         {photoList[0].exif?.model}
                       </b>
                       <p className="text-xs text-default-500">
                         {photoList[0].exif?.lensModel}
                       </p>
                       <p className="text-tiny mt-1">
-                        {photoList[0].takenAt}
+                        {formatTakenDate(photoList[0].takenAt)}
                       </p>
                       <div className="mt-3 flex flex-col gap-1 items-flex-start">
                         <RowInfo
