@@ -33,7 +33,7 @@ export const Marker = (props: MarkerComponentProps) => {
         size: 14,
         fixOffset: true,
         onClick: (e: MouseEvent) => {
-          window.open(`/footprint?id=${exifData?.photoId}`, '_blank');
+          window.open(`/footprint?photoId=${exifData?.photoId}`, '_blank');
         }
       });
       mapInstance?.addOverlay(customMarker);

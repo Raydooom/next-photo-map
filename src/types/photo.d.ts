@@ -48,10 +48,14 @@ export interface PhotoItem {
 }
 export interface PhotoDetail extends PhotoItem {
   exif?: PhotoExif;
+  locations?: PhotoLocation;
 }
 
-export interface ExifData {
+export interface PhotoLocation {
   id: number;
-  photoId: number;
-  exifData: PhotoExif;
+  thumbnail: string;
+  latitude: number;
+  longitude: number;
+  bearing: number | null;
+  takenAt: string | null;
 }

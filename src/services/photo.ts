@@ -4,8 +4,8 @@ import {
   PagerResponse,
   PagerRequest,
   PhotoDetail,
-  ExifData,
-  PhotoExif
+  PhotoExif,
+  PhotoLocation
 } from '@/types';
 
 export default class Service {
@@ -20,9 +20,9 @@ export default class Service {
   }
 
   static async getPhotoDetailBatch(ids: number[]) {
-    return await baseFetch.get<PhotoDetail[]>(`/photos/batch`, {
-      params: {
-        ids: ids.join(',')
+    return await baseFetch.post<PhotoDetail[]>(`/photos/batch`, {
+      body: {
+        ids
       }
     });
   }
@@ -31,7 +31,7 @@ export default class Service {
     return await baseFetch.get<PhotoExif>(`/photos/${id}/exif`);
   }
 
-  static async getExtendList() {
-    return await baseFetch.get<ExifData[]>('/photos/extend');
+  static async getPhotoLocations() {
+    return await baseFetch.get<PhotoLocation[]>('/photos/locations');
   }
 }

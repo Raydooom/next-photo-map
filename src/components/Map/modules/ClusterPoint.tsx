@@ -1,17 +1,16 @@
 'use client';
 import { ClusterPointIcon } from '@/components/Icons/button';
 import { useEffect, useState } from 'react';
-import { ExifData } from '@/types';
+import { PhotoLocation } from '@/types';
 import clsx from 'clsx';
 
 export type ClusterPointData = {
   isCluster?: boolean;
   pointCount?: number;
   data: {
-    id: number;
     count: number;
-    point: [number, number];
-    list: ExifData[];
+    bPoint: [number, number];
+    list: PhotoLocation[];
   };
 };
 export default function ClusterPoint({

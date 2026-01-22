@@ -8,17 +8,17 @@ import ClusterPoint, {
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
 import { MapControls } from './MapControls';
-import { ExifData } from '@/types';
+import { PhotoLocation } from '@/types';
 import { PointDetail } from './PointDetail';
 import { replaceUrl } from '@/utils/history';
 
+type MapMarker = {
+  bPoint: { lng: number; lat: number };
+  count?: number;
+  list: PhotoLocation[];
+};
 interface MapProps {
-  markerGroup?: {
-    point: [number, number];
-    count?: number;
-    id: number;
-    list: ExifData[];
-  }[];
+  markerGroup?: MapMarker[];
 }
 
 export default function Map({ markerGroup }: MapProps) {
@@ -26,32 +26,37 @@ export default function Map({ markerGroup }: MapProps) {
     useBaiduMap();
 
   const searchParams = useSearchParams();
-  const extendId = searchParams.get('id') || undefined;
+  const photoId = Number(searchParams.get('photoId')) || undefined;
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
 
-  const [viewList, setViewList] = useState<ExifData[]>([]);
+  const [viewList, setViewList] = useState<PhotoLocation[]>([]);
 
   // 根据url参数，居中显示地图
   useEffect(() => {
-    const viewMarker = markerGroup?.find(item => item.id === Number(extendId));
-    if (viewMarker) {
+    const viewPoint = markerGroup?.find(group => {
+      const viewPhoto = group.list.find(photo => photo.id === photoId);
+      viewPhoto && setActiveId(viewPhoto.id);
+      return viewPhoto;
+    });
+
+    if (viewPoint) {
       if (mapInstance && isInitialized) {
-        setCenterAndZoom(viewMarker.point, 18);
+        setCenterAndZoom(viewPoint.bPoint, 18);
       }
-      setActiveId(viewMarker.id);
-      setViewList(viewMarker.list);
+      setViewList(viewPoint.list);
     } else {
       setCenterAndZoom(new window.BMapGL.Point(116.404, 39.915), 12);
     }
-  }, [mapInstance, isInitialized, markerGroup]);
+  }, [mapInstance, isInitialized, markerGroup, photoId]);
 
   // 点击聚合点，居中显示地图
   const onClickPoint = (clusterData: ClusterPointData['data']) => {
     setViewList(clusterData.list);
-    flyTo(clusterData.point);
-    setActiveId(clusterData.id);
-    // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
-    replaceUrl(`${window.location.pathname}?id=${clusterData.id}`);
+    flyTo(clusterData.bPoint);
+    // 如果一个点位包含多个图片，将第一个图片的id设为激活状态
+    setActiveId(clusterData.list[0].id);
+    // // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
+    replaceUrl(`${window.location.pathname}?id=${clusterData.list[0].id}`);
   };
   const onCloseDetail = () => {
     setViewList([]);
@@ -90,14 +95,17 @@ export default function Map({ markerGroup }: MapProps) {
       }
     });
 
-    var points = Cluster.pointTransformer(markerGroup, function (data: any) {
-      return {
-        point: data.point,
-        properties: {
-          data
-        }
-      };
-    });
+    const points = Cluster.pointTransformer(
+      markerGroup,
+      function (data: MapMarker) {
+        return {
+          point: [data.bPoint.lng, data.bPoint.lat],
+          properties: {
+            data
+          }
+        };
+      }
+    );
     cluster.setData(points);
     return () => {
       // 检查你的插件文档，通常是以下两种方法之一：

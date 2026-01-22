@@ -1,4 +1,4 @@
-import { ExifData } from '@/types';
+import { PhotoLocation } from '@/types';
 
 // 声明类型，防止 TS 报错
 declare const window: any;
@@ -169,25 +169,32 @@ export const coordTransform = {
   }
 };
 
+export interface GroupedLocation {
+  bPoint: {
+    lng: number;
+    lat: number;
+  };
+  list: PhotoLocation[];
+  count: number;
+}
 // 合并坐标
 export const groupByLocation = (
-  exifDataList: (ExifData & { point: number[] })[],
+  locationList: (PhotoLocation & { bPoint: { lng: number; lat: number } })[],
   precision = 2
 ) => {
-  return exifDataList.reduce((groups: Record<string, any>, exifData) => {
+  return locationList.reduce((groups: Record<string, any>, location) => {
     // 创建一个唯一的网格 Key，例如 "31.23,121.47"
-    const key = `${exifData.point[0]?.toFixed(precision)},${exifData.point[1]?.toFixed(precision)}`;
+    const key = `${location.bPoint.lng?.toFixed(precision)},${location.bPoint.lat?.toFixed(precision)}`;
 
     if (!groups[key]) {
       groups[key] = {
-        id: exifData.id,
-        point: key.split(',').map(Number),
+        bPoint: location.bPoint,
         list: [],
         count: 0
       };
     }
 
-    groups[key].list.push(exifData);
+    groups[key].list.push(location);
     groups[key].count++;
     return groups;
   }, {});

@@ -63,12 +63,12 @@ export const useBaiduMap = ({
   // 动态切换主题
   useEffect(() => {
     if (mapInstance) {
-      mapInstance.setMapStyleV2({
-        styleId:
-          theme === 'dark'
-            ? 'fef1c39c1f296afc207e545b60f5c60c'
-            : 'e7a919669a710ab7163305484c4f3dc4'
-      });
+      // mapInstance.setMapStyleV2({
+      //   styleId:
+      //     theme === 'dark'
+      //       ? 'fef1c39c1f296afc207e545b60f5c60c'
+      //       : 'e7a919669a710ab7163305484c4f3dc4'
+      // });
     }
   }, [mapInstance, theme]);
 

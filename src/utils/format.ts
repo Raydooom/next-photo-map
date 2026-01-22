@@ -94,14 +94,17 @@ export const formatAltitude = (altitude?: number | null) => {
   return `约 ${altitude.toFixed(2)} 米`;
 };
 
-export const formatTakenDate = (gpsTimeStamp?: string | null) => {
-  if (!gpsTimeStamp) {
+export const formatTakenDate = (takenAt?: string | null) => {
+  if (!takenAt) {
     return '';
   }
-  const date = new Date(gpsTimeStamp);
+  const date = new Date(takenAt);
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
   });
 };
