@@ -56,7 +56,7 @@ export default function Map({ markerGroup }: MapProps) {
     // 如果一个点位包含多个图片，将第一个图片的id设为激活状态
     setActiveId(clusterData.list[0].id);
     // // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
-    replaceUrl(`${window.location.pathname}?id=${clusterData.list[0].id}`);
+    replaceUrl(`${window.location.pathname}?photoId=${clusterData.list[0].id}`);
   };
   const onCloseDetail = () => {
     setViewList([]);
