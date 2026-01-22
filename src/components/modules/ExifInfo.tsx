@@ -133,7 +133,7 @@ export const ExtendInfo = memo(
               </div>
               {exifData?.latitude && exifData?.longitude && (
                 <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                  {/* <Marker exifData={exifData} extendId={extendId} /> */}
+                  <Marker exifData={exifData} />
                 </div>
               )}
             </div>

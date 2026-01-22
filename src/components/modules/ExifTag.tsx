@@ -1,5 +1,4 @@
 import { PhotoExif } from '@/types';
-import { Chip } from '@heroui/chip';
 import {
   ExposureTimeIcon,
   FocalLengthIcon,
@@ -12,34 +11,26 @@ import {
   formatIso,
   formatFocalLength
 } from '@/utils/format';
-import clsx from 'clsx';
 
 export const ExifTag = ({
   value,
   Icon,
-  mode
+  label
 }: {
   value: string | number | undefined | null;
+  label: string;
   Icon: React.ReactNode;
-  mode?: 'dark' | 'light';
 }) =>
   value ? (
-    <Chip
-      size="sm"
-      classNames={{
-        base: clsx(
-          'border backdrop-blur-md py-3 px-2 max-w-full tracking-wider',
-          mode === 'dark'
-            ? 'bg-black/20 text-white/90 border-white/5'
-            : 'bg-background/10 text-foreground/90 border-foreground/10'
-        )
-      }}
-      radius="sm"
-      variant="flat"
-      startContent={Icon}
-    >
-      &nbsp;&nbsp;{value}
-    </Chip>
+    <div className="flex flex-col items-center justify-center p-2 bg-foreground/[0.03] backdrop-blur-xl rounded-2xl border border-foreground/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-foreground/[0.08] transition-all duration-300">
+      {Icon}
+      <span className="text-xs text-foreground/50 uppercase tracking-[0.1em]">
+        {label}
+      </span>
+      <span className="text-xs font-semibold text-foreground mt-0.5">
+        {value}
+      </span>
+    </div>
   ) : null;
 
 export const ExifTagList = ({
@@ -51,22 +42,22 @@ export const ExifTagList = ({
 }) => (
   <div className="grid grid-cols-2 gap-2">
     <ExifTag
-      mode={mode}
+      label="曝光"
       Icon={<ExposureTimeIcon size={16} />}
-      value={exifData?.exposureTime}
+      value={formatExposureTime(exifData?.exposureTime)}
     />
     <ExifTag
-      mode={mode}
+      label="光圈"
       Icon={<ApertureIcon size={16} />}
       value={formatFNumber(exifData?.fNumber)}
     />
     <ExifTag
-      mode={mode}
+      label="ISO"
       Icon={<IsoIcon size={16} />}
       value={formatIso(exifData?.iso)}
     />
     <ExifTag
-      mode={mode}
+      label="焦距"
       Icon={<FocalLengthIcon size={16} />}
       value={formatFocalLength(
         exifData?.focalLengthIn35mmFormat || exifData?.focalLength
