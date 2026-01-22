@@ -1,8 +1,9 @@
 'use client';
 import { ClusterPointIcon } from '@/components/Icons/button';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PhotoLocation } from '@/types';
 import clsx from 'clsx';
+import { PointDirectionIcon } from '@/components/Icons/icon';
 
 export type ClusterPointData = {
   isCluster?: boolean;
@@ -30,7 +31,13 @@ export default function ClusterPoint({
   //   const activeItem = data?.list?.find(item => item.id === activeId);
   //   setIsActive(Boolean(activeItem));
   // }, [activeId, data, onClick]);
-
+  const deg = useMemo(() => {
+    if (data?.list?.length === 1) {
+      return data.list[0].bearing
+        ? parseInt(String(data.list[0].bearing), 10)
+        : null;
+    }
+  }, [data]);
   return (
     <>
       {isCluster ? (
@@ -58,13 +65,25 @@ export default function ClusterPoint({
           </div>
         </div>
       ) : (
-        <ClusterPointIcon
-          onClick={() => onClick?.(data)}
-          className={clsx(
-            'bg-brand-primary border border-brand-primary/[0.2] text-2xl text-white',
-            isActive && 'bg-brand-highlight text-white'
-          )}
-        />
+        <>
+          {deg ? (
+            <div
+              className="text-white w-full h-full text-xl absolute z-10 pointer-events-none"
+              style={{
+                transform: `rotate(${deg}deg)`
+              }}
+            >
+              <PointDirectionIcon className="absolute -top-1.5 left-1/2 -translate-x-1/2" />
+            </div>
+          ) : null}
+          <ClusterPointIcon
+            onClick={() => onClick?.(data)}
+            className={clsx(
+              'bg-brand-primary border border-brand-primary/[0.2] text-xl text-white',
+              isActive && 'bg-brand-highlight text-white'
+            )}
+          />
+        </>
       )}
     </>
   );

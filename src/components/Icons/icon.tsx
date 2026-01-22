@@ -7,6 +7,11 @@ import {
   PiSunDim,
   PiCubeFocusLight
 } from 'react-icons/pi';
+import { TbArrowBadgeUpFilled } from 'react-icons/tb';
+import { LiaLocationArrowSolid } from "react-icons/lia";
+import { RiArrowDropUpLine } from "react-icons/ri";
+
+
 
 import { Camera, BarChart3, CircleX, Calendar, MapPin } from 'lucide-react';
 
@@ -23,7 +28,8 @@ export {
   CircleX,
   HiLocationMarker as MarkerIcon,
   Calendar as DateIcon,
-  MapPin as LocationIcon
+  MapPin as LocationIcon,
+  RiArrowDropUpLine as PointDirectionIcon
 };
 
 export const GithubIcon: React.FC<IconSvgProps> = ({
