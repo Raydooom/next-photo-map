@@ -48,14 +48,27 @@ export interface PhotoItem {
 }
 export interface PhotoDetail extends PhotoItem {
   exif?: PhotoExif;
-  locations?: PhotoLocation;
+  location?: PhotoLocation;
 }
 
 export interface PhotoLocation {
   id: number;
-  thumbnail: string;
+  photoId: number;
+  photo?: PhotoItem;
   latitude: number;
   longitude: number;
-  bearing: number | null;
-  takenAt: string | null;
+  latitudeDMS: string; // 维度（度分秒）
+  longitudeDMS: string; // 经度 (度分秒)
+  altitude?: number | null; // 朝向 (0-360)
+  bearing?: number | null;
+  bearingDirection?: string | null; // 中文朝向 (东、东南等)
+  // 逆地理编码字段
+  address?: string | null; // 详细地址
+  country?: string | null; // 国家
+  province?: string | null; // 省份
+  city?: string | null; // 城市
+  district?: string | null; // 区县
+  town?: string | null; // 乡镇
+  street?: string | null; // 街道
+  adcode?: string | null; // 行政区划代码
 }
