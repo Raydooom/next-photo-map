@@ -1,19 +1,10 @@
 'use client';
 import { ClusterPointIcon } from '@/components/Icons/button';
 import { useEffect, useMemo, useState } from 'react';
-import { PhotoLocation } from '@/types';
 import clsx from 'clsx';
 import { PointDirectionIcon } from '@/components/Icons/icon';
+import { ClusterPointData } from '@/types/mapMarker';
 
-export type ClusterPointData = {
-  isCluster?: boolean;
-  pointCount?: number;
-  data: {
-    count: number;
-    bPoint: [number, number];
-    list: PhotoLocation[];
-  };
-};
 export default function ClusterPoint({
   activeId,
   data: clusterData,

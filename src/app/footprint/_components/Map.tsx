@@ -2,21 +2,15 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useBaiduMap } from '@/components/Map';
-import ClusterPoint, {
-  ClusterPointData
-} from '@/components/Map/modules/ClusterPoint';
+import ClusterPoint from '@/components/Map/modules/ClusterPoint';
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
 import { MapControls } from './MapControls';
 import { PhotoLocation } from '@/types';
 import { PointDetail } from './PointDetail';
 import { replaceUrl } from '@/utils/history';
+import { MapMarker, ClusterPointData } from '@/types/mapMarker';
 
-type MapMarker = {
-  bPoint: { lng: number; lat: number };
-  count?: number;
-  list: PhotoLocation[];
-};
 interface MapProps {
   markerGroup?: MapMarker[];
 }
@@ -29,7 +23,7 @@ export default function Map({ markerGroup }: MapProps) {
   const photoId = Number(searchParams.get('photoId')) || undefined;
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
 
-  const [viewList, setViewList] = useState<PhotoLocation[]>([]);
+  const [viewList, setViewList] = useState<MapMarker['list']>([]);
 
   // 根据url参数，居中显示地图
   useEffect(() => {
@@ -62,6 +56,13 @@ export default function Map({ markerGroup }: MapProps) {
     setViewList([]);
     setActiveId(undefined);
     replaceUrl(window.location.pathname);
+  };
+  const onBackLocation = (
+    location: PhotoLocation & { bPoint: { lng: number; lat: number } }
+  ) => {
+    if (location) {
+      flyTo(location.bPoint);
+    }
   };
   // 绘制聚合点
   useEffect(() => {
@@ -122,7 +123,11 @@ export default function Map({ markerGroup }: MapProps) {
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
       <BackIcon className="absolute top-4 left-4 z-10" />
-      <PointDetail onClose={onCloseDetail} viewList={viewList} />
+      <PointDetail
+        onClose={onCloseDetail}
+        onBackLocation={onBackLocation}
+        viewList={viewList}
+      />
       <div ref={mapRef} className="w-full h-full" />
       <MapControls mapInstance={mapInstance} />
     </div>

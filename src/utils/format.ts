@@ -1,4 +1,4 @@
-import { PhotoExif } from '@/types';
+import { PhotoExif, PhotoLocation } from '@/types';
 
 export const formatExposureTime = (exposureTime?: string | null) => {
   if (!exposureTime) {
@@ -72,14 +72,9 @@ export const formatFileSize = (size: number) => {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
 };
 
-export const formatLatLng = (exif?: PhotoExif | null) => {
-  const { latitude, longitude } = exif || {};
-  if (
-    latitude !== undefined &&
-    latitude !== null &&
-    longitude !== undefined &&
-    longitude !== null
-  ) {
+export const formatLatLng = (location?: PhotoLocation | PhotoExif | null) => {
+  const { latitude, longitude } = location || {};
+  if (latitude && longitude) {
     const latRef = latitude >= 0 ? 'N' : 'S';
     const lngRef = longitude >= 0 ? 'E' : 'W';
     return `${Math.abs(latitude).toFixed(6)}°${latRef}, ${Math.abs(longitude).toFixed(6)}°${lngRef}`;
