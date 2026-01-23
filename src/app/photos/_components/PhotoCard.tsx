@@ -31,11 +31,13 @@ export const PhotoCard = memo(
     };
     const [isPlaying, setIsPlaying] = useState(false);
     const onVideoEnded = () => {
-      if (videoRef.current && isPlaying) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
-      setIsPlaying(false);
+      setTimeout(() => {
+        if (videoRef.current && isPlaying) {
+          videoRef.current.pause();
+          videoRef.current.currentTime = 0;
+        }
+        setIsPlaying(false);
+      });
     };
 
     const [loading, setLoading] = useState(true);
