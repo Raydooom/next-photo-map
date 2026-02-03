@@ -118,3 +118,5 @@ export const PhotoCard = memo(
     );
   }
 );
+
+PhotoCard.displayName = 'PhotoCard';

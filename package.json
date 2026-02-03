@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack --port 3100",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --fix"
+    "lint": "eslint"
   },
   "dependencies": {
     "@heroui/accordion": "2.2.24",
@@ -67,6 +67,7 @@
     "react-icons": "5.5.0"
   },
   "devDependencies": {
+    "@eslint/compat": "2.0.2",
     "@next/eslint-plugin-next": "15.3.4",
     "@react-types/shared": "3.32.1",
     "@tailwindcss/postcss": "4.1.11",
@@ -76,15 +77,9 @@
     "@typescript-eslint/eslint-plugin": "8.34.1",
     "@typescript-eslint/parser": "8.34.1",
     "eslint": "9.25.1",
-    "eslint-config-next": "15.3.4",
     "eslint-config-prettier": "9.1.0",
-    "eslint-plugin-import": "2.31.0",
-    "eslint-plugin-jsx-a11y": "6.10.2",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-prettier": "5.2.1",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
-    "eslint-plugin-unused-imports": "4.1.4",
     "globals": "16.0.0",
     "postcss": "8.5.6",
     "prettier": "3.5.3",

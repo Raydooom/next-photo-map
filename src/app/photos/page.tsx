@@ -1,5 +1,6 @@
 import PhotoService from '@/services/photo';
 import MasonryGrid from './_components/MasonryGrid';
+import { Suspense } from 'react';
 
 export default async function DocsPage() {
   const { list } = await PhotoService.getPhotos({
@@ -8,7 +9,9 @@ export default async function DocsPage() {
   });
   return (
     <div className="min-h-screen p-2">
-      <MasonryGrid items={list} />
+      <Suspense>
+        <MasonryGrid items={list} />
+      </Suspense>
     </div>
   );
 }

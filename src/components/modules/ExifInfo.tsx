@@ -152,3 +152,5 @@ export const ExtendInfo = memo(
     );
   }
 );
+
+ExtendInfo.displayName = 'ExtendInfo';

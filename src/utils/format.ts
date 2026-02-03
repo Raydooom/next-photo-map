@@ -10,6 +10,7 @@ export const formatExposureTime = (exposureTime?: string | null) => {
   }
 
   const val = Number(exposureTime);
+
   if (isNaN(val)) return exposureTime;
 
   if (val >= 1) return `${val}s`;

@@ -24,6 +24,13 @@ export default function Map({ markerGroup }: MapProps) {
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
 
   const [viewList, setViewList] = useState<MapMarker['list']>([]);
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    if (window.history.length > 1) {
+      setCanGoBack(true);
+    }
+  }, []);
 
   // 根据url参数，居中显示地图
   useEffect(() => {
@@ -122,7 +129,7 @@ export default function Map({ markerGroup }: MapProps) {
 
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
-      <BackIcon className="absolute top-4 left-4 z-10" />
+      {canGoBack && <BackIcon className="absolute top-4 left-4 z-10" />}
       <PointDetail
         onClose={onCloseDetail}
         onBackLocation={onBackLocation}
