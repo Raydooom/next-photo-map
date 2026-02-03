@@ -2,6 +2,7 @@ import Map from './_components/Map';
 import Service from '@/services/photo';
 import { coordTransform, groupByLocation } from '@/components/Map/helper';
 import { PhotoLocation } from '@/types';
+import { Suspense } from 'react';
 
 export default async function FootprintPage() {
   const list = await Service.getPhotoLocations();
@@ -18,5 +19,9 @@ export default async function FootprintPage() {
   // 合并坐标
   const markerGroup = Object.values(groupByLocation(markers, 4));
 
-  return <Map markerGroup={markerGroup} />;
+  return (
+    <Suspense>
+      <Map markerGroup={markerGroup} />
+    </Suspense>
+  );
 }

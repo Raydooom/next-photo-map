@@ -1,12 +1,11 @@
 'use client';
 import { ClusterPointIcon } from '@/components/Icons/button';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { PointDirectionIcon } from '@/components/Icons/icon';
 import { ClusterPointData } from '@/types/mapMarker';
 
 export default function ClusterPoint({
-  activeId,
   data: clusterData,
   onClick
 }: {
@@ -16,12 +15,7 @@ export default function ClusterPoint({
 }) {
   const { data, isCluster, pointCount } = clusterData;
 
-  const [isActive, setIsActive] = useState(false);
-  // 更新激活点，有错位，暂不高亮
-  // useEffect(() => {
-  //   const activeItem = data?.list?.find(item => item.id === activeId);
-  //   setIsActive(Boolean(activeItem));
-  // }, [activeId, data, onClick]);
+  const [isActive] = useState(false);
   const deg = useMemo(() => {
     if (data?.list?.length === 1) {
       return data.list[0].bearing
