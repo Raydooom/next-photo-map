@@ -20,7 +20,7 @@ import { ThemeSwitch } from '@/components/theme-switch';
 import { GithubIcon } from '@/components/Icons/icon';
 import { Logo } from '@/components/Icons/custom';
 
-export const Navbar = () => {
+export const Navbar = ({ className }: { className?: string }) => {
   const searchInput = (
     <Input
       aria-label="Search"
@@ -40,7 +40,12 @@ export const Navbar = () => {
   );
 
   return (
-    <HeroUINavbar height={50} maxWidth="2xl" position="sticky" className="z-49">
+    <HeroUINavbar
+      height={50}
+      maxWidth="2xl"
+      position="sticky"
+      className={clsx('z-49', className)}
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">

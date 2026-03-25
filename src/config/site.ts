@@ -9,7 +9,8 @@ export const siteConfig = {
   navItems: [
     {
       label: 'Home',
-      href: '/'
+      href: '/',
+      meta: { fullscreen: true }
     },
     {
       label: 'Photos',

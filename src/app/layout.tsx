@@ -40,7 +40,7 @@ export default function RootLayout({
         <Script
           id="baidu-map-base"
           strategy="beforeInteractive"
-          src="https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=omdCxGga1olQLcpbGMMs01W6A0VX9gWQ"
+          src="https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=sp1nOvjl3L17FGOsrN13wNBJqDMcnuu1"
         />
         <Script
           id="baidu-map-cluster"
