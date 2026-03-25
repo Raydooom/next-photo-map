@@ -1,6 +1,7 @@
 {
   "name": "next-app-template",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3100",
@@ -52,6 +53,8 @@
     "@react-aria/ssr": "3.9.10",
     "@react-aria/visually-hidden": "3.8.28",
     "clsx": "2.1.1",
+    "embla-carousel-autoplay": "8.6.0",
+    "embla-carousel-fade": "8.6.0",
     "embla-carousel-react": "8.6.0",
     "embla-carousel-wheel-gestures": "8.1.0",
     "framer-motion": "11.18.2",
