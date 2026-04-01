@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model photoExif {
+  id                      Int     @id @default(autoincrement())
+  photoId                 Int     @unique
+  make                    String?
+  model                   String?
+  lensModel               String?
+  fNumber                 Float?
+  exposureTime            String?
+  iso                     Int?
+  focalLength             Float?
+  exposureBias            Float?
+  latitude                Float?
+  longitude               Float?
+  altitude                Float?
+  colorSpace              String?
+  exposureMode            String?
+  exposureProgram         String?
+  flash                   String?
+  focalLengthIn35mmFormat Float?
+  gpsTimeStamp            String?
+  lensMake                String?
+  meteringMode            String?
+  rawData                 Json?
+  software                String?
+  whiteBalance            String?
+  exifImageHeight         Int?
+  exifImageWidth          Int?
+  GPSLatitude             Int[]   @default([])
+  GPSLatitudeRef          String?
+  GPSLongitude            Int[]   @default([])
+  GPSLongitudeRef         String?
+  bearingDirection        String?
+  gpsImgDirection         Float?
+  photos                  photos  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+}
+
+model locations {
+  id               Int     @id @default(autoincrement())
+  photoId          Int     @unique
+  latitude         Float
+  longitude        Float
+  altitude         Float?
+  address          String?
+  city             String?
+  country          String?
+  district         String?
+  bearing          Float?
+  bearingDirection String?
+  adcode           String?
+  province         String?
+  street           String?
+  town             String?
+  GPSLatitude      Int[]   @default([])
+  GPSLongitude     Int[]   @default([])
+  photos           photos  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@index([latitude, longitude])
+}
+
+model photos {
+  id             Int         @id @default(autoincrement())
+  filename       String
+  originalPath   String      @unique
+  size           Int
+  mimeType       String
+  smallThumbnail String?
+  largeThumbnail String?
+  videoPath      String?
+  width          Int?
+  height         Int?
+  takenAt        DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+  dominantColor  String?
+  description    String?
+  tags           String[]    @default([])
+  photo_exif     photoExif?
+  locations      locations?
+}
