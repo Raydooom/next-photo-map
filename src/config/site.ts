@@ -30,6 +30,11 @@ export const siteConfig = {
     {
       label: 'About',
       href: '/about'
+    },
+    {
+      label: 'Admin',
+      href: '/admin',
+      meta: { icon: MapPinned, fullscreen: true }
     }
   ],
   links: {

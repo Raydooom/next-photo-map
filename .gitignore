@@ -38,3 +38,6 @@ pnpm-lock.yaml
 yarn.lock
 package-lock.json
 bun.lockb
+/src/generated/prisma
+
+/app/generated/prisma

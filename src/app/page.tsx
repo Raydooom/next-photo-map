@@ -1,4 +1,4 @@
-import Service from '@/services/photo';
+import Service from '@/server/photo';
 import HeroCarousel from '@/components/Home/HeroCarousel';
 import { Navbar } from '@/components/navbar';
 
