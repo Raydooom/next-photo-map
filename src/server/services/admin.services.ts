@@ -4,99 +4,30 @@ import { glob } from 'glob';
 import sharp from 'sharp';
 import exifr from 'exifr';
 const convert = require('heic-convert');
+import { FileManageService } from './fileManage.services';
 import { PhotoService } from './photo.services';
 import { locationService } from './location.services';
 import { photoExifService } from './photoExif.services';
 
-import {
-  PHOTO_BASE_DIR,
-  THUMBNAIL_LARGE_DIR,
-  THUMBNAIL_SMALL_DIR
-} from '../config';
+import { PHOTO_BASE_DIR } from '../config';
 import * as Utils from '../utils';
 
 interface FileGroup {
+  fileName: string; // 包含扩展名的文件名
   name: string; // 不含扩展名的文件名
-  image?: string; // 图片绝对路径
-  video?: string; // 视频绝对路径
-  dir: string; // 所在目录绝对路径
+  ext: string; // 文件扩展名，包含点号
+  imageAbsolutePath?: string; // 图片绝对路径
+  videoAbsolutePath?: string; // 视频绝对路径
+  dirAbsolutePath: string; // 所在目录绝对路径
   mimeType: string; // 文件MIME类型
 }
 
 export class ScannerService {
   private photoService: PhotoService;
+  private fileManageService: FileManageService;
   constructor(appUrl?: string) {
     this.photoService = new PhotoService(appUrl);
-  }
-  /**
-   * 获取 Sharp 实例，对于 HEIC 文件会先进行转换
-   */
-  private async getSharpInstance(filePath: string): Promise<sharp.Sharp> {
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext === '.heic') {
-      try {
-        const inputBuffer = await fs.promises.readFile(filePath);
-        const outputBuffer = await convert({
-          buffer: inputBuffer, // the HEIC file buffer
-          format: 'JPEG', // output format
-          quality: 1 // the jpeg compression quality, between 0 and 1
-        });
-        return sharp(outputBuffer);
-      } catch (error) {
-        console.error(`Failed to convert HEIC file ${filePath}:`, error);
-        throw error;
-      }
-    }
-    return sharp(filePath);
-  }
-  /**
-   * 生成缩略图
-   * @param imagePath 图片路径
-   * @param filename 图片文件名
-   */
-
-  private async generateThumbnails(
-    imagePath: string,
-    filename: string
-  ): Promise<{ smallLocalPath: string; largeLocalPath: string }> {
-    // 生成唯一文件名防止冲突，或者保持原名结构
-    // 这里简单起见，使用 hash 或者 UUID，或者保持目录结构
-    // 为了简单，所有缩略图扁平化存储，文件名加上 hash
-    const hash = Buffer.from(path.relative(PHOTO_BASE_DIR, imagePath))
-      .toString('base64')
-      .replace(/\//g, '_')
-      .substring(0, 10);
-    const thumbName = `${filename}_${hash}.jpg`;
-
-    const smallLocalPath = path.join(THUMBNAIL_SMALL_DIR, thumbName);
-    const largeLocalPath = path.join(THUMBNAIL_LARGE_DIR, thumbName);
-
-    const sharpInstance = await this.getSharpInstance(imagePath);
-    const image = sharpInstance.rotate();
-
-    // 小图: 最长 200px
-    await image
-      .clone()
-      .resize({ width: 200, height: 200, fit: 'inside' })
-      .toFormat('jpeg', { quality: 80 })
-      .toFile(smallLocalPath);
-
-    // 大图: 最长 1400px
-    await image
-      .clone()
-      .resize({
-        width: 1400,
-        height: 1400,
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .toFormat('jpeg', { quality: 85 })
-      .toFile(largeLocalPath);
-
-    return {
-      smallLocalPath,
-      largeLocalPath
-    };
+    this.fileManageService = new FileManageService();
   }
   /**
    * 开始扫描目录
@@ -118,8 +49,11 @@ export class ScannerService {
     const dataMap = new Map<string, any>();
 
     for (const group of groups.values()) {
-      if (group.image) {
-        const relativePath = path.relative(PHOTO_BASE_DIR, group.image);
+      if (group.imageAbsolutePath) {
+        const relativePath = path.relative(
+          PHOTO_BASE_DIR,
+          group.imageAbsolutePath
+        );
         currentPaths.add(relativePath);
         const data = await this.processGroup(group, force);
         dataMap.set(relativePath, data);
@@ -131,43 +65,15 @@ export class ScannerService {
   }
 
   /**
-   * 将文件按文件名分组
-   */
-  private groupFiles(files: string[]): Map<string, FileGroup> {
-    const groups = new Map<string, FileGroup>();
-
-    for (const file of files) {
-      const dir = path.dirname(file);
-      const ext = path.extname(file).toLowerCase();
-      const name = path.basename(file, path.extname(file));
-      const key = path.join(dir, name); // 使用 目录+文件名 作为唯一键
-
-      if (!groups.has(key)) {
-        groups.set(key, { name, dir, mimeType: '' });
-      }
-
-      const group = groups.get(key)!;
-      if (['.jpg', '.jpeg', '.png', '.heic', '.webp'].includes(ext)) {
-        group.image = file;
-        group.mimeType = Utils.getMimeType(file);
-      } else if (['.mp4', '.mov'].includes(ext)) {
-        group.video = file;
-      }
-    }
-
-    return groups;
-  }
-
-  /**
    * 处理单个文件组
    */
   private async processGroup(group: FileGroup, force: boolean) {
-    if (!group.image) return;
-
-    const relativePath = path.relative(PHOTO_BASE_DIR, group.image);
+    if (!group.imageAbsolutePath) return;
 
     // 根据原始路径检查数据库是否存在
-    const existing = await this.photoService.checkPhotoExists(relativePath);
+    const existing = await this.photoService.checkPhotoExists(
+      group.imageAbsolutePath
+    );
 
     // 如果是增量模式且记录已存在，则跳过
     if (!force && existing) {
@@ -176,76 +82,74 @@ export class ScannerService {
 
     try {
       // 以下为 全量模式 或 增量模式下的新文件 处理逻辑
+      const fileBuffer = await fs.promises.readFile(group.imageAbsolutePath);
 
-      // 1. 获取文件基础信息
-      const stats = fs.statSync(group.image);
+      const sharpImage = await this.getSharpInstance(fileBuffer, group.ext);
+
+      // 用sharp实例，获取旋转后的元数据宽高
+      const metadata = await sharpImage.metadata();
+      const width = metadata.width || 0;
+      const height = metadata.height || 0;
+      const size = metadata.size || 0;
+
+      const exifData = await this.getMetadata(fileBuffer, group);
 
       // 2. 准备 video path
       let videoRelativePath = null;
-      if (group.video) {
-        videoRelativePath = path.relative(PHOTO_BASE_DIR, group.video);
+      if (group.videoAbsolutePath) {
+        videoRelativePath = path.relative(
+          PHOTO_BASE_DIR,
+          group.videoAbsolutePath
+        );
       }
-
-      // 3. 提取主色调 (每次都重算，确保最新)
-      let dominantColor = null;
-      const image = await this.getSharpInstance(group.image);
-      try {
-        const { data } = await image
-          .resize(1, 1, { fit: 'cover' })
-          .raw()
-          .toBuffer({ resolveWithObject: true });
-
-        const r = data[0];
-        const g = data[1];
-        const b = data[2];
-        dominantColor = `rgb(${r},${g},${b})`;
-      } catch (err) {
-        console.warn(`Failed to extract color for ${group.image}:`, err);
-      }
-
-      // 4. 读取 EXIF 和元数据 (每次都重算)
-      let takenAt = stats.birthtime;
-
-      const metadata = await image.metadata();
-      const width = metadata.width || 0;
-      const height = metadata.height || 0;
-      let exifData: any = null;
-
-      try {
-        const imageBuffer = await fs.promises.readFile(group.image);
-        // 扩展 exifr 解析
-        const exif = await exifr
-          .parse(imageBuffer, {
-            tiff: true,
-            exif: true,
-            gps: true
-          })
-          .catch(() => null);
-
-        exifData = exif || null;
-        takenAt = exif?.DateTimeOriginal || takenAt;
-      } catch (err) {
-        console.warn(`Failed to read metadata for ${group.image}:`, err);
-      }
-
-      let photoId: number;
-      // CREATE 逻辑 (新文件)
-      const { smallLocalPath, largeLocalPath } = await this.generateThumbnails(
-        group.image,
-        group.name
+      // 生成缩略图
+      const { smallBuffer, largeBuffer } = await this.generateThumbnails(
+        fileBuffer,
+        group.ext
       );
+      // 使用小图提取主色调，提高效率
+      const dominantColor = await this.getDominantColor(smallBuffer, group);
+
+      // 按拍摄时间分组
+      const uploadRes = await Promise.all([
+        this.fileManageService.uploadFile({
+          date: exifData.takenAt.toISOString(),
+          fileName: `${group.name}${group.ext}`,
+          fileBuffer,
+          size: 'raw'
+        }),
+        await this.fileManageService.uploadFile({
+          date: exifData.takenAt.toISOString(),
+          fileName: `${group.name}${group.ext}`,
+          fileBuffer: smallBuffer,
+          size: 'small'
+        }),
+        await this.fileManageService.uploadFile({
+          date: exifData.takenAt.toISOString(),
+          fileName: `${group.name}${group.ext}`,
+          fileBuffer: largeBuffer,
+          size: 'large'
+        })
+      ]);
+
+      const isSuccess = uploadRes.every(res => res?.key && res?.success);
+
+      if (!isSuccess) {
+        return null;
+      }
 
       const photoData = {
-        filename: path.basename(group.image),
-        originalPath: relativePath,
-        size: stats.size,
+        filename: group.fileName,
+        originalPath: group.imageAbsolutePath,
+        size,
         mimeType: group.mimeType,
-        smallThumbnail: smallLocalPath,
-        largeThumbnail: largeLocalPath,
+        originalKey: uploadRes[0]?.key,
+        thumbSmallKey: uploadRes[1]?.key,
+        thumbLargeKey: uploadRes[2]?.key,
         videoPath: videoRelativePath,
         width,
         height,
-        takenAt,
+        takenAt: exifData.takenAt,
         dominantColor
       };
 
@@ -254,15 +158,13 @@ export class ScannerService {
       if (force && existing) {
         photo = await this.photoService.updatePhoto(
           photoData,
-          existing?.id as number
+          existing.id as number
         );
         // await locationService.deleteLocationByPhotoId(photo.id);
       } else {
         photo = await this.photoService.createPhoto(photoData);
       }
-      photoId = photo.id;
 
-      // 6. 保存关联数据 (Exif & Location) - Create 和 Update 共用逻辑
       if (exifData) {
         // 处理曝光时间
         let exposureTimeStr = null;
@@ -285,27 +187,6 @@ export class ScannerService {
               ? exifData.GPSImgDirection
               : parseFloat(exifData.GPSImgDirection);
         }
-
-        const latitudeDMS =
-          exifData.GPSLatitude && exifData.GPSLatitudeRef
-            ? Utils.formatDMSFromRaw(
-                exifData.GPSLatitude,
-                exifData.GPSLatitudeRef
-              )
-            : exifData.latitude
-              ? Utils.toDMS(exifData.latitude, true)
-              : null;
-
-        const longitudeDMS =
-          exifData.GPSLongitude && exifData.GPSLongitudeRef
-            ? Utils.formatDMSFromRaw(
-                exifData.GPSLongitude,
-                exifData.GPSLongitudeRef
-              )
-            : exifData.longitude
-              ? Utils.toDMS(exifData.longitude, false)
-              : null;
-
         const data = {
           make: exifData.Make,
           model: exifData.Model,
@@ -351,7 +232,7 @@ export class ScannerService {
 
           rawData: exifData
         };
-        await photoExifService.savePhotoExif(photoId, data);
+        await photoExifService.savePhotoExif(photo.id, data);
         // if (exifData.latitude && exifData.longitude) {
         //   const bearingDirection =
         //     bearing !== null ? Utils.getDirectionFromBearing(bearing) : null;
@@ -375,12 +256,159 @@ export class ScannerService {
         // }
       } else {
         // 删除旧记录
-        await photoExifService.deletePhotoExifByPhotoId(photoId);
+        await photoExifService.deletePhotoExifByPhotoId(photo.id);
       }
 
-      console.log(`Processed photo: ${relativePath} (ID: ${photoId})`);
+      console.log(
+        `Processed photo: ${group.imageAbsolutePath} (ID: ${photo.id})`
+      );
     } catch (error) {
-      console.error(`Error processing ${group.image}:`, error);
+      console.error(`Error processing ${group.imageAbsolutePath}:`, error);
+    }
+  }
+
+  /**
+   * 将文件按文件名分组
+   */
+  private groupFiles(files: string[]): Map<string, FileGroup> {
+    const groups = new Map<string, FileGroup>();
+
+    for (const file of files) {
+      const fileName = path.basename(file);
+      const dir = path.dirname(file);
+      const name = path.basename(file, path.extname(file));
+      const ext = path.extname(file).toLowerCase();
+      const key = path.join(dir, name); // 使用 目录+文件名 作为唯一键
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          fileName,
+          name,
+          ext,
+          dirAbsolutePath: dir,
+          mimeType: ''
+        });
+      }
+
+      const group = groups.get(key)!;
+      if (['.jpg', '.jpeg', '.png', '.heic', '.webp'].includes(ext)) {
+        group.imageAbsolutePath = file;
+        group.mimeType = Utils.getMimeType(file);
+      } else if (['.mp4', '.mov'].includes(ext)) {
+        group.videoAbsolutePath = file;
+      }
+    }
+    return groups;
+  }
+
+  /**
+   * 获取 Sharp 实例，对于 HEIC 文件会先进行转换
+   */
+  private async getSharpInstance(
+    buffer: Buffer,
+    ext: string
+  ): Promise<sharp.Sharp> {
+    if (ext === '.heic') {
+      try {
+        const outputBuffer = await convert({
+          buffer: buffer, // the HEIC file buffer
+          format: 'JPEG', // output format
+          quality: 1 // the jpeg compression quality, between 0 and 1
+        });
+        return sharp(outputBuffer);
+      } catch (error) {
+        console.error(`Failed to convert HEIC file ${ext}:`, error);
+        throw error;
+      }
+    }
+    return sharp(buffer);
+  }
+  /**
+   * 生成缩略图
+   * @param imagePath 图片路径
+   * @param filename 图片文件名
+   */
+
+  private async generateThumbnails(
+    fileBuffer: Buffer,
+    ext: string
+  ): Promise<{ smallBuffer: Buffer; largeBuffer: Buffer }> {
+    const sharpInstance = await this.getSharpInstance(fileBuffer, ext);
+    const image = sharpInstance.rotate();
+
+    // 小图: 最长 200px
+    const smallBuffer = await image
+      .clone()
+      .resize({ width: 200, height: 200, fit: 'inside' })
+      .toFormat('jpeg', { quality: 80 })
+      .toBuffer();
+
+    // 大图: 最长 1400px
+    const largeBuffer = await image
+      .clone()
+      .resize({
+        width: 1400,
+        height: 1400,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .toFormat('jpeg', { quality: 85 })
+      .toBuffer();
+
+    return {
+      smallBuffer,
+      largeBuffer
+    };
+  }
+
+  /**
+   * 获取文件元数据
+   */
+  private async getMetadata(fileBuffer: Buffer, group: FileGroup) {
+    // 4. 读取 EXIF 和元数据 (每次都重算)
+    const stats = fs.statSync(group.imageAbsolutePath!);
+    let takenAt = stats.birthtime;
+
+    let exifData: any = null;
+    try {
+      // 扩展 exifr 解析
+      const exif = await exifr
+        .parse(fileBuffer, {
+          tiff: true,
+          exif: true,
+          gps: true
+        })
+        .catch(() => null);
+
+      exifData = exif || null;
+    } catch (err) {
+      console.warn(
+        `Failed to read metadata for ${group.imageAbsolutePath}:`,
+        err
+      );
+    }
+    return { ...exifData, takenAt: exifData?.DateTimeOriginal || takenAt };
+  }
+  /**
+   * 获取文件主色调
+   */
+  private async getDominantColor(fileBuffer: Buffer, group: FileGroup) {
+    try {
+      const { data } = await sharp(fileBuffer)
+        .resize(1, 1, { fit: 'cover' })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      const r = data[0];
+      const g = data[1];
+      const b = data[2];
+      return `rgb(${r},${g},${b})`;
+    } catch (err) {
+      console.warn(
+        `Failed to extract color for ${group.imageAbsolutePath}:`,
+        err
+      );
+      return null;
     }
   }
 }

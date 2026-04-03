@@ -66,22 +66,23 @@ model locations {
 }
 
 model photos {
-  id             Int         @id @default(autoincrement())
-  filename       String
-  originalPath   String      @unique
-  size           Int
-  mimeType       String
-  smallThumbnail String?
-  largeThumbnail String?
-  videoPath      String?
-  width          Int?
-  height         Int?
-  takenAt        DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @default(now())
-  dominantColor  String?
-  description    String?
-  tags           String[]    @default([])
-  photo_exif     photoExif?
-  locations      locations?
+  id            Int        @id @default(autoincrement())
+  filename      String
+  originalPath  String     @unique
+  size          Int
+  mimeType      String
+  originalKey   String?
+  thumbSmallKey String?
+  thumbLargeKey String?
+  videoPath     String?
+  width         Int?
+  height        Int?
+  takenAt       DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now())
+  dominantColor String?
+  description   String?
+  tags          String[]   @default([])
+  photo_exif    photoExif?
+  locations     locations?
 }

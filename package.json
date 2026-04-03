@@ -17,6 +17,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1021.0",
     "@heroui/accordion": "2.2.24",
     "@heroui/alert": "2.2.27",
     "@heroui/autocomplete": "2.3.29",
@@ -62,6 +63,7 @@
     "@react-aria/ssr": "3.9.10",
     "@react-aria/visually-hidden": "3.8.28",
     "clsx": "2.1.1",
+    "dayjs": "1.11.20",
     "dotenv": "17.3.1",
     "embla-carousel-autoplay": "8.6.0",
     "embla-carousel-fade": "8.6.0",
