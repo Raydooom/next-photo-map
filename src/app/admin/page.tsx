@@ -10,8 +10,7 @@ export default function AboutPage() {
   };
 
   const getList = async () => {
-    const list = await PhotoAction.getCountPhotos({});
-    console.log(list);
+    const list = await PhotoAction.getPhotoList();
   };
 
   const getExif = async () => {

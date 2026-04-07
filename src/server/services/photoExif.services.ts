@@ -44,7 +44,7 @@ export const photoExifService = {
   /**
    * 获取所有EXIF记录
    */
-  getAllPhotoExifs: async (): Promise<photoExif[]> => {
+  getAllPhotoExif: async (): Promise<photoExif[]> => {
     return await prisma.photoExif.findMany();
   },
 

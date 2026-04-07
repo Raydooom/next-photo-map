@@ -5,10 +5,10 @@ import { photoExifService } from '../services/photoExif.services';
 
 const photoService = new PhotoService();
 
-export const getCountPhotos = async (where: Prisma.photosWhereInput) => {
+export const getPhotoList = async () => {
   return await photoService.listPhotos();
 };
 
-export const getPhotoExif = async () => {
-  return await photoExifService.getAllPhotoExifs();
+export const getPhotoExif = async (photoId: number) => {
+  return await photoExifService.getPhotoExifByPhotoId(photoId);
 };

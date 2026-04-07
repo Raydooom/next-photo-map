@@ -38,7 +38,7 @@ export const ExifTagList = ({
   exifData
 }: {
   mode?: 'dark' | 'light';
-  exifData: PhotoExif | undefined;
+  exifData: PhotoExif | null;
 }) => (
   <div className="grid grid-cols-2 gap-2">
     <ExifTag

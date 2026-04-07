@@ -12,7 +12,7 @@ import {
 } from '@/utils/format';
 
 import { PhotoItem, PhotoExif } from '@/types';
-import * as Actions from '@/services/actions';
+import * as Actions from '@/server/actions/photo';
 import { Marker } from '../Map';
 import { ExifTagList } from './ExifTag';
 
@@ -40,9 +40,9 @@ export const ExtendInfo = memo(
     photo: PhotoItem;
     setIsOpen: (isOpen: boolean) => void;
   }) => {
-    const [exifData, setExifData] = useState<PhotoExif | undefined>(undefined);
+    const [exifData, setExifData] = useState<PhotoExif | null>(null);
     useEffect(() => {
-      Actions.getPhotoExtendInfo(photo.id).then(data => {
+      Actions.getPhotoExif(photo.id).then(data => {
         setExifData(data);
       });
     }, [photo.id]);
@@ -100,15 +100,15 @@ export const ExtendInfo = memo(
                 <InfoRow
                   label="尺寸"
                   value={formatDimension(
-                    exifData?.exifImageWidth,
-                    exifData?.exifImageHeight
+                    exifData?.exifImageWidth || 0,
+                    exifData?.exifImageHeight || 0
                   )}
                 />
                 <InfoRow
                   label="像素"
                   value={formatPixel(
-                    exifData?.exifImageWidth,
-                    exifData?.exifImageHeight
+                    exifData?.exifImageWidth || 0,
+                    exifData?.exifImageHeight || 0
                   )}
                 />
                 <InfoRow
@@ -133,7 +133,7 @@ export const ExtendInfo = memo(
               </div>
               {exifData?.latitude && exifData?.longitude && (
                 <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                  <Marker exifData={exifData} />
+                  {/* <Marker exifData={exifData} /> */}
                 </div>
               )}
             </div>

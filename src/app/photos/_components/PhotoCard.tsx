@@ -21,7 +21,7 @@ export const PhotoCard = memo(
     const [isHovered, setIsHovered] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const playVideo = () => {
-      if (data.videoPath) {
+      if (data.videoUrl) {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
           videoRef.current.play();
@@ -63,17 +63,17 @@ export const PhotoCard = memo(
           <Image
             className={clsx(
               'z-1 w-full h-auto object-contain transition-all ease-in-out duration-300',
-              isHovered && !data.videoPath
+              isHovered && !data.videoUrl
                 ? 'scale-105 opacity-85'
                 : 'scale-100 opacity-100'
             )}
             width={data.width}
             height={data.height}
-            src={data.largeThumbnail}
+            src={data.thumbLargeUrl}
             alt={data.filename}
             onLoad={() => setLoading(false)}
           />
-          {data.videoPath && (
+          {data.videoUrl && (
             <video
               className={clsx(
                 'absolute z-10 top-0 left-0 w-full h-full object-cover',
@@ -82,13 +82,13 @@ export const PhotoCard = memo(
               onEnded={() => onVideoEnded()}
               ref={videoRef}
               muted={true}
-              src={data.videoPath}
+              src={data.videoUrl}
             ></video>
           )}
         </motion.div>
 
         {/* livephoto 图标 */}
-        {data.videoPath && (
+        {data.videoUrl && (
           <div
             className="absolute top-2 left-2 z-40"
             onMouseEnter={playVideo}
