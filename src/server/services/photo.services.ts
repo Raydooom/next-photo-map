@@ -1,4 +1,5 @@
 import { prisma, Prisma } from '../lib/db';
+import { getImageUrl } from '@/server/lib/oss';
 
 export class PhotoService {
   private readonly photosBaseUrl = '/photos';
@@ -36,15 +37,6 @@ export class PhotoService {
     });
   }
   /**
-   * 创建照片照片
-   * @param photos 照片数据
-   */
-  async createPhotos(photos: Prisma.photosCreateManyInput[]) {
-    return prisma.photos.createMany({
-      data: photos
-    });
-  }
-  /**
    * 获取照片列表
    * @param page 页码
    * @param pageSize 每页数量
@@ -79,7 +71,9 @@ export class PhotoService {
     ]);
 
     // 转换数据，生成完整 URL
-    const transformedList = list.map(photo => this.transformPhoto(photo));
+    const transformedList = await Promise.all(
+      list.map(photo => this.transformPhoto(photo))
+    );
 
     return { total, list: transformedList };
   }
@@ -89,16 +83,16 @@ export class PhotoService {
    * @param id 照片ID
    */
   async getPhotoById(id: number) {
-    const photo = await prisma.photo.findUnique({
+    const photo = await prisma.photos.findUnique({
       where: { id },
       include: {
-        exif: true // 默认包含 EXIF 信息
+        photo_exif: true // 默认包含 EXIF 信息
       }
     });
 
     if (!photo) return null;
 
-    return this.transformPhoto(photo);
+    return await this.transformPhoto(photo);
   }
 
   /**
@@ -117,7 +111,7 @@ export class PhotoService {
   async getPhotosWithLocation() {
     const photos = await prisma.photos.findMany({
       where: {
-        location: {
+        locations: {
           isNot: null
         }
       },
@@ -125,13 +119,13 @@ export class PhotoService {
         id: true,
         smallThumbnail: true,
         takenAt: true,
-        location: {
+        locations: {
           select: {
             latitude: true,
             longitude: true,
             bearing: true,
-            latitudeDMS: true,
-            longitudeDMS: true,
+            GPSLatitude: true,
+            GPSLongitude: true,
             address: true,
             country: true,
             province: true,
@@ -150,19 +144,19 @@ export class PhotoService {
       return {
         id: transformed.id,
         thumbnail: transformed.smallThumbnail,
-        latitude: transformed.location?.latitude,
-        longitude: transformed.location?.longitude,
-        bearing: transformed.location?.bearing,
-        latitudeDMS: transformed.location?.latitudeDMS,
-        longitudeDMS: transformed.location?.longitudeDMS,
-        address: transformed.location?.address,
-        country: transformed.location?.country,
-        province: transformed.location?.province,
-        city: transformed.location?.city,
-        district: transformed.location?.district,
-        town: transformed.location?.town,
-        street: transformed.location?.street,
-        adcode: transformed.location?.adcode,
+        latitude: transformed.locations?.latitude,
+        longitude: transformed.locations?.longitude,
+        bearing: transformed.locations?.bearing,
+        GPSLatitude: transformed.locations?.GPSLatitude,
+        GPSLongitude: transformed.locations?.GPSLongitude,
+        address: transformed.locations?.address,
+        country: transformed.locations?.country,
+        province: transformed.locations?.province,
+        city: transformed.locations?.city,
+        district: transformed.locations?.district,
+        town: transformed.locations?.town,
+        street: transformed.locations?.street,
+        adcode: transformed.locations?.adcode,
         takenAt: transformed.takenAt
       };
     });
@@ -178,7 +172,7 @@ export class PhotoService {
     maxLng: number
   ) {
     // 1. 先查出范围内的 photoId
-    const locations = await this.prisma.photoLocation.findMany({
+    const locations = await prisma.locations.findMany({
       where: {
         latitude: { gte: minLat, lte: maxLat },
         longitude: { gte: minLng, lte: maxLng }
@@ -195,7 +189,7 @@ export class PhotoService {
     const photoIds = locations.map(l => l.photoId);
 
     // 2. 查照片详情
-    const photos = await this.prisma.photo.findMany({
+    const photos = await prisma.photos.findMany({
       where: { id: { in: photoIds } },
       orderBy: { takenAt: 'desc' }
     });
@@ -211,13 +205,13 @@ export class PhotoService {
       return [];
     }
 
-    const photos = await this.prisma.photo.findMany({
+    const photos = await prisma.photos.findMany({
       where: {
         id: { in: ids }
       },
       include: {
-        exif: true,
-        location: true
+        photo_exif: true,
+        locations: true
       }
     });
 
@@ -225,10 +219,10 @@ export class PhotoService {
     const photoMap = new Map(
       photos.map(p => {
         const transformed = this.transformPhoto(p);
-        if (transformed.exif) {
+        if (transformed.photo_exif) {
           // 排除 rawData 字段以减小响应体积
-          const { rawData, ...rest } = transformed.exif;
-          transformed.exif = rest as any;
+          const { rawData, ...rest } = transformed.photo_exif;
+          transformed.photo_exif = rest as any;
         }
         return [p.id, transformed];
       })
@@ -249,24 +243,32 @@ export class PhotoService {
   /**
    * 转换照片数据，处理 URL
    */
-  private transformPhoto(photo: any) {
+  private async transformPhoto(
+    photo: Prisma.photosGetPayload<{
+      include?: {
+        photo_exif?: boolean;
+        locations?: boolean;
+      };
+    }>
+  ) {
+    const transformed = { ...photo } as any;
     // 处理缩略图 URL
-    if (photo.smallThumbnail && !photo.smallThumbnail.startsWith('http')) {
-      photo.smallThumbnail = `${this.appUrl}${photo.smallThumbnail}`;
+    if (photo.thumbSmallKey) {
+      transformed.thumbSmallUrl = await getImageUrl(photo.thumbSmallKey);
     }
-    if (photo.largeThumbnail && !photo.largeThumbnail.startsWith('http')) {
-      photo.largeThumbnail = `${this.appUrl}${photo.largeThumbnail}`;
+    if (photo.thumbLargeKey) {
+      transformed.thumbLargeUrl = await getImageUrl(photo.thumbLargeKey);
     }
 
     // 处理视频 URL
-    if (photo.videoPath && !photo.videoPath.startsWith('http')) {
-      // 确保路径分隔符正确 (Windows/Unix 兼容)
-      // videoPath 在 DB 中存储的是相对路径，如 "2023/12/video.mp4"
-      // URL 应该是 http://host/photos/2023/12/video.mp4
-      // 注意：如果 videoPath 包含反斜杠（Windows），需要替换为正斜杠
-      const normalizedPath = photo.videoPath.replace(/\\/g, '/');
-      photo.videoPath = `${this.appUrl}${this.photosBaseUrl}/${normalizedPath}`;
+    if (transformed.videoFileKey) {
+      transformed.videoUrl = await getImageUrl(transformed.videoFileKey);
     }
-    return photo;
+
+    delete transformed.thumbSmallKey;
+    delete transformed.thumbLargeKey;
+    delete transformed.videoFileKey;
+
+    return transformed;
   }
 }

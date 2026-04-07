@@ -2,8 +2,10 @@ import crypto from 'crypto';
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
 
 const client = new S3Client({
@@ -26,6 +28,19 @@ export function uploadFileToMinio(key: string, body: Buffer) {
   );
 }
 
+// 获取图片访问链接
+export async function getImageUrl(key: string) {
+  const command = new GetObjectCommand({
+    Bucket: 'photo-server',
+    Key: key
+  });
+  // 生成一个 1 小时后过期的链接
+  return await getSignedUrl(client, command, {
+    expiresIn: Number(process.env['IMAGE_EXPIRES_IN']) || 3600
+  });
+}
+
+// 删除图片
 export function deleteFileFromMinio(key: string) {
   return client.send(
     new DeleteObjectCommand({

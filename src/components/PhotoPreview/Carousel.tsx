@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { EmblaOptionsType } from 'embla-carousel';
 import useEmblaCarousel from 'embla-carousel-react';
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
@@ -86,7 +87,7 @@ const EmblaCarousel: React.FC<PropType> = props => {
       className="bg-cover bg-center h-full w-full flex relative"
       style={{
         backgroundImage: slides[selectedIndex]
-          ? `url(${slides[selectedIndex].largeThumbnail})`
+          ? `url(${slides[selectedIndex].thumbLargeUrl})`
           : undefined
       }}
     >
@@ -124,7 +125,9 @@ const EmblaCarousel: React.FC<PropType> = props => {
                     'h-full w-auto transition-opacity duration-300 hover:opacity-100',
                     selectedIndex === index ? 'opacity-100' : 'opacity-80'
                   )}
-                  src={item.largeThumbnail}
+                  width={item.width}
+                  height={item.height}
+                  src={item.thumbLargeUrl}
                   alt={item.filename}
                 />
               </div>
