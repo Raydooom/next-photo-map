@@ -110,27 +110,44 @@ export class ScannerService {
       // 使用小图提取主色调，提高效率
       const dominantColor = await this.getDominantColor(smallBuffer, group);
 
-      // 按拍摄时间分组
-      const uploadRes = await Promise.all([
+      // 准备上传任务
+      const uploadTasks = [
         this.fileManageService.uploadFile({
-          date: exifData.takenAt.toISOString(),
+          date: exifData.takenAt,
           fileName: `${group.name}${group.ext}`,
           fileBuffer,
           size: 'raw'
         }),
-        await this.fileManageService.uploadFile({
-          date: exifData.takenAt.toISOString(),
+        this.fileManageService.uploadFile({
+          date: exifData.takenAt,
           fileName: `${group.name}${group.ext}`,
           fileBuffer: smallBuffer,
           size: 'small'
         }),
-        await this.fileManageService.uploadFile({
-          date: exifData.takenAt.toISOString(),
+        this.fileManageService.uploadFile({
+          date: exifData.takenAt,
           fileName: `${group.name}${group.ext}`,
           fileBuffer: largeBuffer,
           size: 'large'
         })
-      ]);
+      ];
+
+      // 如果有视频文件，添加视频上传任务
+      let videoUploadTask = null;
+      if (group.videoAbsolutePath) {
+        const videoBuffer = await fs.promises.readFile(group.videoAbsolutePath);
+        const videoExt = path.extname(group.videoAbsolutePath);
+        videoUploadTask = this.fileManageService.uploadFile({
+          date: exifData.takenAt,
+          fileName: `${group.name}${videoExt}`,
+          fileBuffer: videoBuffer,
+          size: 'raw'
+        });
+        uploadTasks.push(videoUploadTask);
+      }
+
+      // 执行上传
+      const uploadRes = await Promise.all(uploadTasks);
 
       const isSuccess = uploadRes.every(res => res?.key && res?.success);
 
@@ -146,7 +163,9 @@ export class ScannerService {
         originalKey: uploadRes[0]?.key,
         thumbSmallKey: uploadRes[1]?.key,
         thumbLargeKey: uploadRes[2]?.key,
-        videoPath: videoRelativePath,
+        videoPath: group.videoAbsolutePath
+          ? uploadRes[3]?.key
+          : videoRelativePath,
         width,
         height,
         takenAt: exifData.takenAt,
