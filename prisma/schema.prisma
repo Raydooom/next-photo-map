@@ -47,19 +47,21 @@ model locations {
   photoId          Int     @unique
   latitude         Float
   longitude        Float
-  altitude         Float?
-  address          String?
-  city             String?
-  country          String?
-  district         String?
-  bearing          Float?
-  bearingDirection String?
-  adcode           String?
-  province         String?
-  street           String?
-  town             String?
   GPSLatitude      Int[]   @default([])
   GPSLongitude     Int[]   @default([])
+  altitude         Float?
+  bearing          Float?
+  bearingDirection String?
+  country          String?
+  province         String?
+  city             String?
+  district         String?
+  township         String?
+  adcode           String?
+  formattedAddress String?
+  neighborhood     String?
+  type             String?
+  rawData          Json?
   photos           photos  @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
   @@index([latitude, longitude])
@@ -74,7 +76,7 @@ model photos {
   originalKey   String?
   thumbSmallKey String?
   thumbLargeKey String?
-  videoPath     String?
+  videoKey      String?
   width         Int?
   height        Int?
   takenAt       DateTime?

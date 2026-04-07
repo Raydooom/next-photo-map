@@ -1,5 +1,5 @@
 import Map from './_components/Map';
-import Service from '@/services/photo';
+import * as Service from '@/server/services/admin.services';
 import { coordTransform, groupByLocation } from '@/components/Map/helper';
 import { PhotoLocation } from '@/types';
 import { Suspense } from 'react';
