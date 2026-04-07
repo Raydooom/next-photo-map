@@ -11,9 +11,11 @@ import { photoExifService } from './photoExif.services';
 
 import { PHOTO_BASE_DIR } from '../config';
 import * as Utils from '../utils';
+import { GeocodingService } from '../utils/geocoding';
 
 interface FileGroup {
   fileName: string; // 包含扩展名的文件名
+  videoName?: string; // 视频文件扩展名
   name: string; // 不含扩展名的文件名
   ext: string; // 文件扩展名，包含点号
   imageAbsolutePath?: string; // 图片绝对路径
@@ -25,9 +27,11 @@ interface FileGroup {
 export class ScannerService {
   private photoService: PhotoService;
   private fileManageService: FileManageService;
+  private geocodingService: GeocodingService;
   constructor(appUrl?: string) {
     this.photoService = new PhotoService(appUrl);
     this.fileManageService = new FileManageService();
+    this.geocodingService = new GeocodingService();
   }
   /**
    * 开始扫描目录
@@ -114,19 +118,19 @@ export class ScannerService {
       const uploadTasks = [
         this.fileManageService.uploadFile({
           date: exifData.takenAt,
-          fileName: `${group.name}${group.ext}`,
+          fileName: group.fileName,
           fileBuffer,
           size: 'raw'
         }),
         this.fileManageService.uploadFile({
           date: exifData.takenAt,
-          fileName: `${group.name}${group.ext}`,
+          fileName: group.fileName,
           fileBuffer: smallBuffer,
           size: 'small'
         }),
         this.fileManageService.uploadFile({
           date: exifData.takenAt,
-          fileName: `${group.name}${group.ext}`,
+          fileName: group.fileName,
           fileBuffer: largeBuffer,
           size: 'large'
         })
@@ -163,7 +167,7 @@ export class ScannerService {
         originalKey: uploadRes[0]?.key,
         thumbSmallKey: uploadRes[1]?.key,
         thumbLargeKey: uploadRes[2]?.key,
-        videoPath: group.videoAbsolutePath
+        videoKey: group.videoAbsolutePath
           ? uploadRes[3]?.key
           : videoRelativePath,
         width,
@@ -252,27 +256,42 @@ export class ScannerService {
           rawData: exifData
         };
         await photoExifService.savePhotoExif(photo.id, data);
-        // if (exifData.latitude && exifData.longitude) {
-        //   const bearingDirection =
-        //     bearing !== null ? Utils.getDirectionFromBearing(bearing) : null;
 
-        //   // 逆地理编码
-        //   let addressInfo: any = {};
+        // 处理位置信息
+        if (exifData.latitude && exifData.longitude) {
+          const bearingDirection =
+            bearing !== null ? Utils.getDirectionFromBearing(bearing) : null;
 
-        //   await locationService.createLocation({
-        //     photoId: photoId,
-        //     latitude: exifData.latitude,
-        //     longitude: exifData.longitude,
-        //     GPSLatitude: latitudeDMS,
-        //     GPSLongitude: longitudeDMS,
-        //     altitude: exifData.GPSAltitude
-        //       ? Number(exifData.GPSAltitude.toFixed(2))
-        //       : null,
-        //     bearing: bearing,
-        //     bearingDirection: bearingDirection,
-        //     ...addressInfo
-        //   });
-        // }
+          // 逆地理编码
+          const addressInfo = await this.geocodingService.reverseGeocode(
+            exifData.latitude,
+            exifData.longitude
+          );
+
+          if (!addressInfo) return;
+          const { formatted_address, addressComponent } = addressInfo;
+          await locationService.saveLocation(photo.id, {
+            latitude: exifData.latitude,
+            longitude: exifData.longitude,
+            GPSLatitude: exifData.GPSLatitude,
+            GPSLongitude: exifData.GPSLongitude,
+            altitude: exifData.GPSAltitude
+              ? Number(exifData.GPSAltitude.toFixed(2))
+              : null,
+            bearing: bearing,
+            bearingDirection: bearingDirection,
+            country: addressComponent.country,
+            province: addressComponent.province,
+            city: addressComponent.city || addressComponent.province, // 直辖市
+            district: addressComponent.district,
+            township: addressComponent.township,
+            adcode: addressComponent.adcode,
+            neighborhood: addressComponent.neighborhood.name,
+            type: addressComponent.neighborhood.type,
+            formattedAddress: formatted_address,
+            rawData: addressInfo
+          });
+        }
       } else {
         // 删除旧记录
         await photoExifService.deletePhotoExifByPhotoId(photo.id);
@@ -301,11 +320,11 @@ export class ScannerService {
 
       if (!groups.has(key)) {
         groups.set(key, {
-          fileName,
           name,
           ext,
           dirAbsolutePath: dir,
-          mimeType: ''
+          mimeType: '',
+          fileName: ''
         });
       }
 
@@ -313,10 +332,15 @@ export class ScannerService {
       if (['.jpg', '.jpeg', '.png', '.heic', '.webp'].includes(ext)) {
         group.imageAbsolutePath = file;
         group.mimeType = Utils.getMimeType(file);
+        group.fileName = fileName;
       } else if (['.mp4', '.mov'].includes(ext)) {
         group.videoAbsolutePath = file;
+        group.videoName = fileName;
       }
     }
+
+    console.log('👾 ~ :344 ~ ScannerService ~ groupFiles ~ groupslog:', groups);
+
     return groups;
   }
 

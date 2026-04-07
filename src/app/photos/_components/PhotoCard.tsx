@@ -18,6 +18,7 @@ export const PhotoCard = memo(
     className?: string;
     onClickItem: (item: { data: PhotoItem }) => void;
   }) => {
+    console.log(data.videoUrl)
     const [isHovered, setIsHovered] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const playVideo = () => {

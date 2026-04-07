@@ -219,10 +219,10 @@ export class PhotoService {
     const photoMap = new Map(
       photos.map(p => {
         const transformed = this.transformPhoto(p);
-        if (transformed.photo_exif) {
+        if (transformed.photoExif) {
           // 排除 rawData 字段以减小响应体积
-          const { rawData, ...rest } = transformed.photo_exif;
-          transformed.photo_exif = rest as any;
+          const { rawData, ...rest } = transformed.photoExif;
+          transformed.photoExif = rest as any;
         }
         return [p.id, transformed];
       })
@@ -261,13 +261,13 @@ export class PhotoService {
     }
 
     // 处理视频 URL
-    if (transformed.videoFileKey) {
-      transformed.videoUrl = await getImageUrl(transformed.videoFileKey);
+    if (transformed.videoKey) {
+      transformed.videoUrl = await getImageUrl(transformed.videoKey);
     }
 
     delete transformed.thumbSmallKey;
     delete transformed.thumbLargeKey;
-    delete transformed.videoFileKey;
+    delete transformed.videoKey;
 
     return transformed;
   }

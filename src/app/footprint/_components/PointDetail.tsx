@@ -1,6 +1,6 @@
 'use client';
 import { PhotoLocation, PhotoDetail } from '@/types';
-import * as Action from '@/services/actions';
+import * as Action from '@/server/services/admin.services';
 import { useEffect, useState } from 'react';
 import { Card } from '@heroui/card';
 import { formatTakenDate } from '@/utils/format';

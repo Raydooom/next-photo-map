@@ -1,4 +1,4 @@
-import { prisma } from '../lib/db';
+import { Prisma, prisma } from '../lib/db';
 import type { locations } from '@prisma/client';
 
 /**
@@ -8,12 +8,20 @@ export const locationService = {
   /**
    * 创建位置记录
    */
-  createLocation: async (data: Omit<locations, 'id' | 'photos'>): Promise<locations> => {
-    return await prisma.locations.create({
-      data
+  saveLocation: async (photoId: number, location: any) => {
+    return await prisma.locations.upsert({
+      where: { photoId },
+      update: {
+        ...location,
+        rawData: location.rawData ?? Prisma.JsonNull
+      },
+      create: {
+        photoId,
+        ...location,
+        rawData: location.rawData ?? Prisma.JsonNull
+      }
     });
   },
-
   /**
    * 根据 ID 获取位置记录
    */
@@ -63,32 +71,6 @@ export const locationService = {
   },
 
   /**
-   * 更新位置记录
-   */
-  updateLocation: async (
-    id: number,
-    data: Partial<Omit<locations, 'id' | 'photos'>>
-  ): Promise<locations> => {
-    return await prisma.locations.update({
-      where: { id },
-      data
-    });
-  },
-
-  /**
-   * 根据 photoId 更新位置记录
-   */
-  updateLocationByPhotoId: async (
-    photoId: number,
-    data: Partial<Omit<locations, 'id' | 'photos'>>
-  ): Promise<locations> => {
-    return await prisma.locations.update({
-      where: { photoId },
-      data
-    });
-  },
-
-  /**
    * 删除位置记录
    */
   deleteLocation: async (id: number): Promise<locations> => {
@@ -103,18 +85,6 @@ export const locationService = {
   deleteLocationByPhotoId: async (photoId: number): Promise<locations> => {
     return await prisma.locations.delete({
       where: { photoId }
-    });
-  },
-
-  /**
-   * 批量创建位置记录
-   */
-  createLocationsBatch: async (
-    data: Array<Omit<locations, 'id' | 'photos'>>
-  ): Promise<{ count: number }> => {
-    return await prisma.locations.createMany({
-      data,
-      skipDuplicates: true
     });
   },
 
