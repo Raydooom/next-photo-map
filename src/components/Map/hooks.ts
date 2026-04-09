@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -27,9 +27,10 @@ export const useMapLibre = ({
   const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // 【关键】使用 Ref 记录当前的标记点，防止切换主题时数据丢失
+  const featuresRef = useRef<GeoJSON.Feature[]>([]);
   const themeInfo = useTheme();
 
-  // 计算地图样式
   const mapStyle = useMemo(
     () =>
       themeInfo.theme === 'dark'
@@ -39,109 +40,110 @@ export const useMapLibre = ({
   );
 
   // 替换中文
-  const replaceChinese = () => {
-    if (!mapInstance) return;
-    const layers = mapInstance.getStyle().layers;
-    layers.forEach(layer => {
-      // 检查图层是否有文字字段 (Symbol 图层)
+  const replaceChinese = useCallback((map: maplibregl.Map) => {
+    const style = map.getStyle();
+    if (!style) return;
+
+    style.layers.forEach(layer => {
       if (
         layer.type === 'symbol' &&
         layer.layout &&
         layer.layout['text-field']
       ) {
-        // 动态将 text-field 改为中文逻辑
-        mapInstance.setLayoutProperty(layer.id, 'text-field', [
+        map.setLayoutProperty(layer.id, 'text-field', [
           'coalesce',
-          ['get', 'name:zh'], // 优先中文
-          ['get', 'name:zh-Hans'], // 备选简体
-          ['get', 'name'], // 原始名称
-          ['get', 'name:en'] // 最后英文保底
+          ['get', 'name:zh'],
+          ['get', 'name:zh-Hans'],
+          ['get', 'name'],
+          ['get', 'name:en']
         ]);
       }
     });
-  };
+  }, []);
 
   // 添加聚合图层的函数
-  const addClusterLayers = (map: maplibregl.Map) => {
-    if (!config.cluster) return;
+  const addClusterLayers = useCallback(
+    (map: maplibregl.Map) => {
+      if (!config.cluster) return;
 
-    // 检查数据源是否存在，不存在则添加
-    if (!map.getSource('markers')) {
+      // 【修正】setStyle 后旧 source 必死，这里不再做 if 判断，直接 add
       map.addSource('markers', {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features: []
+          features: featuresRef.current // 立即回填之前存的数据
         },
         cluster: true,
         clusterMaxZoom: config.clusterMaxZoom || 18,
         clusterRadius: config.clusterRadius || 50
       });
-    }
 
-    // 检查图层是否存在，不存在则添加
-    if (!map.getLayer('clusters')) {
-      map.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'markers',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#51bbd6',
-            100,
-            '#f1f075',
-            750,
-            '#f28cb1'
-          ],
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            20,
-            100,
-            30,
-            750,
-            40
-          ]
-        }
-      });
-    }
+      // 图层还是可以判断一下，避免重复添加报错
+      if (!map.getLayer('clusters')) {
+        map.addLayer({
+          id: 'clusters',
+          type: 'circle',
+          source: 'markers',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': [
+              'step',
+              ['get', 'point_count'],
+              '#51bbd6',
+              100,
+              '#f1f075',
+              750,
+              '#f28cb1'
+            ],
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              20,
+              100,
+              30,
+              750,
+              40
+            ]
+          }
+        });
+      }
 
-    if (!map.getLayer('cluster-count')) {
-      map.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'markers',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12
-        }
-      });
-    }
+      if (!map.getLayer('cluster-count')) {
+        map.addLayer({
+          id: 'cluster-count',
+          type: 'symbol',
+          source: 'markers',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': '{point_count_abbreviated}',
+            // 确保你的 TileServer 字体库里有这些字体，否则数字会白屏
+            'text-font': ['Noto Sans CJK Regular', 'Arial Unicode MS Regular'],
+            'text-size': 12
+          }
+        });
+      }
 
-    if (!map.getLayer('unclustered-point')) {
-      map.addLayer({
-        id: 'unclustered-point',
-        type: 'circle',
-        source: 'markers',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': '#11b4da',
-          'circle-radius': 10,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff'
-        }
-      });
-    }
-  };
+      if (!map.getLayer('unclustered-point')) {
+        map.addLayer({
+          id: 'unclustered-point',
+          type: 'circle',
+          source: 'markers',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-color': '#11b4da',
+            'circle-radius': 10,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff'
+          }
+        });
+      }
+    },
+    [config]
+  );
 
-  // 初始化 MapLibre 地图
+  // 初始化地图
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapStyle) return;
 
     const map = new maplibregl.Map({
       container: mapRef.current,
@@ -150,11 +152,10 @@ export const useMapLibre = ({
       zoom: config.zoom || 12,
       attributionControl: false
     });
-    map.on('load', () => {
-      replaceChinese();
-      // 添加聚合图层
-      addClusterLayers(map);
 
+    map.on('load', () => {
+      replaceChinese(map);
+      addClusterLayers(map);
       setMapInstance(map);
       setIsInitialized(true);
       events?.onMapLoad?.(map);
@@ -165,45 +166,35 @@ export const useMapLibre = ({
     };
   }, []);
 
-  // 监听主题变化，更新地图样式并重新添加聚合点
+  // 处理主题/样式切换
   useEffect(() => {
-    if (mapInstance && mapStyle) {
-      // 设置新样式
+    if (mapInstance && mapStyle && isInitialized) {
+      // 1. 执行切换
       mapInstance.setStyle(mapStyle);
-      
-      // 监听样式加载完成事件，重新添加聚合点
+
+      // 2. 只有 style.load 之后，图层才是“干净且可写”的
       mapInstance.once('style.load', () => {
-        replaceChinese();
-        // 重新添加聚合图层
+        replaceChinese(mapInstance);
         addClusterLayers(mapInstance);
+
+        // 3. 补偿性同步数据（确保数据渲染）
+        const source = mapInstance.getSource(
+          'markers'
+        ) as maplibregl.GeoJSONSource;
+        if (source) {
+          source.setData({
+            type: 'FeatureCollection',
+            features: featuresRef.current
+          });
+        }
       });
     }
-  }, [mapInstance, mapStyle]);
-
-  // 设置地图中心和缩放级别
-  const setCenterAndZoom = (point: MarkerPoint, zoom?: number) => {
-    if (mapInstance) {
-      mapInstance.setCenter([point.longitude, point.latitude]);
-      if (zoom) {
-        mapInstance.setZoom(zoom);
-      }
-    }
-  };
-
-  // 平滑移动到指定位置
-  const flyTo = (point: MarkerPoint, options?: { zoom?: number }) => {
-    if (mapInstance) {
-      mapInstance.flyTo({
-        center: [point.longitude, point.latitude],
-        zoom: options?.zoom || mapInstance.getZoom(),
-        duration: 1000
-      });
-    }
-  };
+  }, [mapInstance, mapStyle, isInitialized, replaceChinese, addClusterLayers]);
 
   // 更新地图数据
   const updateMarkers = (features: GeoJSON.Feature[]) => {
-    if (mapInstance) {
+    featuresRef.current = features; // 同步更新 Ref
+    if (mapInstance && isInitialized) {
       const source = mapInstance.getSource(
         'markers'
       ) as maplibregl.GeoJSONSource;
@@ -213,6 +204,23 @@ export const useMapLibre = ({
           features
         });
       }
+    }
+  };
+
+  const setCenterAndZoom = (point: MarkerPoint, zoom?: number) => {
+    if (mapInstance) {
+      mapInstance.setCenter([point.longitude, point.latitude]);
+      if (zoom) mapInstance.setZoom(zoom);
+    }
+  };
+
+  const flyTo = (point: MarkerPoint, options?: { zoom?: number }) => {
+    if (mapInstance) {
+      mapInstance.flyTo({
+        center: [point.longitude, point.latitude],
+        zoom: options?.zoom || mapInstance.getZoom(),
+        duration: 1000
+      });
     }
   };
 
