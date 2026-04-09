@@ -86,7 +86,7 @@ export class PhotoService {
     const photo = await prisma.photos.findUnique({
       where: { id },
       include: {
-        photo_exif: true // 默认包含 EXIF 信息
+        photoExif: true // 默认包含 EXIF 信息
       }
     });
 
@@ -105,62 +105,64 @@ export class PhotoService {
     });
   }
 
-  /**
-   * 获取所有包含地理位置信息的照片（用于地图展示）
-   */
-  async getPhotosWithLocation() {
-    const photos = await prisma.photos.findMany({
-      where: {
-        locations: {
-          isNot: null
-        }
-      },
-      select: {
-        id: true,
-        smallThumbnail: true,
-        takenAt: true,
-        locations: {
-          select: {
-            latitude: true,
-            longitude: true,
-            bearing: true,
-            GPSLatitude: true,
-            GPSLongitude: true,
-            address: true,
-            country: true,
-            province: true,
-            city: true,
-            district: true,
-            town: true,
-            street: true,
-            adcode: true
-          }
-        }
-      }
-    });
+  // /**
+  //  * 获取所有包含地理位置信息的照片（用于地图展示）
+  //  */
+  // async getPhotosWithLocation() {
+  //   const photos = await prisma.photos.findMany({
+  //     where: {
+  //       locations: {
+  //         isNot: null
+  //       }
+  //     },
+  //     select: {
+  //       id: true,
+  //       takenAt: true,
+  //       locations: {
+  //         select: {
+  //           latitude: true,
+  //           longitude: true,
+  //           GPSLatitude: true,
+  //           GPSLongitude: true,
+  //           altitude: true,
+  //           bearing: true,
+  //           bearingDirection: true,
+  //           country: true,
+  //           province: true,
+  //           city: true,
+  //           district: true,
+  //           township: true,
+  //           adcode: true,
+  //           formattedAddress: true,
+  //           neighborhood: true,
+  //           type: true
+  //         }
+  //       }
+  //     }
+  //   });
 
-    return photos.map(photo => {
-      const transformed = this.transformPhoto({ ...photo }); // 浅拷贝以避免副作用
-      return {
-        id: transformed.id,
-        thumbnail: transformed.smallThumbnail,
-        latitude: transformed.locations?.latitude,
-        longitude: transformed.locations?.longitude,
-        bearing: transformed.locations?.bearing,
-        GPSLatitude: transformed.locations?.GPSLatitude,
-        GPSLongitude: transformed.locations?.GPSLongitude,
-        address: transformed.locations?.address,
-        country: transformed.locations?.country,
-        province: transformed.locations?.province,
-        city: transformed.locations?.city,
-        district: transformed.locations?.district,
-        town: transformed.locations?.town,
-        street: transformed.locations?.street,
-        adcode: transformed.locations?.adcode,
-        takenAt: transformed.takenAt
-      };
-    });
-  }
+  //   return photos.map(photo => {
+  //     const transformed = this.transformPhoto({ ...photo }); // 浅拷贝以避免副作用
+  //     return {
+  //       id: transformed.id,
+  //       thumbnail: transformed.smallThumbnail,
+  //       latitude: transformed.locations?.latitude,
+  //       longitude: transformed.locations?.longitude,
+  //       bearing: transformed.locations?.bearing,
+  //       GPSLatitude: transformed.locations?.GPSLatitude,
+  //       GPSLongitude: transformed.locations?.GPSLongitude,
+  //       address: transformed.locations?.address,
+  //       country: transformed.locations?.country,
+  //       province: transformed.locations?.province,
+  //       city: transformed.locations?.city,
+  //       district: transformed.locations?.district,
+  //       town: transformed.locations?.town,
+  //       street: transformed.locations?.street,
+  //       adcode: transformed.locations?.adcode,
+  //       takenAt: transformed.takenAt
+  //     };
+  //   });
+  // }
 
   /**
    * 获取指定地理范围内的照片
@@ -210,26 +212,17 @@ export class PhotoService {
         id: { in: ids }
       },
       include: {
-        photo_exif: true,
+        photoExif: true,
         locations: true
       }
     });
 
     // 保持输入 ID 的顺序
-    const photoMap = new Map(
-      photos.map(p => {
-        const transformed = this.transformPhoto(p);
-        if (transformed.photoExif) {
-          // 排除 rawData 字段以减小响应体积
-          const { rawData, ...rest } = transformed.photoExif;
-          transformed.photoExif = rest as any;
-        }
-        return [p.id, transformed];
+    const result = await Promise.all(
+      photos.map(async p => {
+        return await this.transformPhoto(p);
       })
     );
-    const result = ids
-      .map(id => photoMap.get(id))
-      .filter(item => item !== undefined);
 
     return result;
   }
@@ -246,7 +239,7 @@ export class PhotoService {
   private async transformPhoto(
     photo: Prisma.photosGetPayload<{
       include?: {
-        photo_exif?: boolean;
+        photoExif?: boolean;
         locations?: boolean;
       };
     }>
@@ -263,6 +256,18 @@ export class PhotoService {
     // 处理视频 URL
     if (transformed.videoKey) {
       transformed.videoUrl = await getImageUrl(transformed.videoKey);
+    }
+
+    if (transformed.photoExif) {
+      // 排除 rawData 字段以减小响应体积
+      const { rawData, ...rest } = transformed.photoExif;
+      transformed.photoExif = rest as any;
+    }
+
+    if (transformed.locations) {
+      // 排除 rawData 字段以减小响应体积
+      const { rawData, ...rest } = transformed.locations;
+      transformed.locations = rest as any;
     }
 
     delete transformed.thumbSmallKey;

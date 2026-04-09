@@ -339,8 +339,6 @@ export class ScannerService {
       }
     }
 
-    console.log('👾 ~ :344 ~ ScannerService ~ groupFiles ~ groupslog:', groups);
-
     return groups;
   }
 

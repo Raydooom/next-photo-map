@@ -1,6 +1,6 @@
 'use client';
 import { PhotoLocation, PhotoDetail } from '@/types';
-import * as Action from '@/server/services/admin.services';
+import * as Action from '@/server/actions/index';
 import { useEffect, useState } from 'react';
 import { Card } from '@heroui/card';
 import { formatTakenDate } from '@/utils/format';
@@ -13,7 +13,6 @@ import {
 import { ExifTagList } from '@/components/modules/ExifTag';
 import { Skeleton } from '@heroui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MarkerListDataItem } from '@/types/mapMarker';
 
 const JumpPhoto = (photoId: number) => {
   window.open(`/photos?photoId=${photoId}`, '_blank');
@@ -24,9 +23,9 @@ export const PointDetail = ({
   onClose,
   onBackLocation
 }: {
-  viewList: MarkerListDataItem[];
+  viewList: PhotoLocation[];
   onClose: () => void;
-  onBackLocation: (location: MarkerListDataItem) => void;
+  onBackLocation: (location: PhotoLocation) => void;
 }) => {
   const [photoList, setPhotoList] = useState<PhotoDetail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +34,7 @@ export const PointDetail = ({
   useEffect(() => {
     if (viewList.length === 0) return;
     setIsLoading(true);
-    const photoIds = viewList.map(item => item.id);
+    const photoIds = viewList.map(item => item.photoId);
     Action.getPhotoDetailBatch(photoIds).then(data => {
       setPhotoList(data);
       setIsLoading(false);
@@ -121,20 +120,17 @@ export const PointDetail = ({
 // 单图展示
 const SingleImageSkeleton = () => (
   <>
-    <Skeleton className="h-50 bg-default-300"></Skeleton>
+    <Skeleton className="h-50 bg-default-300" />
     <div className="p-3 flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2">
         {[1, 2, 3, 4].map(item => (
-          <Skeleton
-            key={item}
-            className="rounded-lg h-6 bg-default-400"
-          ></Skeleton>
+          <Skeleton key={item} className="rounded-lg h-6 bg-default-400" />
         ))}
       </div>
-      <Skeleton className="w-1/3 h-4 rounded-lg bg-default-300"></Skeleton>
-      <Skeleton className="h-3 rounded-lg bg-default-200"></Skeleton>
-      <Skeleton className="h-4 w-2/3 rounded-lg bg-default-300"></Skeleton>
-      <Skeleton className="mt-2 h-5 w-2/3 rounded-lg bg-default-300"></Skeleton>
+      <Skeleton className="w-1/3 h-4 rounded-lg bg-default-300" />
+      <Skeleton className="h-3 rounded-lg bg-default-200" />
+      <Skeleton className="h-4 w-2/3 rounded-lg bg-default-300" />
+      <Skeleton className="mt-2 h-5 w-2/3 rounded-lg bg-default-300" />
     </div>
   </>
 );
@@ -153,11 +149,11 @@ const SingleImage = ({
     >
       <div className="w-full max-h-60 relative rounded-3xl overflow-hidden flex items-center justify-center shadow-lg">
         <Image
-          src={photoInfo.largeThumbnail}
+          src={photoInfo.thumbLargeUrl}
           alt={photoInfo.filename || ''}
           width={photoInfo.width}
           height={photoInfo.height}
-          blurDataURL={photoInfo.smallThumbnail}
+          blurDataURL={photoInfo.thumbSmallUrl}
           placeholder="blur"
         />
         <div className="group absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-end justify-end">
@@ -168,7 +164,7 @@ const SingleImage = ({
         </div>
       </div>
       <div className="p-3">
-        <ExifTagList exifData={photoInfo.exif} />
+        <ExifTagList exifData={photoInfo.photoExif || null} />
         <b className="mt-2 block text-sm">{photoInfo.exif?.model}</b>
         <p className="text-xs text-default-500">{photoInfo.exif?.lensModel}</p>
         <p className="text-tiny mt-1">{formatTakenDate(photoInfo.takenAt)}</p>
@@ -184,13 +180,10 @@ const SingleImage = ({
 // 多图展示
 const MultiImageSkeleton = () => (
   <div className="p-4">
-    <Skeleton className="w-1/2 h-6 rounded-lg bg-default-300"></Skeleton>
+    <Skeleton className="w-1/2 h-6 rounded-lg bg-default-300" />
     <div className="grid grid-cols-3 gap-1 mt-2">
       {new Array(6).fill(0).map((item, i) => (
-        <Skeleton
-          key={i}
-          className="aspect-square rounded-lg shadow-lg"
-        ></Skeleton>
+        <Skeleton key={i} className="aspect-square rounded-lg shadow-lg" />
       ))}
     </div>
   </div>
@@ -221,11 +214,11 @@ const MultiImage = ({
               className="aspect-square relative rounded-lg overflow-hidden flex items-center justify-center shadow-lg"
             >
               <Image
-                src={photo.largeThumbnail}
+                src={photo.thumbLargeUrl}
                 alt={photo.filename || ''}
                 width={photo.width}
                 height={photo.height}
-                blurDataURL={photo.smallThumbnail}
+                blurDataURL={photo.thumbSmallUrl}
                 placeholder="blur"
               />
               <div className="group absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-center justify-center">
@@ -274,7 +267,7 @@ const LocationInfo = ({
       <div className="mt-3 flex gap-1 items-center justify-between">
         <div>
           <div className="text-xs">
-            {photoLocation.latitudeDMS} , {photoLocation.longitudeDMS}
+            {photoLocation.GPSLatitude} , {photoLocation.GPSLongitude}
           </div>
           <div className="text-xs text-default-500">
             {photoLocation.address || ''}
