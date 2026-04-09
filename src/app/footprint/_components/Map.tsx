@@ -1,23 +1,34 @@
 'use client';
+import maplibregl from 'maplibre-gl';
 import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { useBaiduMap } from '@/components/Map';
-import ClusterPoint from '@/components/Map/modules/ClusterPoint';
+import { useMapLibre } from '@/components/Map/hooks';
+import { MapControls } from '@/components/Map/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
-import { MapControls } from './MapControls';
-import { PhotoLocation } from '@/types';
 import { PointDetail } from './PointDetail';
 import { replaceUrl } from '@/utils/history';
-import { MapMarker, ClusterPointData } from '@/types/mapMarker';
+import { MapMarker } from '@/types/mapMarker';
 
 interface MapProps {
   markerGroup?: MapMarker[];
 }
 
 export default function Map({ markerGroup }: MapProps) {
-  const { mapRef, mapInstance, isInitialized, setCenterAndZoom, flyTo } =
-    useBaiduMap();
+  // 使用 useMapLibre hook
+  const {
+    mapRef,
+    mapInstance,
+    isInitialized,
+    setCenterAndZoom,
+    flyTo,
+    updateMarkers
+  } = useMapLibre({
+    config: {
+      cluster: true,
+      clusterMaxZoom: 17,
+      clusterRadius: 50
+    }
+  });
 
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
@@ -42,100 +53,109 @@ export default function Map({ markerGroup }: MapProps) {
 
     if (viewPoint) {
       if (mapInstance && isInitialized) {
-        setCenterAndZoom(viewPoint.bPoint, 18);
+        setCenterAndZoom(viewPoint.point, 16);
       }
       setViewList(viewPoint.list);
     } else {
-      setCenterAndZoom(new window.BMapGL.Point(116.404, 39.915), 12);
+      if (mapInstance && isInitialized) {
+        setCenterAndZoom({ longitude: 116.404, latitude: 39.915 }, 12);
+      }
     }
   }, [mapInstance, isInitialized, markerGroup, photoId]);
 
-  // 点击聚合点，居中显示地图
-  const onClickPoint = (clusterData: ClusterPointData['data']) => {
-    setViewList(clusterData.list);
-    flyTo(clusterData.bPoint);
-    // 如果一个点位包含多个图片，将第一个图片的id设为激活状态
-    setActiveId(clusterData.list[0].id);
-    // // 仅更新地址栏 URL，不触发 Next.js 的路由跳转逻辑
-    replaceUrl(`${window.location.pathname}?photoId=${clusterData.list[0].id}`);
-  };
-  const onCloseDetail = () => {
-    setViewList([]);
-    setActiveId(undefined);
-    replaceUrl(window.location.pathname);
-  };
-  const onBackLocation = (
-    location: PhotoLocation & { bPoint: { lng: number; lat: number } }
-  ) => {
-    if (location) {
-      flyTo(location.bPoint);
-    }
-  };
-  // 绘制聚合点
+  // 更新地图数据
   useEffect(() => {
-    if (!mapInstance || !markerGroup) return;
-    const Cluster = window.Cluster;
-    const getHtmlDom = (cluster: ClusterPointData) => {
-      const div = document.createElement('div');
-      const root = createRoot(div);
-      root.render(
-        <ClusterPoint
-          activeId={Number(activeId)}
-          data={cluster}
-          onClick={onClickPoint}
-        />
-      );
-      return div;
-    };
+    if (!mapInstance || !markerGroup || !isInitialized) return;
 
-    const cluster = new Cluster.View(mapInstance, {
-      clusterMinPoints: 2,
-      clusterMaxZoom: 18,
-      updateRealTime: true,
-      fitViewOnClick: true,
-      renderClusterStyle: {
-        type: Cluster.ClusterRender.DOM,
-        inject: getHtmlDom
+    // 转换数据为 GeoJSON 格式
+    const features = markerGroup.map(group => ({
+      type: 'Feature' as const,
+      properties: {
+        data: group,
+        count: group.list.length
       },
-      renderSingleStyle: {
-        type: Cluster.ClusterRender.DOM,
-        inject: getHtmlDom
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [group.point.longitude, group.point.latitude]
       }
-    });
+    }));
 
-    const points = Cluster.pointTransformer(
-      markerGroup,
-      function (data: MapMarker) {
-        return {
-          point: [data.bPoint.lng, data.bPoint.lat],
-          properties: {
-            data
+    // 更新数据源
+    updateMarkers(features);
+
+    // 添加点击事件监听
+    const handleClick = async (e: maplibregl.MapMouseEvent) => {
+      const features = mapInstance.queryRenderedFeatures(e.point, {
+        layers: ['clusters']
+      });
+      if (features.length) {
+        const clusterId = features[0].properties?.cluster_id;
+
+        if (clusterId !== undefined) {
+          // 点击聚合点，展开聚合
+          const source = mapInstance.getSource(
+            'markers'
+          ) as maplibregl.GeoJSONSource;
+
+          console.log('👾 ~ :104 ~ handleClick ~ sourcelog:', source);
+
+          const expansionZoom = await source.getClusterExpansionZoom(clusterId);
+          const coordinates = (features[0].geometry as any).coordinates;
+          mapInstance.flyTo({
+            center: coordinates, // 飞向聚合点的中心
+            zoom: expansionZoom + 1, // 稍微多加一点
+            speed: 1.2, // 飞行动画的速度
+            curve: 1.42, // 飞行曲线，数值越大，动画看起来越“高”
+            essential: true // 哪怕用户开启了“减弱动画”设置，这个飞行也会执行
+          });
+        }
+      } else {
+        // 点击单个标记点
+        const singleFeatures = mapInstance.queryRenderedFeatures(e.point, {
+          layers: ['unclustered-point']
+        });
+        if (singleFeatures.length) {
+          const feature = singleFeatures[0];
+          const data = feature.properties?.data;
+          const formattedData = JSON.parse(data as string);
+          if (formattedData) {
+            setViewList(formattedData.list);
+            flyTo(formattedData.point);
+            setActiveId(formattedData.list[0].id);
+            replaceUrl(
+              `${window.location.pathname}?photoId=${formattedData.list[0].id}`
+            );
           }
-        };
+        }
       }
-    );
-    cluster.setData(points);
-    return () => {
-      // 检查你的插件文档，通常是以下两种方法之一：
-      if (cluster.destroy) {
-        cluster.destroy(); // 销毁实例并移除 DOM
-      } else if (cluster.clear) {
-        cluster.clear(); // 清除数据和图层
-      }
-      // 确保清空地图上的相关 Overlay
-      mapInstance.clearOverlays();
     };
-  }, [mapInstance, markerGroup]);
+
+    mapInstance.on('click', handleClick);
+
+    return () => {
+      mapInstance.off('click', handleClick);
+    };
+  }, [mapInstance, markerGroup, isInitialized, updateMarkers, flyTo]);
 
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
       {canGoBack && <BackIcon className="absolute top-4 left-4 z-10" />}
       <PointDetail
-        onClose={onCloseDetail}
-        onBackLocation={onBackLocation}
+        onClose={() => {
+          setViewList([]);
+          setActiveId(undefined);
+          replaceUrl(window.location.pathname);
+        }}
+        onBackLocation={(location: any) => {
+          if (location) {
+            flyTo(location.bPoint);
+          }
+        }}
         viewList={viewList}
       />
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* 使用 MapControls 组件 */}
       <MapControls mapInstance={mapInstance} />
     </div>
   );

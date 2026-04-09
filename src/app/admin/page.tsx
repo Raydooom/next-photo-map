@@ -1,11 +1,11 @@
 'use client';
 import * as Admin from '@/server/actions/admin';
-import * as PhotoAction from '@/server/actions/photo';
+import * as PhotoAction from '@/server/actions/index';
 import { Button } from '@heroui/button';
 
 export default function AboutPage() {
   const startScanner = async () => {
-    const res = await Admin.scanner(true);
+    const res = await Admin.scanner();
     console.log(res);
   };
 

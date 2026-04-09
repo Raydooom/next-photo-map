@@ -37,16 +37,6 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
-        {/* <Script
-          id="baidu-map-base"
-          strategy="beforeInteractive"
-          src="https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=sp1nOvjl3L17FGOsrN13wNBJqDMcnuu1"
-        />
-        <Script
-          id="baidu-map-cluster"
-          strategy="beforeInteractive"
-          src="//unpkg.com/@bmapgl-plugin/cluster"
-        /> */}
       </body>
     </html>
   );

@@ -1,23 +1,21 @@
 import Map from './_components/Map';
-import * as Service from '@/server/services/admin.services';
-import { coordTransform, groupByLocation } from '@/components/Map/helper';
-import { PhotoLocation } from '@/types';
+import * as Actions from '@/server/actions/index';
+import { groupByLocation } from '@/components/Map/helper';
 import { Suspense } from 'react';
 
 export default async function FootprintPage() {
-  const list = await Service.getPhotoLocations();
-  // 转换为百度地图坐标
-  const baiduPoints = (item: PhotoLocation) =>
-    coordTransform.transformToBaidu({
-      lng: item.longitude,
-      lat: item.latitude
-    });
+  const list = await Actions.getLocations();
+
+  // MapLibre 使用标准 WGS84 坐标，不需要转换
   const markers = list?.map(item => ({
     ...item,
-    bPoint: { lng: baiduPoints(item).lng, lat: baiduPoints(item).lat }
+    point: { longitude: item.longitude, latitude: item.latitude }
   }));
+
   // 合并坐标
   const markerGroup = Object.values(groupByLocation(markers, 4));
+
+  console.log('👾 ~ :13 ~ FootprintPage ~ markerGrouplog:', markerGroup);
 
   return (
     <Suspense>

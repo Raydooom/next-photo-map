@@ -1,8 +1,5 @@
 declare global {
-  interface Window {
-    BMapGL: any;
-    Cluster: any;
-  }
+  interface Window {}
 }
 
 export {};

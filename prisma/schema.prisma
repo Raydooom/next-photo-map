@@ -85,6 +85,6 @@ model photos {
   dominantColor String?
   description   String?
   tags          String[]   @default([])
-  photo_exif    photoExif?
+  photoExif    photoExif?
   locations     locations?
 }

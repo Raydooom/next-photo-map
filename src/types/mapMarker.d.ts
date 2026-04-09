@@ -1,15 +1,12 @@
 import { PhotoLocation } from '@/types';
 
-// 图片数据扩展百度经纬度
-export type MarkerListDataItem = PhotoLocation & {
-  bPoint: { lng: number; lat: number };
-};
+export type MarkerPoint = { longitude: number; latitude: number };
 
 // 地图标记数据
 export type MapMarker = {
-  bPoint: { lng: number; lat: number };
-  count?: number;
-  list: MarkerListDataItem[];
+  point: MarkerPoint;
+  count: number;
+  list: PhotoLocation[];
 };
 
 // 聚合点数据

@@ -1,4 +1,4 @@
-import * as PhotoAction from '@/server/actions/photo';
+import * as PhotoAction from '@/server/actions/index';
 import MasonryGrid from './_components/MasonryGrid';
 import { Suspense } from 'react';
 

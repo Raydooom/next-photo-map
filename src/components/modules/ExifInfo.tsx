@@ -12,7 +12,7 @@ import {
 } from '@/utils/format';
 
 import { PhotoItem, PhotoExif } from '@/types';
-import * as Actions from '@/server/actions/photo';
+import * as Actions from '@/server/actions/index';
 import { Marker } from '../Map';
 import { ExifTagList } from './ExifTag';
 

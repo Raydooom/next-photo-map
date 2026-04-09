@@ -51,7 +51,7 @@ export interface PhotoItem {
   updatedAt: string;
 }
 export interface PhotoDetail extends PhotoItem {
-  exif?: PhotoExif;
+  photoExif?: PhotoExif;
   location?: PhotoLocation;
 }
 
@@ -61,8 +61,8 @@ export interface PhotoLocation {
   photo?: PhotoItem;
   latitude: number;
   longitude: number;
-  latitudeDMS: string; // 维度（度分秒）
-  longitudeDMS: string; // 经度 (度分秒)
+  GPSLatitude: number[] | null; // 维度（度分秒）
+  GPSLongitude: number[] | null; // 经度 (度分秒)
   altitude?: number | null; // 朝向 (0-360)
   bearing?: number | null;
   bearingDirection?: string | null; // 中文朝向 (东、东南等)
