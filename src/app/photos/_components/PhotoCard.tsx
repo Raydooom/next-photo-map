@@ -6,7 +6,6 @@ import { memo, useRef, useState } from 'react';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 import { formatFileSize } from '@/utils/format';
 import { motion } from 'framer-motion';
-// import { ExifTagList } from '@/components/modules/ExifTag';
 
 export const PhotoCard = memo(
   ({
@@ -18,7 +17,6 @@ export const PhotoCard = memo(
     className?: string;
     onClickItem: (item: { data: PhotoItem }) => void;
   }) => {
-    console.log(data.videoUrl)
     const [isHovered, setIsHovered] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const playVideo = () => {
@@ -84,7 +82,7 @@ export const PhotoCard = memo(
               ref={videoRef}
               muted={true}
               src={data.videoUrl}
-            ></video>
+            />
           )}
         </motion.div>
 
@@ -113,7 +111,6 @@ export const PhotoCard = memo(
             {data.filename.split('.').pop()?.toUpperCase()} · {data.width} x{' '}
             {data.height} · {formatFileSize(data.size)}
           </div>
-          {/* <ExifTagList mode="dark" photo={data} /> */}
         </div>
       </motion.div>
     );
