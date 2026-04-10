@@ -14,14 +14,14 @@ const client = new S3Client({
     accessKeyId: process.env['MINIO_ACCESS_KEY'] || '',
     secretAccessKey: process.env['MINIO_SECRET_KEY'] || ''
   },
-  region: 'us-east-1',
+  region: process.env['MINIO_REGION'] || '',
   forcePathStyle: true
 });
 
 export function uploadFileToMinio(key: string, body: Buffer) {
   return client.send(
     new PutObjectCommand({
-      Bucket: process.env['BUCKET_NAME'],
+      Bucket: process.env['MINIO_BUCKET'],
       Key: key,
       Body: body
     })
@@ -31,7 +31,7 @@ export function uploadFileToMinio(key: string, body: Buffer) {
 // 获取图片访问链接
 export async function getImageUrl(key: string) {
   const command = new GetObjectCommand({
-    Bucket: 'photo-server',
+    Bucket: process.env['MINIO_BUCKET'],
     Key: key
   });
   // 生成一个 1 小时后过期的链接
@@ -44,7 +44,7 @@ export async function getImageUrl(key: string) {
 export function deleteFileFromMinio(key: string) {
   return client.send(
     new DeleteObjectCommand({
-      Bucket: process.env['BUCKET_NAME'],
+      Bucket: process.env['MINIO_BUCKET'],
       Key: key
     })
   );
