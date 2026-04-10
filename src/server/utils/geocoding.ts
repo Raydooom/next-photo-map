@@ -64,7 +64,6 @@ export class GeocodingService {
       const url = `https://restapi.amap.com/v3/geocode/regeo?output=json&key=${this.key}&coordtype=wgs84ll&location=${lng.toFixed(6)},${lat.toFixed(6)}`;
 
       const response = await fetch(url);
-
       const data = (await response.json()) as ReverseGeocodingResponse;
 
       if (data.status === "1") {

@@ -5,7 +5,7 @@ import { Button } from '@heroui/button';
 
 export default function AboutPage() {
   const startScanner = async () => {
-    const res = await Admin.scanner();
+    const res = await Admin.scanner(true);
     console.log(res);
   };
 
