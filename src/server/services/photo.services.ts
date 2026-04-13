@@ -43,12 +43,13 @@ export class PhotoService {
    * @param keyword 搜索关键词
    * @param select 可选的字段选择
    */
-  async listPhotos(
-    page: number = 1,
-    pageSize: number = 20,
-    keyword?: string,
-    select?: Prisma.photosSelect
-  ) {
+  async listPhotos({
+    page = 1,
+    pageSize = 20,
+    keyword = '',
+    withLocation = false,
+    withExif = false
+  } = {}) {
     const skip = (page - 1) * pageSize;
 
     const where: Prisma.photosWhereInput = {};
@@ -60,13 +61,16 @@ export class PhotoService {
       ];
     }
     const [total, list] = await prisma.$transaction([
-      prisma.photos.count({ where }),
+      prisma.photos.count({ where: where }),
       prisma.photos.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: { takenAt: 'desc' },
-        select: select // 如果未定义，则返回所有字段
+        include: {
+          locations: withLocation,
+          photoExif: withExif
+        }
       })
     ]);
 

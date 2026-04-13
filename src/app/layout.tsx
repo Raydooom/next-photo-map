@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="zh-CN">
       <head />
-      <body className="min-h-screen text-foreground bg-background font-sans antialiased">
+      <body className="min-h-screen text-foreground bg-page-background font-sans antialiased">
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

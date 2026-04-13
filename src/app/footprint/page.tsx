@@ -14,9 +14,6 @@ export default async function FootprintPage() {
 
   // 合并坐标
   const markerGroup = Object.values(groupByLocation(markers, 4));
-
-  console.log('👾 ~ :13 ~ FootprintPage ~ markerGrouplog:', markerGroup);
-
   return (
     <Suspense>
       <Map markerGroup={markerGroup} />

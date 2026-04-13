@@ -1,6 +1,6 @@
 import { Modal, ModalContent } from '@heroui/modal';
 import { PhotoDetail, PhotoItem } from '@/types';
-import Carousel from './Carousel';
+import Carousel from '../common/Carousel';
 
 export default function PhotoPreview({
   list,
@@ -28,7 +28,15 @@ export default function PhotoPreview({
       }}
     >
       <ModalContent>
-        <Carousel slides={list} previewId={previewId} onClose={onClickClose} />
+        <Carousel
+          slides={list}
+          currentId={previewId}
+          onClose={onClickClose}
+          showThumbnails
+          showControls
+          showExif
+          isFullScreen
+        />
       </ModalContent>
     </Modal>
   );
