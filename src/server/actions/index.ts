@@ -6,8 +6,18 @@ import { locationService } from '../services/location.services';
 
 const photoService = new PhotoService();
 
-export const getPhotoList = async () => {
-  return await photoService.listPhotos();
+export const getPhotoList = async ({
+  page = 1,
+  pageSize = 20,
+  withLocation = false,
+  withExif = false
+} = {}) => {
+  return await photoService.listPhotos({
+    page,
+    pageSize,
+    withLocation,
+    withExif
+  });
 };
 
 export const getPhotoExif = async (photoId: number) => {

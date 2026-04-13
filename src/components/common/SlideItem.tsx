@@ -57,7 +57,7 @@ export const SlideItem = ({ item }: { item: PhotoItem }) => {
               ref={videoRef}
               muted={true}
               src={item.videoUrl}
-            ></video>
+            />
           )}
         </>
       )}

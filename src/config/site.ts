@@ -10,7 +10,7 @@ export const siteConfig = {
     {
       label: 'Home',
       href: '/',
-      meta: { fullscreen: true }
+      meta: { fullscreen: false }
     },
     {
       label: 'Photos',
