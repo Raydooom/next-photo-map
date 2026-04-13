@@ -4,15 +4,33 @@
 
 @layer base {
   :root {
-    /* 亮色模式变量 */
-    --brand-primary: 59 130 246; /* 蓝色 */
-    --brand-highlight: 24 144 255; /* 亮蓝色 */
+    --page-background: 238 238 238;
+    --background: 245 245 245;
+    --border: 228 228 231;
+    --text-main: 24 24 27;
+    --text-sub: 113 113 122; /* slate-500 */
+    --text-muted: 161 161 170; /* slate-400 */
+    --radius: 24px;
   }
 
   .dark {
-    /* 暗色模式变量 */
-    --brand-primary: 21 99 195; /* 深蓝黑 */
-    --brand-highlight: 42 157 255; /* 亮蓝色 */
+    /* --- 核心扩展色板 --- */
+    /* 基础背景 (Base) */
+    --page-background: 10, 10, 10;
+    --background: 22 22 22; /* 核心容器色 #161616 */
+
+    /* 描边与分割线 (Stroke) */
+    --border: 38 38 38; /* 核心描边色 #262626 */
+    --border-light: 55 55 55; /* 悬浮时的加强描边 */
+
+    /* 文字层级 (Typography) */
+    --text-main: 242 242 242; /* 主文字：柔白色 */
+    --text-sub: 100 116 139; /* 副文字：slate-500 */
+    --text-muted: 148 163 184; /* 弱文字：slate-400 */
+
+    /* 功能色 (Functional) */
+    --primary: 59 130 246; /* 蓝色作为点缀 */
+    --surface: 32 32 32; /* 输入框或按下态背景 */
   }
 }
 

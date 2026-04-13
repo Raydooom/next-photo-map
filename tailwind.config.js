@@ -10,10 +10,22 @@ const config = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          primary: 'rgb(var(--brand-primary) / <alpha-value>)', // global.css 中变量
-          highlight: 'rgb(var(--brand-highlight) / <alpha-value>)' // global.css 中变量
-        }
+        // 容器背景 #161616
+        'page-background': 'rgb(var(--page-background) / <alpha-value>)',
+        background: 'rgb(var(--background) / <alpha-value>)',
+        // 描边 #262626
+        border: 'rgb(var(--border) / <alpha-value>)',
+        'border-light': 'rgb(var(--border-light) / <alpha-value>)',
+        // 主题色点缀
+        primary: 'rgb(var(--primary) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+
+        main: 'rgb(var(--text-main) / <alpha-value>)', // 主文字
+        sub: 'rgb(var(--text-sub) / <alpha-value>)', // 副文字
+        muted: 'rgb(var(--text-muted) / <alpha-value>)' // 弱文字
+      },
+      borderRadius: {
+        DEFAULT: 'var(--radius)'
       },
       backdropBlur: {
         button: '4px'
