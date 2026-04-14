@@ -11,9 +11,10 @@ import { MapMarker } from '@/types/mapMarker';
 
 interface MapProps {
   markerGroup?: MapMarker[];
+  hideBackIcon?: boolean;
 }
 
-export default function Map({ markerGroup }: MapProps) {
+export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   // 使用 useMapLibre hook
   const {
     mapRef,
@@ -139,7 +140,9 @@ export default function Map({ markerGroup }: MapProps) {
 
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
-      {canGoBack && <BackIcon className="absolute top-4 left-4 z-10" />}
+      {canGoBack && !hideBackIcon && (
+        <BackIcon className="absolute top-4 left-4 z-10" />
+      )}
       <PointDetail
         onClose={() => {
           setViewList([]);
