@@ -17,7 +17,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isFullscreen = currentRoute?.meta?.fullscreen;
 
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative min-h-screen">
       {!isFullscreen && <Navbar />}
       <main>{children}</main>
       {!isFullscreen && (
