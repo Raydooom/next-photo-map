@@ -165,8 +165,8 @@ const SingleImage = ({
       </div>
       <div className="p-3">
         <ExifTagList exifData={photoInfo.photoExif || null} />
-        <b className="mt-2 block text-sm">{photoInfo.exif?.model}</b>
-        <p className="text-xs text-default-500">{photoInfo.exif?.lensModel}</p>
+        <b className="mt-2 block text-sm">{photoInfo.photoExif?.model}</b>
+        <p className="text-xs text-default-500">{photoInfo.photoExif?.lensModel}</p>
         <p className="text-tiny mt-1">{formatTakenDate(photoInfo.takenAt)}</p>
         <LocationInfo
           onClick={onClickLocation}
