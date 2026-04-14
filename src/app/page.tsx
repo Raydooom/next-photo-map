@@ -1,7 +1,6 @@
 import * as Actions from '@/server/actions';
-import { StatsGrid } from '@/components/Home/statsGrid';
-import { Recently } from '@/components/Home/recently';
-import { HotMap } from '@/components/Home/hotMap';
+import { Recently } from '@/components/Home/Recently';
+import { HotMap } from '@/components/Home/HotMap';
 
 export default async function Home() {
   const hotPhotos = await Actions.getPhotoList({
