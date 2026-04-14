@@ -24,29 +24,35 @@ export function HotMap({ hotPhotos }: HotMapProps) {
     return hotPhotos.list.find(p => p.id === photoId) || hotPhotos.list[0];
   }, [photoId, hotPhotos.list]);
 
-  const photosWithLocation = hotPhotos.list.filter(
-    (photo): photo is PhotoDetail & { location: PhotoLocation } =>
-      photo.location?.latitude !== undefined &&
-      photo.location?.longitude !== undefined
-  );
+  const photosWithLocation = useMemo(() => {
+    return hotPhotos.list.filter(
+      (photo): photo is PhotoDetail & { location: PhotoLocation } =>
+        photo.location?.latitude !== undefined &&
+        photo.location?.longitude !== undefined
+    );
+  }, [hotPhotos.list]);
 
-  const markers = photosWithLocation.map(photo => ({
-    ...photo.location,
-    id: photo.id,
-    takenAt: photo.takenAt,
-    thumbnail: photo.thumbSmallUrl,
-    point: {
-      longitude: photo.location.longitude,
-      latitude: photo.location.latitude
-    } as MarkerPoint
-  })) as (PhotoLocation & {
-    point: MarkerPoint;
-    id: number;
-    takenAt: string | null;
-    thumbnail: string;
-  })[];
+  const markers = useMemo(() => {
+    return photosWithLocation.map(photo => ({
+      ...photo.location,
+      id: photo.id,
+      takenAt: photo.takenAt,
+      thumbnail: photo.thumbSmallUrl,
+      point: {
+        longitude: photo.location.longitude,
+        latitude: photo.location.latitude
+      } as MarkerPoint
+    })) as (PhotoLocation & {
+      point: MarkerPoint;
+      id: number;
+      takenAt: string | null;
+      thumbnail: string;
+    })[];
+  }, [photosWithLocation]);
 
-  const markerGroup = Object.values(groupByLocation(markers, 4));
+  const markerGroup = useMemo(() => {
+    return Object.values(groupByLocation(markers, 4));
+  }, [markers]);
 
   const totalCities = useMemo(() => {
     const cities = new Set<string>();
@@ -73,7 +79,7 @@ export function HotMap({ hotPhotos }: HotMapProps) {
           />
 
           {/* 左下方地图小卡片 */}
-          <div className="absolute left-6 bottom-6 w-80 h-50 z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/30 backdrop-blur-xl group hover:scale-105 transition-transform duration-300">
+          <div className="absolute left-6 bottom-6 w-80 h-50 z-10 rounded overflow-hidden shadow-2xl border-4 border-white/30 backdrop-blur-xl">
             <div className="w-full h-full relative">
               <Map markerGroup={markerGroup} hideBackIcon={true} />
 

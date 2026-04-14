@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
-import maplibregl from 'maplibre-gl';
+import maplibreGl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MarkerPoint } from '@/types/mapMarker';
 
@@ -12,24 +12,49 @@ interface MapLibreProps {
     cluster?: boolean;
     clusterMaxZoom?: number;
     clusterRadius?: number;
+    interactive?: boolean;
   };
   events?: {
-    onMapLoad?: (map: maplibregl.Map) => void;
+    onMapLoad?: (map: maplibreGl.Map) => void;
   };
 }
 
+// 获取环境变量中的默认中心坐标
+const DEFAULT_CENTER = process.env
+  .NEXT_PUBLIC_MAP_DEFAULT_CENTER!.split(',')
+  .map(Number);
+
 export const useMapLibre = ({
-  center,
+  center = { longitude: DEFAULT_CENTER[0], latitude: DEFAULT_CENTER[1] },
   config = {},
   events
 }: MapLibreProps = {}) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [mapInstance, setMapInstance] = useState<maplibreGl.Map | null>(null);
 
-  // 【关键】使用 Ref 记录当前的标记点，防止切换主题时数据丢失
+  // 存储从 WebGL 影子层抓取出来的实时聚合数据
+  const [clusters, setClusters] = useState<any[]>([]);
+  // 使用 Ref 记录当前的标记点，防止切换主题时数据丢失
   const featuresRef = useRef<GeoJSON.Feature[]>([]);
   const themeInfo = useTheme();
+
+  // 从透明图层抓取聚合点数据
+  const syncClusters = useCallback(() => {
+    if (!mapInstance || !config.cluster) return;
+
+    // 查询不可见的聚合图层，获取实时聚合数据
+    const features = mapInstance.queryRenderedFeatures({
+      layers: ['clusters-hidden-sensor']
+    });
+
+    const clusterData = features.map(f => ({
+      id: f.id,
+      coordinates: (f.geometry as any).coordinates,
+      properties: f.properties
+    }));
+
+    setClusters(clusterData);
+  }, [mapInstance, config.cluster]);
 
   const mapStyle = useMemo(
     () =>
@@ -40,7 +65,7 @@ export const useMapLibre = ({
   );
 
   // 替换中文
-  const replaceChinese = useCallback((map: maplibregl.Map) => {
+  const replaceChinese = useCallback((map: maplibreGl.Map) => {
     const style = map.getStyle();
     if (!style) return;
 
@@ -63,101 +88,60 @@ export const useMapLibre = ({
 
   // 添加聚合图层的函数
   const addClusterLayers = useCallback(
-    (map: maplibregl.Map) => {
+    (map: maplibreGl.Map) => {
       if (!config.cluster) return;
 
-      // 【修正】setStyle 后旧 source 必死，这里不再做 if 判断，直接 add
+      // 如果已存在 Source 则先移除，确保数据刷新
+      if (map.getSource('markers')) {
+        map.removeSource('markers');
+      }
+
       map.addSource('markers', {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features: featuresRef.current // 立即回填之前存的数据
+          features: featuresRef.current
         },
         cluster: true,
         clusterMaxZoom: config.clusterMaxZoom || 18,
         clusterRadius: config.clusterRadius || 50
       });
 
-      // 图层还是可以判断一下，避免重复添加报错
-      if (!map.getLayer('clusters')) {
+      // 不设置颜色，只用于 queryRenderedFeatures 抓取位置
+      if (!map.getLayer('clusters-hidden-sensor')) {
         map.addLayer({
-          id: 'clusters',
+          id: 'clusters-hidden-sensor',
           type: 'circle',
           source: 'markers',
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-color': [
-              'step',
-              ['get', 'point_count'],
-              '#51bbd6',
-              100,
-              '#f1f075',
-              750,
-              '#f28cb1'
-            ],
-            'circle-radius': [
-              'step',
-              ['get', 'point_count'],
-              20,
-              100,
-              30,
-              750,
-              40
-            ]
-          }
+          paint: { 'circle-opacity': 0, 'circle-radius': 25 } // 半径稍微大一点方便抓取
         });
       }
 
-      if (!map.getLayer('cluster-count')) {
-        map.addLayer({
-          id: 'cluster-count',
-          type: 'symbol',
-          source: 'markers',
-          filter: ['has', 'point_count'],
-          layout: {
-            'text-field': '{point_count_abbreviated}',
-            // 确保你的 TileServer 字体库里有这些字体，否则数字会白屏
-            'text-font': ['Noto Sans CJK Regular', 'Arial Unicode MS Regular'],
-            'text-size': 12
-          }
-        });
-      }
-
-      if (!map.getLayer('unclustered-point')) {
-        map.addLayer({
-          id: 'unclustered-point',
-          type: 'circle',
-          source: 'markers',
-          filter: ['!', ['has', 'point_count']],
-          paint: {
-            'circle-color': '#11b4da',
-            'circle-radius': 10,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#fff'
-          }
-        });
-      }
+      // 监听地图移动事件，同步聚合图层
+      map.on('move', syncClusters);
+      map.on('moveend', syncClusters);
+      syncClusters();
     },
-    [config]
+    [config, syncClusters]
   );
 
   // 初始化地图
   useEffect(() => {
     if (!mapRef.current || !mapStyle) return;
 
-    const map = new maplibregl.Map({
+    const map = new maplibreGl.Map({
       container: mapRef.current,
       style: mapStyle,
-      center: center ? [center.longitude, center.latitude] : [116.404, 39.915],
+      center: [center.longitude, center.latitude],
       zoom: config.zoom || 12,
-      attributionControl: false
+      attributionControl: false,
+      interactive: config.interactive ?? true
     });
 
     map.on('load', () => {
       replaceChinese(map);
       addClusterLayers(map);
       setMapInstance(map);
-      setIsInitialized(true);
       events?.onMapLoad?.(map);
     });
 
@@ -166,9 +150,9 @@ export const useMapLibre = ({
     };
   }, []);
 
-  // 处理主题/样式切换
+  // // 处理主题/样式切换
   useEffect(() => {
-    if (mapInstance && mapStyle && isInitialized) {
+    if (mapInstance && mapStyle) {
       // 1. 执行切换
       mapInstance.setStyle(mapStyle);
 
@@ -176,36 +160,24 @@ export const useMapLibre = ({
       mapInstance.once('style.load', () => {
         replaceChinese(mapInstance);
         addClusterLayers(mapInstance);
-
-        // 3. 补偿性同步数据（确保数据渲染）
-        const source = mapInstance.getSource(
-          'markers'
-        ) as maplibregl.GeoJSONSource;
-        if (source) {
-          source.setData({
-            type: 'FeatureCollection',
-            features: featuresRef.current
-          });
-        }
+        syncClusters();
       });
     }
-  }, [mapInstance, mapStyle, isInitialized, replaceChinese, addClusterLayers]);
+  }, [mapInstance, mapStyle, replaceChinese, addClusterLayers]);
 
-  // 更新地图数据
-  const updateMarkers = (features: GeoJSON.Feature[]) => {
-    featuresRef.current = features; // 同步更新 Ref
-    if (mapInstance && isInitialized) {
-      const source = mapInstance.getSource(
-        'markers'
-      ) as maplibregl.GeoJSONSource;
-      if (source) {
-        source.setData({
-          type: 'FeatureCollection',
-          features
-        });
+  const updateMarkers = useCallback(
+    (features: GeoJSON.Feature[]) => {
+      featuresRef.current = features;
+      if (mapInstance) {
+        const source = mapInstance.getSource(
+          'markers'
+        ) as maplibreGl.GeoJSONSource;
+        if (source) source.setData({ type: 'FeatureCollection', features });
+        syncClusters(); // 数据更新后立即同步一次
       }
-    }
-  };
+    },
+    [mapInstance, syncClusters]
+  );
 
   const setCenterAndZoom = (point: MarkerPoint, zoom?: number) => {
     if (mapInstance) {
@@ -227,7 +199,7 @@ export const useMapLibre = ({
   return {
     mapRef,
     mapInstance,
-    isInitialized,
+    clusters,
     setCenterAndZoom,
     flyTo,
     updateMarkers
