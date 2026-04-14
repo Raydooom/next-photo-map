@@ -43,7 +43,10 @@ export const PhotoCard = memo(
 
     return (
       <motion.div
-        className={clsx('overflow-hidden relative cursor-pointer', className)}
+        className={clsx(
+          'overflow-hidden relative cursor-pointer border border-border rounded',
+          className
+        )}
         style={{
           background: data.dominantColor || '#000'
         }}
@@ -62,9 +65,7 @@ export const PhotoCard = memo(
           <Image
             className={clsx(
               'z-1 w-full h-auto object-contain transition-all ease-in-out duration-300',
-              isHovered && !data.videoUrl
-                ? 'scale-105 opacity-85'
-                : 'scale-100 opacity-100'
+              isHovered ? 'scale-105 opacity-85' : 'scale-100 opacity-100'
             )}
             width={data.width}
             height={data.height}

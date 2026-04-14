@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Map from '@/app/footprint/_components/Map';
 import { PhotoDetail, PhotoLocation, PhotoItem } from '@/types';
 import { MarkerPoint } from '@/types/mapMarker';
 import { groupByLocation } from '@/components/Map/helper';
-import Carousel from '@/components/common/Carousel';
-import { Calendar } from '@/components/common/Calendar';
+import Carousel from '@/components/Carousel';
+import { Calendar } from './Calendar';
 import { useSearchParams } from 'next/navigation';
-import { replaceUrl } from '@/utils/history';
 
 interface HotMapProps {
   hotPhotos: {
@@ -49,15 +48,6 @@ export function HotMap({ hotPhotos }: HotMapProps) {
 
   const markerGroup = Object.values(groupByLocation(markers, 4));
 
-  const handleSelect = useCallback(
-    (id: number) => {
-      if (id !== photoId) {
-        replaceUrl(`${window.location.pathname}?photoId=${id}`);
-      }
-    },
-    [photoId]
-  );
-
   const totalCities = useMemo(() => {
     const cities = new Set<string>();
     hotPhotos.list.forEach(photo => {
@@ -78,7 +68,6 @@ export function HotMap({ hotPhotos }: HotMapProps) {
             options={{ loop: true }}
             plugins={[]}
             currentId={photoId}
-            onSelect={handleSelect}
             imageFit="cover"
             className="h-full w-full"
           />
