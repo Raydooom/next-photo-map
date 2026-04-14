@@ -23,6 +23,7 @@ export type CarouselProps = {
   showControls?: boolean;
   showExif?: boolean;
   isFullScreen?: boolean;
+  imageFit?: 'contain' | 'cover'; // 新增 imageFit 属性
   className?: string;
 };
 
@@ -37,6 +38,7 @@ const Carousel: React.FC<CarouselProps> = ({
   showControls = false,
   showExif = false,
   isFullScreen = false,
+  imageFit = 'contain', // 默认使用 contain，保持原有大图预览的比例
   className
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -117,7 +119,7 @@ const Carousel: React.FC<CarouselProps> = ({
       >
         <div className="flex h-full">
           {slides.map(item => (
-            <SlideItem key={item.id} item={item} />
+            <SlideItem key={item.id} item={item} imageFit={imageFit} />
           ))}
         </div>
       </section>

@@ -9,28 +9,22 @@ export default async function Home() {
     withLocation: true,
     withExif: true
   });
+
+  const recentlyPhotos = await Actions.getPhotoList({
+    pageSize: 20,
+    withLocation: true,
+    withExif: true
+  });
+
+  console.log("🚀🚀🚀 ~ :19 ~ Home ~ recentlyPhotos:", recentlyPhotos)
+
   return (
-    <main className="relative min-h-screen">
+    <section className="relative min-h-screen mx-auto mt-8 max-w-7xl">
       {/* Hot map */}
       <HotMap hotPhotos={hotPhotos} />
-      <div className="mx-auto max-w-7xl">
-        {/* Hero section with stats */}
-        <section className="mb-8">
-          <div className="mb-6">
-            <h1 className="text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Photo Map
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              在地图上记录你的每一次旅程与珍贵瞬间
-            </p>
-          </div>
 
-          {/* Stats grid - bento style */}
-          <StatsGrid />
-          {/* Recently captured */}
-          <Recently />
-        </section>
-      </div>
-    </main>
+      {/* Recently captured */}
+      <Recently photos={recentlyPhotos.list} />
+    </section>
   );
 }

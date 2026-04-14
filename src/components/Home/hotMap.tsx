@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Map from '@/app/footprint/_components/Map';
-import { PhotoItem, PhotoDetail, PhotoLocation } from '@/types';
-import { MarkerPoint, MapMarker } from '@/types/mapMarker';
+import { PhotoDetail, PhotoLocation, PhotoItem } from '@/types';
+import { MarkerPoint } from '@/types/mapMarker';
 import { groupByLocation } from '@/components/Map/helper';
 import Carousel from '@/components/common/Carousel';
+import { Calendar } from '@/components/common/Calendar';
 import { useSearchParams } from 'next/navigation';
 import { replaceUrl } from '@/utils/history';
 
@@ -19,6 +20,10 @@ interface HotMapProps {
 export function HotMap({ hotPhotos }: HotMapProps) {
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
+
+  const currentPhoto = useMemo(() => {
+    return hotPhotos.list.find(p => p.id === photoId) || hotPhotos.list[0];
+  }, [photoId, hotPhotos.list]);
 
   const photosWithLocation = hotPhotos.list.filter(
     (photo): photo is PhotoDetail & { location: PhotoLocation } =>
@@ -64,27 +69,54 @@ export function HotMap({ hotPhotos }: HotMapProps) {
   }, [hotPhotos.list]);
 
   return (
-    <div className="flex h-screen">
-      {/* 左侧轮播图 */}
-      <div className="w-1/3 h-full">
-        <Carousel
-          slides={hotPhotos.list}
-          options={{ loop: true }}
-          plugins={[]}
-          currentId={photoId}
-          onSelect={handleSelect}
-        />
-      </div>
+    <main className="flex h-[450px]">
+      <section className="relative border border-border bg-background rounded-3xl overflow-hidden shadow-2xl">
+        {/* 全屏轮播图区域 */}
+        <div className="relative flex-1 h-full overflow-hidden">
+          <Carousel
+            slides={hotPhotos.list as PhotoItem[]}
+            options={{ loop: true }}
+            plugins={[]}
+            currentId={photoId}
+            onSelect={handleSelect}
+            imageFit="cover"
+            className="h-full w-full"
+          />
 
-      {/* 右侧地图 */}
-      <div className="w-2/3 h-full relative">
-        <Map markerGroup={markerGroup} />
-        {/* 统计信息 */}
-        <div className="absolute bottom-4 right-4 bg-background/70 p-2 rounded-md text-sm">
-          <div>城市数量: {totalCities}</div>
-          <div>总图片数量: {hotPhotos.total}</div>
+          {/* 左下方地图小卡片 */}
+          <div className="absolute left-6 bottom-6 w-80 h-50 z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/30 backdrop-blur-xl group hover:scale-105 transition-transform duration-300">
+            <div className="w-full h-full relative">
+              <Map markerGroup={markerGroup} hideBackIcon={true} />
+
+              {/* 悬浮统计信息 */}
+              <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl text-white text-[10px] flex gap-3 border border-white/10">
+                <div className="flex flex-col items-center">
+                  <span className="opacity-60 uppercase font-bold tracking-widest scale-75">
+                    Cities
+                  </span>
+                  <span className="font-bold text-sm leading-none mt-1">
+                    {totalCities}
+                  </span>
+                </div>
+                <div className="w-[1px] h-4 bg-white/20 self-center" />
+                <div className="flex flex-col items-center">
+                  <span className="opacity-60 uppercase font-bold tracking-widest scale-75">
+                    Photos
+                  </span>
+                  <span className="font-bold text-sm leading-none mt-1">
+                    {hotPhotos.total}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* 右侧日历区域 */}
+      <div className="w-80 h-full pl-3 shrink-0">
+        <Calendar date={currentPhoto?.takenAt} />
       </div>
-    </div>
+    </main>
   );
 }

@@ -44,7 +44,7 @@ export const Navbar = ({ className }: { className?: string }) => {
       height={50}
       maxWidth="2xl"
       position="sticky"
-      className={clsx('z-49', className)}
+      className={clsx('z-49 border-b border-border/80', className)}
     >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
