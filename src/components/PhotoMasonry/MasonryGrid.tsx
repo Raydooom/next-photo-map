@@ -4,11 +4,17 @@ import { PhotoItem } from '@/types';
 import { PhotoCard } from './PhotoCard';
 import { Masonry } from 'masonic';
 import { useCallback, useEffect, useState } from 'react';
-import PhotoPreview from '@/components/PhotoPreview';
-import { replaceUrl } from '@/utils/history';
+import { PhotoPreview } from '../common/PhotoPreview';
+import { replaceUrl } from '@/utils/url';
 import { useSearchParams } from 'next/navigation';
 
-export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
+export default function MasonryGrid({
+  items,
+  columns = 5
+}: {
+  items: PhotoItem[];
+  columns?: number;
+}) {
   const [mounted, setMounted] = useState(false);
 
   const [previewId, setPreviewId] = useState<number | undefined>(undefined);
@@ -63,8 +69,8 @@ export default function MasonryGrid({ items }: { items: PhotoItem[] }) {
       />
       <Masonry
         items={items}
-        columnGutter={4}
-        columnCount={5}
+        columnGutter={12}
+        columnCount={columns}
         render={renderItem}
       />
     </>

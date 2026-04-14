@@ -1,8 +1,11 @@
 import { Modal, ModalContent } from '@heroui/modal';
-import { PhotoDetail, PhotoItem } from '@/types';
-import Carousel from '../common/Carousel';
+import { PhotoItem } from '@/types';
+import Carousel from '../Carousel';
+import { useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { getParams, replaceUrl } from '@/utils/url';
 
-export default function PhotoPreview({
+export function PhotoPreview({
   list,
   previewId,
   isOpen,
@@ -17,6 +20,15 @@ export default function PhotoPreview({
     onClose();
   };
 
+  const photoId = Number(getParams('photoId')) || undefined;
+  const handleSelect = useCallback(
+    (item: PhotoItem) => {
+      if (item.id !== photoId) {
+        replaceUrl(`${window.location.pathname}?photoId=${item.id}`);
+      }
+    },
+    [photoId]
+  );
   return (
     <Modal
       isOpen={isOpen}
@@ -32,6 +44,7 @@ export default function PhotoPreview({
           slides={list}
           currentId={previewId}
           onClose={onClickClose}
+          onSelect={handleSelect}
           showThumbnails
           showControls
           showExif

@@ -6,7 +6,7 @@ import { MapControls } from '@/components/Map/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
 import { PointDetail } from './PointDetail';
-import { replaceUrl } from '@/utils/history';
+import { replaceUrl } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
 
 interface MapProps {
