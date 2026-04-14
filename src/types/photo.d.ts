@@ -46,7 +46,8 @@ export interface PhotoItem {
   height: number;
   takenAt: string | null;
   dominantColor: string | null;
-  exif: PhotoExif | null;
+  photoExif: PhotoExif | null;
+  locations: PhotoLocation | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -72,7 +73,8 @@ export interface PhotoLocation {
   province?: string | null; // 省份
   city?: string | null; // 城市
   district?: string | null; // 区县
-  town?: string | null; // 乡镇
+  township?: string | null; // 乡镇
   street?: string | null; // 街道
   adcode?: string | null; // 行政区划代码
+  neighborhood?: string | null; // 小区
 }

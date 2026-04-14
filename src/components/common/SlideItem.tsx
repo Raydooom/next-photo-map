@@ -5,7 +5,13 @@ import clsx from 'clsx';
 import LivePhotoIndicate from '../modules/LivePhotoIndicate';
 import { flushSync } from 'react-dom';
 
-export const SlideItem = ({ item }: { item: PhotoItem }) => {
+export const SlideItem = ({
+  item,
+  imageFit = 'contain'
+}: {
+  item: PhotoItem;
+  imageFit?: 'contain' | 'cover';
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
   const playVideo = () => {
@@ -37,7 +43,10 @@ export const SlideItem = ({ item }: { item: PhotoItem }) => {
         radius="none"
         src={item.thumbLargeUrl}
         alt={item.filename}
-        className="max-w-full max-h-full w-auto h-auto object-contain"
+        className={clsx(
+          'w-full h-full',
+          imageFit === 'cover' ? 'object-cover' : 'object-contain max-w-full max-h-full w-auto h-auto'
+        )}
       />
 
       {item.videoUrl && (
