@@ -2,7 +2,6 @@ import { Modal, ModalContent } from '@heroui/modal';
 import { PhotoItem } from '@/types';
 import Carousel from '../Carousel';
 import { useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { getParams, replaceUrl } from '@/utils/url';
 
 export function PhotoPreview({
