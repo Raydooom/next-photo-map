@@ -19,7 +19,7 @@ export default async function Home() {
   console.log("🚀🚀🚀 ~ :19 ~ Home ~ recentlyPhotos:", recentlyPhotos)
 
   return (
-    <section className="relative min-h-screen mx-auto mt-8 max-w-7xl">
+    <section className="relative min-h-screen mx-auto max-w-7xl">
       {/* Hot map */}
       <HotMap hotPhotos={hotPhotos} />
 

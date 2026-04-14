@@ -4,12 +4,13 @@ import { useTheme } from 'next-themes';
 import { useIsSSR } from '@react-aria/ssr';
 import { LeftIcon } from './button';
 
-export const Logo: React.FC<{ size?: number }> = ({ size = 32 }) => {
+export const Logo: React.FC<{ size?: number; className?: string }> = ({ size = 32, className }) => {
   const { theme } = useTheme();
   const isSSR = useIsSSR();
   const isDarkMode = theme === 'dark' && !isSSR;
   return (
     <Image
+      className={className}
       src={isDarkMode ? '/logo_white.png' : '/logo_black.png'}
       width={size}
       height={size}
