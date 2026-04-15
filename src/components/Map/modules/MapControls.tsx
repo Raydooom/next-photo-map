@@ -18,19 +18,19 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
   // 放大
   const handleZoomIn = () => {
     if (!mapInstance) return;
-    mapInstance.setZoom(mapInstance.getZoom() + 1);
+    mapInstance.zoomTo(mapInstance.getZoom() + 1, { duration: 500 });
   };
 
   // 缩小
   const handleZoomOut = () => {
     if (!mapInstance) return;
-    mapInstance.setZoom(mapInstance.getZoom() - 1);
+    mapInstance.zoomTo(mapInstance.getZoom() - 1, { duration: 500 });
   };
 
   // 方向回正
   const handleResetRotation = () => {
     if (!mapInstance) return;
-    mapInstance.setBearing(0);
+    mapInstance.resetNorthPitch({ duration: 500 });
   };
 
   // 定位到当前位置
@@ -38,7 +38,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
     if (!mapInstance) return;
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      position => {
         const { latitude, longitude } = position.coords;
         mapInstance.flyTo({
           center: [longitude, latitude],
@@ -46,7 +46,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
           duration: 1000
         });
       },
-      (error) => {
+      error => {
         addToast({
           title: '定位失败',
           description: '请检查定位权限',
