@@ -2,7 +2,7 @@
 import maplibreGl from 'maplibre-gl';
 import { useEffect, useState, useMemo } from 'react';
 import { useMapLibre } from '@/components/Map/hooks';
-import { MapControls } from '@/components/Map/MapControls';
+import { MapControls } from '@/components/Map/modules/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
 import { PointDetail } from './PointDetail';
@@ -34,7 +34,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       []
     )
   });
-  console.log(clusters)
+
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
@@ -61,10 +61,6 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
         setCenterAndZoom(viewPoint.point, 16);
       }
       setViewList(viewPoint.list);
-    } else {
-      if (mapInstance) {
-        setCenterAndZoom({ longitude: 116.404, latitude: 39.915 }, 12);
-      }
     }
   }, [mapInstance, markerGroup, photoId]);
 
@@ -81,7 +77,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       },
       geometry: {
         type: 'Point' as const,
-        coordinates: [group.point.longitude, group.point.latitude]
+        coordinates: group.point
       }
     }));
 
@@ -90,31 +86,28 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   }, [mapInstance, markerGroup, updateMarkers]);
 
   // 添加点击事件监听
-  const handleClusterClick = async (e: React.MouseEvent, cluster: any) => {
+  const handleClusterClick = async (cluster: any) => {
     if (!mapInstance) return;
     const { id, coordinates, properties } = cluster;
+    const source = mapInstance.getSource('markers') as maplibreGl.GeoJSONSource;
+
+    const expansionZoom = await source.getClusterExpansionZoom(id);
     if (properties.cluster) {
       // 点击聚合点，展开聚合
-      const source = mapInstance.getSource(
-        'markers'
-      ) as maplibreGl.GeoJSONSource;
-
-      const expansionZoom = await source.getClusterExpansionZoom(id);
-      mapInstance.flyTo({
-        center: coordinates,
-        zoom: expansionZoom + 1,
-        duration: 1000
+      flyTo(coordinates, {
+        zoom: expansionZoom + 1
       });
     } else {
       // 点击单点
-      const data = properties.data as MapMarker;
+      const data = JSON.parse(properties.data) as MapMarker;
       setViewList(data.list);
       setActiveId(undefined);
       replaceUrl(`${window.location.pathname}?photoId=${data.list[0].id}`);
-      flyTo(data.point, { zoom: 16 });
+      flyTo(data.point, {
+        zoom: expansionZoom + 1
+      });
     }
   };
-
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
       {canGoBack && !hideBackIcon && (
@@ -138,21 +131,19 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       <div ref={mapRef} className="w-full h-full relative overflow-hidden">
         {/* 渲染 React 聚合组件层 */}
         {mapInstance &&
-          clusters.map(cluster => (
-            <ClusterMarker
-              key={
-                cluster.id ||
-                `${cluster.coordinates[0]}-${cluster.coordinates[1]}`
-              }
-              map={mapInstance}
-              cluster={cluster}
-              onClick={handleClusterClick}
-            />
-          ))}
+          clusters.map(cluster => {
+            return (
+              <ClusterMarker
+                key={cluster.renderKey}
+                map={mapInstance}
+                cluster={cluster}
+                onClick={handleClusterClick}
+              />
+            );
+          })}
+        {/* 使用 MapControls 组件 */}
+        <MapControls mapInstance={mapInstance} />
       </div>
-
-      {/* 使用 MapControls 组件 */}
-      <MapControls mapInstance={mapInstance} />
     </div>
   );
 }

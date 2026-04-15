@@ -11,6 +11,10 @@
     --text-sub: 113 113 122; /* slate-500 */
     --text-muted: 161 161 170; /* slate-400 */
     --radius: 24px;
+
+    --primary: 59 130 246;
+    --primary-light: 100 163 255;
+    --surface: 32 32 32;
   }
 
   .dark {
