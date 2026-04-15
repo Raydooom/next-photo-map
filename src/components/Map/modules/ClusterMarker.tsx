@@ -1,76 +1,110 @@
-'use client';
-
-import React from 'react';
-import maplibregl from 'maplibre-gl';
+import { useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import maplibreGl from 'maplibre-gl';
+import { PointDirectionIcon } from '@/components/Icons/icon';
+import { ClusterPointIcon } from '@/components/Icons/button';
+import clsx from 'clsx';
 
 interface ClusterMarkerProps {
-  map: maplibregl.Map;
-  cluster: {
-    id: string | number;
-    coordinates: [number, number];
-    properties: {
-      point_count: number;
-      point_count_abbreviated: string | number;
-      cluster: boolean;
-      data?: any;
-    };
-  };
-  onClick?: (e: React.MouseEvent, cluster: any) => void;
+  map: maplibreGl.Map;
+  cluster: any;
+  onClick: (cluster: any) => void;
 }
 
-export const ClusterMarker: React.FC<ClusterMarkerProps> = ({
+export const ClusterMarker = ({
   map,
   cluster,
   onClick
-}) => {
-  const { coordinates, properties } = cluster;
-  const isCluster = properties.cluster;
-  const count = properties.point_count || 1;
+}: ClusterMarkerProps) => {
+  const container = useMemo(() => document.createElement('div'), []);
+  const markerRef = useRef<maplibreGl.Marker | null>(null);
 
-  // 将地理坐标转换为屏幕坐标（用于绝对定位）
-  const pos = map.project(coordinates as [number, number]);
+  useEffect(() => {
+    // 1. 创建原生 Marker 实例
+    // 由 MapLibre 内部的 requestAnimationFrame 驱动位置更新，极其丝滑
+    const marker = new maplibreGl.Marker({
+      element: container,
+      anchor: 'center'
+    })
+      .setLngLat(cluster.coordinates)
+      .addTo(map);
 
-  // 根据数量决定大小
-  const size = isCluster ? Math.min(40 + count * 0.5, 80) : 40;
+    markerRef.current = marker;
 
-  return (
-    <div
-      className="absolute flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110 select-none z-10"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        transform: `translate(-50%, -50%)`,
-        width: size,
-        height: size
-      }}
-      onClick={e => onClick?.(e, cluster)}
-    >
+    return () => {
+      marker.remove();
+      markerRef.current = null;
+    };
+  }, [map, container]); // 仅在初始化和销毁时执行
+
+  // 2. 响应位置变化
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setLngLat(cluster.coordinates);
+    }
+  }, [cluster.coordinates]);
+
+  const isCluster = cluster.properties?.cluster;
+  const count = cluster.properties?.point_count || 1;
+  const data = JSON.parse(cluster.properties?.data || '{}');
+
+  // 朝向角度计算
+  const deg = useMemo(() => {
+    if (data?.list?.length === 1) {
+      return data.list[0].bearing
+        ? parseInt(String(data.list[0].bearing), 10)
+        : null;
+    }
+  }, [data]);
+  // 渲染具体的 UI
+  return createPortal(
+    <div onClick={() => onClick?.(cluster)}>
       {isCluster ? (
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* 外圈动画 */}
-          <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
-          {/* 主圆圈 */}
-          <div className="w-4/5 h-4/5 rounded-full bg-primary shadow-lg flex items-center justify-center border-2 border-white/50">
-            <span className="text-white font-bold text-sm">
-              {properties.point_count_abbreviated}
-            </span>
+        <div
+          className={`
+                w-12 h-12 rounded-full flex items-center justify-center
+                bg-background backdrop-blur-button border-1.5 border-main/[0.4]
+                shadow-lg overflow-hidden
+                hover:scale-105 transition-transform duration-200
+              `}
+        >
+          <div className="relative w-full h-full p-1.5">
+            <div
+              className="w-full h-full rounded-full bg-cover bg-center overflow-hidden"
+              style={{
+                backgroundImage: `url('/cluster_placeholder.png')`
+              }}
+            >
+              <div className="w-full h-full bg-background/40 flex items-center justify-center">
+                <span className="text-main text-lg font-bold drop-shadow-md">
+                  {count}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="w-8 h-8 rounded-full bg-white shadow-xl border-2 border-primary overflow-hidden">
-          {properties.data?.thumbnail ? (
-            <img
-              src={properties.data.thumbnail}
-              alt="marker"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-primary" />
+        <>
+          {deg ? (
+            <div
+              className="text-main w-full h-full text-xl absolute z-10 pointer-events-none"
+              style={{
+                transform: `rotate(${deg}deg)`
+              }}
+            >
+              <PointDirectionIcon className="absolute -top-1.5 left-1/2 -translate-x-1/2" />
             </div>
-          )}
-        </div>
+          ) : null}
+          <ClusterPointIcon
+            onClick={() => onClick?.(cluster)}
+            className={clsx(
+              'bg-main border border-main/[0.4] text-xl text-main',
+              'bg-main-highlight text-main'
+            )}
+          />
+        </>
       )}
-    </div>
+    </div>,
+    container
   );
 };

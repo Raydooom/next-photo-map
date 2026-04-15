@@ -1,6 +1,8 @@
 import { PhotoLocation } from '@/types';
 
-export type MarkerPoint = { longitude: number; latitude: number };
+type Longitude = number;
+type Latitude = number;
+export type MarkerPoint = [Longitude, Latitude];
 
 // 地图标记数据
 export type MapMarker = {

@@ -38,10 +38,7 @@ export function HotMap({ hotPhotos }: HotMapProps) {
       id: photo.id,
       takenAt: photo.takenAt,
       thumbnail: photo.thumbSmallUrl,
-      point: {
-        longitude: photo.location.longitude,
-        latitude: photo.location.latitude
-      } as MarkerPoint
+      point: [photo.location.longitude, photo.location.latitude] as MarkerPoint
     })) as (PhotoLocation & {
       point: MarkerPoint;
       id: number;
