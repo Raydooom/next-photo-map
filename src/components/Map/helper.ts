@@ -76,7 +76,7 @@ export const groupByLocation = (
   return locationList.reduce(
     (groups: Record<string, GroupedLocation>, location) => {
       // 创建一个唯一的网格 Key，例如 "31.23,121.47"
-      const key = `${location.point.longitude.toFixed(precision)},${location.point.latitude.toFixed(precision)}`;
+      const key = `${location.point[0].toFixed(precision)},${location.point[1].toFixed(precision)}`;
 
       if (!groups[key]) {
         groups[key] = {
