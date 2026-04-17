@@ -32,10 +32,12 @@ export function LivePhotoIndicate({
 
 export const LivePhoto = ({
   photoInfo,
-  imageFit = 'contain'
+  imageFit = 'contain',
+  disableLive = false
 }: {
   photoInfo: PhotoItem;
   imageFit?: 'contain' | 'cover';
+  disableLive?: boolean;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -78,7 +80,7 @@ export const LivePhoto = ({
         )}
       />
 
-      {photoInfo.videoUrl && (
+      {photoInfo.videoUrl && !disableLive && (
         <>
           <div
             className="absolute top-4 left-4 z-10 cursor-pointer"

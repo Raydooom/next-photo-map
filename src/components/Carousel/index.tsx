@@ -22,6 +22,7 @@ const Carousel: React.FC<CarouselProps> = ({
   showExif = false,
   isFullScreen = false,
   imageFit = 'contain',
+  disableLive = false,
   className
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -47,15 +48,6 @@ const Carousel: React.FC<CarouselProps> = ({
     // 更新 URL 中的 photoId 参数
     const item = slides[newIndex];
     onSelect?.(item);
-    // if (item) {
-    //   if (onSelect) {
-    //     onSelect(item.id);
-    //   } else {
-    //     // 非全屏模式下，不更新 URL 中的 photoId 参数
-    //     !isFullScreen &&
-    //       replaceUrl(`${window.location.pathname}?photoId=${item.id}`);
-    //   }
-    // }
   }, [
     emblaMainApi,
     emblaThumbsApi,
@@ -103,7 +95,12 @@ const Carousel: React.FC<CarouselProps> = ({
 
   const content = (
     <section className="flex-[1_1_auto] flex flex-col relative z-1">
-      <MainSlider slides={slides} emblaRef={emblaMainRef} imageFit={imageFit} />
+      <MainSlider
+        slides={slides}
+        emblaRef={emblaMainRef}
+        imageFit={imageFit}
+        disableLive={disableLive}
+      />
 
       {showThumbnails && (
         <Thumbnails
@@ -150,9 +147,10 @@ const Carousel: React.FC<CarouselProps> = ({
         className
       )}
       style={{
-        backgroundImage: slides[selectedIndex]
-          ? `url(${slides[selectedIndex].thumbLargeUrl})`
-          : undefined
+        backgroundImage:
+          slides[selectedIndex] && !isFullScreen
+            ? `url(${slides[selectedIndex].thumbLargeUrl})`
+            : undefined
       }}
     >
       <div className="absolute inset-0 bg-black/20 z-0 backdrop-blur-2xl" />
