@@ -5,7 +5,7 @@ export type CarouselProps = {
   slides: PhotoItem[];
   options?: EmblaOptionsType;
   plugins?: EmblaPluginType[];
-  currentId: number | undefined;
+  currentId?: number;
   onSelect?: (item: PhotoItem) => void;
   onClose?: () => void;
   showThumbnails?: boolean;
@@ -13,6 +13,7 @@ export type CarouselProps = {
   showExif?: boolean;
   isFullScreen?: boolean;
   imageFit?: 'contain' | 'cover';
+  disableLive?: boolean;
   className?: string;
 };
 
@@ -20,6 +21,7 @@ export interface MainSliderProps {
   slides: PhotoItem[];
   emblaRef: (node: HTMLElement | null) => void;
   imageFit?: 'contain' | 'cover';
+  disableLive?: boolean;
 }
 
 export interface ThumbnailsProps {

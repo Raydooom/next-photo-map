@@ -46,7 +46,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
           duration: 1000
         });
       },
-      error => {
+      () => {
         addToast({
           title: '定位失败',
           description: '请检查定位权限',
