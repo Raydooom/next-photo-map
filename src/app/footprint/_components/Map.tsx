@@ -1,7 +1,6 @@
 'use client';
 import maplibreGl from 'maplibre-gl';
-import { useEffect, useState, useMemo } from 'react';
-import { useMapLibre } from '@/components/Map/hooks';
+import { useEffect, useState } from 'react';
 import { MapControls } from '@/components/Map/modules/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { useSearchParams } from 'next/navigation';
@@ -9,6 +8,7 @@ import { PointDetail } from './PointDetail';
 import { replaceUrl } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
 import { ClusterMarker } from '@/components/Map/modules/ClusterMarker';
+import { useMapBase, useMapClusters } from '@/components/Map';
 
 interface MapProps {
   markerGroup?: MapMarker[];
@@ -17,23 +17,8 @@ interface MapProps {
 
 export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   // 使用 useMapLibre hook
-  const {
-    mapRef,
-    mapInstance,
-    clusters,
-    setCenterAndZoom,
-    flyTo,
-    updateMarkers
-  } = useMapLibre({
-    config: useMemo(
-      () => ({
-        cluster: true,
-        clusterMaxZoom: 17,
-        clusterRadius: 50
-      }),
-      []
-    )
-  });
+  const { mapRef, mapInstance } = useMapBase({});
+  const { clusters, updateMarkers } = useMapClusters(mapInstance!);
 
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
@@ -58,7 +43,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
 
     if (viewPoint) {
       if (mapInstance) {
-        setCenterAndZoom(viewPoint.point, 16);
+        mapInstance.flyTo({ center: viewPoint.point, zoom: 16 });
       }
       setViewList(viewPoint.list);
     }
@@ -91,11 +76,14 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
     const { id, coordinates, properties } = cluster;
     const source = mapInstance.getSource('markers') as maplibreGl.GeoJSONSource;
 
-    const expansionZoom = await source.getClusterExpansionZoom(id);
     if (properties.cluster) {
       // 点击聚合点，展开聚合
-      flyTo(coordinates, {
-        zoom: expansionZoom + 1
+
+      const expansionZoom = await source.getClusterExpansionZoom(id);
+      mapInstance.flyTo({
+        center: coordinates,
+        zoom: expansionZoom + 1,
+        duration: 1000
       });
     } else {
       // 点击单点
@@ -103,8 +91,10 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       setViewList(data.list);
       setActiveId(undefined);
       replaceUrl(`${window.location.pathname}?photoId=${data.list[0].id}`);
-      flyTo(data.point, {
-        zoom: expansionZoom + 1
+
+      mapInstance.flyTo({
+        center: data.point,
+        duration: 1000
       });
     }
   };
@@ -122,7 +112,9 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
         }}
         onBackLocation={(location: any) => {
           if (location) {
-            flyTo(location.bPoint);
+            mapInstance?.flyTo(location.bPoint, {
+              zoom: 16
+            });
           }
         }}
         viewList={viewList}

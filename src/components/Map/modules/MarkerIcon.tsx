@@ -1,4 +1,4 @@
-export default function MarkerIcon() {
+export function MarkerIcon() {
   return (
     <div className="relative flex flex-col items-center group cursor-pointer">
       {/* 连接处与底部光点 */}
