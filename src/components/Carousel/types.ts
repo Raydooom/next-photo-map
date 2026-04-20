@@ -10,6 +10,7 @@ export type CarouselProps = {
   onClose?: () => void;
   showThumbnails?: boolean;
   showControls?: boolean;
+  showIndicators?: boolean;
   showExif?: boolean;
   isFullScreen?: boolean;
   imageFit?: 'contain' | 'cover';
@@ -38,4 +39,11 @@ export interface ControlsProps {
   onClose?: () => void;
   onPrev: () => void;
   onNext: () => void;
+}
+
+export interface IndicatorsProps {
+  count: number;
+  selectedIndex: number;
+  onIndicatorClick?: (index: number) => void;
+  className?: string;
 }
