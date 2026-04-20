@@ -148,7 +148,7 @@ const Carousel: React.FC<CarouselProps> = ({
       )}
       style={{
         backgroundImage:
-          slides[selectedIndex] && !isFullScreen
+          slides[selectedIndex] && isFullScreen
             ? `url(${slides[selectedIndex].thumbLargeUrl})`
             : undefined
       }}

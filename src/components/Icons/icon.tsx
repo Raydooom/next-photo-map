@@ -8,12 +8,10 @@ import {
   PiCubeFocusLight
 } from 'react-icons/pi';
 import { TbArrowBadgeUpFilled } from 'react-icons/tb';
-import { LiaLocationArrowSolid } from "react-icons/lia";
-import { RiArrowDropUpLine } from "react-icons/ri";
+import { LiaLocationArrowSolid } from 'react-icons/lia';
+import { RiArrowDropUpLine } from 'react-icons/ri';
 
-
-
-import { Camera, BarChart3, CircleX, Calendar, MapPin } from 'lucide-react';
+import { Camera, BarChart3, CircleX, CalendarDays, MapPin } from 'lucide-react';
 
 import { IconSvgProps } from '@/types';
 
@@ -27,7 +25,7 @@ export {
   BarChart3,
   CircleX,
   HiLocationMarker as MarkerIcon,
-  Calendar as DateIcon,
+  CalendarDays as DateIcon,
   MapPin as LocationIcon,
   RiArrowDropUpLine as PointDirectionIcon
 };
