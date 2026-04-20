@@ -55,13 +55,6 @@ export const SingleMarker = ({
     if (markerRef.current) {
       markerRef.current.setLngLat([longitude, latitude]);
     }
-    map.flyTo({
-      center: [longitude, latitude],
-      zoom: 12, // 移动后的缩放级别
-      duration: 2000, // 动画时长
-      curve: 1.42, // 飞行曲线（数值越大，轨迹越“拱”）
-      essential: true // 如果用户有“减少动画”设置，该动画仍会执行
-    });
   }, [longitude, latitude]);
 
   // 4. 将 React 内容传送到原生 DOM
