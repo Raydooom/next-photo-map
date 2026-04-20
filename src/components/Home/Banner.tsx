@@ -58,6 +58,7 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
           imageFit="cover"
           className="h-full w-full"
           disableLive={true}
+          showIndicators={true}
           onSelect={setSelectedPhoto}
         />
 

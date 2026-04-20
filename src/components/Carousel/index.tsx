@@ -9,6 +9,7 @@ import { MainSlider } from './MainSlider';
 import { Thumbnails } from './Thumbnails';
 import { Controls } from './Controls';
 import { ExifOverlay } from './ExifOverlay';
+import { Indicators } from './Indicators';
 
 const Carousel: React.FC<CarouselProps> = ({
   slides,
@@ -19,6 +20,7 @@ const Carousel: React.FC<CarouselProps> = ({
   onClose,
   showThumbnails = false,
   showControls = false,
+  showIndicators = false,
   showExif = false,
   isFullScreen = false,
   imageFit = 'contain',
@@ -59,12 +61,12 @@ const Carousel: React.FC<CarouselProps> = ({
 
   const onThumbClick = useCallback(
     (index: number) => {
-      if (!emblaMainApi || !emblaThumbsApi) return;
+      if (!emblaMainApi) return;
       if (index !== selectedIndex) {
         emblaMainApi.scrollTo(index);
       }
     },
-    [emblaMainApi, emblaThumbsApi, selectedIndex]
+    [emblaMainApi, selectedIndex]
   );
 
   useEffect(() => {
@@ -109,6 +111,16 @@ const Carousel: React.FC<CarouselProps> = ({
           selectedIndex={selectedIndex}
           onThumbClick={onThumbClick}
         />
+      )}
+
+      {showIndicators && (
+        <div className="absolute bottom-7 right-8 z-10">
+          <Indicators
+            count={slides.length}
+            selectedIndex={selectedIndex}
+            onIndicatorClick={onThumbClick}
+          />
+        </div>
       )}
 
       {showControls && (
