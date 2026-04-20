@@ -13,6 +13,7 @@ const config = {
         // 容器背景 #161616
         'page-background': 'rgb(var(--page-background) / <alpha-value>)',
         background: 'rgb(var(--background) / <alpha-value>)',
+        'background-light': 'rgb(var(--background-light) / <alpha-value>)',
         // 描边 #262626
         border: 'rgb(var(--border) / <alpha-value>)',
         'border-light': 'rgb(var(--border-light) / <alpha-value>)',
@@ -31,7 +32,8 @@ const config = {
         button: '4px'
       },
       shadow: {
-        button: '0 4px 8px rgba(0, 0, 0, 0.05)'
+        button: '0 4px 8px rgba(0, 0, 0, 0.05)',
+        card: '0 20px 50px rgba(0, 0, 0, 0.05)'
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

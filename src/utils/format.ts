@@ -1,4 +1,5 @@
 import { PhotoExif, PhotoLocation } from '@/types';
+import dayjs from 'dayjs';
 
 export const formatExposureTime = (exposureTime?: string | null) => {
   if (!exposureTime) {
@@ -90,7 +91,7 @@ export const formatAltitude = (altitude?: number | null) => {
   return `约 ${altitude.toFixed(2)} 米`;
 };
 
-export const formatTakenDate = (takenAt?: string | null) => {
+export const formatTakenCN = (takenAt?: string | null) => {
   if (!takenAt) {
     return '';
   }
@@ -103,4 +104,15 @@ export const formatTakenDate = (takenAt?: string | null) => {
     minute: '2-digit',
     second: '2-digit'
   });
+};
+
+export const formatTakenDate = (date?: string | null) => {
+  if (!date) {
+    return '';
+  }
+  const year = dayjs(date).year();
+  if (year === dayjs().year()) {
+    return dayjs(date).format('MM月DD日');
+  }
+  return dayjs(date).format('YYYY年MM月DD日');
 };

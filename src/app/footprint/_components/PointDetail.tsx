@@ -57,13 +57,12 @@ export const PointDetail = ({
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="absolute top-20 left-4 z-10 w-[310px] "
-          initial={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
+          className="absolute top-20 left-4 z-10 w-[310px] backdrop-blur-lg"
+          initial={{ opacity: 0, x: -20, scale: 0.95 }}
           animate={{
             opacity: 1,
             x: 0,
             scale: 1,
-            filter: 'blur(0px)',
             transition: {
               type: 'spring',
               stiffness: 260, // 刚度高，速度快
@@ -75,7 +74,6 @@ export const PointDetail = ({
             opacity: 0,
             x: -10,
             scale: 0.98,
-            filter: 'blur(5px)',
             transition: {
               duration: 0.15,
               ease: 'easeOut'
@@ -166,7 +164,9 @@ const SingleImage = ({
       <div className="p-3">
         <ExifTagList exifData={photoInfo.photoExif || null} />
         <b className="mt-2 block text-sm">{photoInfo.photoExif?.model}</b>
-        <p className="text-xs text-default-500">{photoInfo.photoExif?.lensModel}</p>
+        <p className="text-xs text-default-500">
+          {photoInfo.photoExif?.lensModel}
+        </p>
         <p className="text-tiny mt-1">{formatTakenDate(photoInfo.takenAt)}</p>
         <LocationInfo
           onClick={onClickLocation}

@@ -6,6 +6,7 @@
   :root {
     --page-background: 238 238 238;
     --background: 245 245 245;
+    --background-light: 200 200 200;
     --border: 228 228 231;
     --text-main: 24 24 27;
     --text-sub: 113 113 122; /* slate-500 */
@@ -22,6 +23,7 @@
     /* 基础背景 (Base) */
     --page-background: 10, 10, 10;
     --background: 22 22 22; /* 核心容器色 #161616 */
+    --background-light: 55 55 55; /* 核心容器色 #373737 */
 
     /* 描边与分割线 (Stroke) */
     --border: 38 38 38; /* 核心描边色 #262626 */
