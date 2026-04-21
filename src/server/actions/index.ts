@@ -20,6 +20,10 @@ export const getPhotoList = async ({
   });
 };
 
+export const countAllPhotos = async () => {
+  return await photoService.countAllPhotos();
+};
+
 export const getPhotoExif = async (photoId: number) => {
   return await photoExifService.getPhotoExifByPhotoId(photoId);
 };
@@ -28,6 +32,6 @@ export const getPhotoDetailBatch = async (photoIds: number[]) => {
   return await photoService.getPhotosByIds(photoIds);
 };
 
-export const getLocations = async () => {
-  return await locationService.getAllLocations();
+export const getLocations = async ({ select = {} } = {}) => {
+  return await locationService.getAllLocations({ select });
 };
