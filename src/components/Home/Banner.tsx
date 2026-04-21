@@ -17,8 +17,6 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
   }, [photos]);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
-  console.log('👾 ~ :20 ~ Banner ~ selectedPhotolog:', selectedPhoto);
-
   const { mapRef, mapInstance } = useMapBase();
 
   const [isInit, setIsInit] = useState(true);

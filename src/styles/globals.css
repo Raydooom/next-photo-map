@@ -43,6 +43,13 @@
 /* 处理 hero Modal size=full 时，强制覆盖 JS 注入到 html 标签上的内联样式 */
 html {
   scrollbar-gutter: auto !important;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
 
 /* 自定义滚动条样式 */

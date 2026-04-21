@@ -18,6 +18,12 @@ export class PhotoService {
     });
   }
   /**
+   * 获取所有照片数量
+   */
+  async countAllPhotos() {
+    return prisma.photos.count();
+  }
+  /**
    * 创建照片照片
    * @param photos 照片数据
    */
@@ -109,65 +115,6 @@ export class PhotoService {
     });
   }
 
-  // /**
-  //  * 获取所有包含地理位置信息的照片（用于地图展示）
-  //  */
-  // async getPhotosWithLocation() {
-  //   const photos = await prisma.photos.findMany({
-  //     where: {
-  //       locations: {
-  //         isNot: null
-  //       }
-  //     },
-  //     select: {
-  //       id: true,
-  //       takenAt: true,
-  //       locations: {
-  //         select: {
-  //           latitude: true,
-  //           longitude: true,
-  //           GPSLatitude: true,
-  //           GPSLongitude: true,
-  //           altitude: true,
-  //           bearing: true,
-  //           bearingDirection: true,
-  //           country: true,
-  //           province: true,
-  //           city: true,
-  //           district: true,
-  //           township: true,
-  //           adcode: true,
-  //           formattedAddress: true,
-  //           neighborhood: true,
-  //           type: true
-  //         }
-  //       }
-  //     }
-  //   });
-
-  //   return photos.map(photo => {
-  //     const transformed = this.transformPhoto({ ...photo }); // 浅拷贝以避免副作用
-  //     return {
-  //       id: transformed.id,
-  //       thumbnail: transformed.smallThumbnail,
-  //       latitude: transformed.locations?.latitude,
-  //       longitude: transformed.locations?.longitude,
-  //       bearing: transformed.locations?.bearing,
-  //       GPSLatitude: transformed.locations?.GPSLatitude,
-  //       GPSLongitude: transformed.locations?.GPSLongitude,
-  //       address: transformed.locations?.address,
-  //       country: transformed.locations?.country,
-  //       province: transformed.locations?.province,
-  //       city: transformed.locations?.city,
-  //       district: transformed.locations?.district,
-  //       town: transformed.locations?.town,
-  //       street: transformed.locations?.street,
-  //       adcode: transformed.locations?.adcode,
-  //       takenAt: transformed.takenAt
-  //     };
-  //   });
-  // }
-
   /**
    * 获取指定地理范围内的照片
    */
@@ -231,12 +178,6 @@ export class PhotoService {
     return result;
   }
 
-  /**
-   * 根据图片id删除图片的exif数据
-   */
-  async deletePhotoExif(photoId: number) {
-    return prisma.photoExif.deleteMany({ where: { photoId } });
-  }
   /**
    * 转换照片数据，处理 URL
    */

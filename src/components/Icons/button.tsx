@@ -15,6 +15,7 @@ import { FaLocationArrow } from 'react-icons/fa6';
 import { IoCameraOutline } from 'react-icons/io5';
 import { RxOpenInNewWindow } from 'react-icons/rx';
 import { FaLocationDot } from 'react-icons/fa6';
+import { Fullscreen } from 'lucide-react';
 
 import { Button, ButtonProps } from '@heroui/button';
 
@@ -109,5 +110,11 @@ export const OpenInNewWindowIcon = (props: IconButtonProps) => (
 export const MoveLocationIcon = (props: IconButtonProps) => (
   <IconButton {...props}>
     <FaLocationDot />
+  </IconButton>
+);
+
+export const FullscreenIcon = (props: IconButtonProps) => (
+  <IconButton {...props}>
+    <Fullscreen />
   </IconButton>
 );
