@@ -9,6 +9,7 @@ import { replaceUrl } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
 import { ClusterMarker } from '@/components/Map/modules/ClusterMarker';
 import { useMapBase, useMapClusters } from '@/components/Map';
+import { bbox, featureCollection } from '@turf/turf';
 
 interface MapProps {
   markerGroup?: MapMarker[];
@@ -17,12 +18,11 @@ interface MapProps {
 
 export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   // 使用 useMapLibre hook
-  const { mapRef, mapInstance } = useMapBase({});
+  const { mapRef, mapInstance } = useMapBase({ config: { zoom: 6 } });
   const { clusters, updateMarkers } = useMapClusters(mapInstance!);
 
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
-  const [activeId, setActiveId] = useState<number | undefined>(undefined);
 
   const [viewList, setViewList] = useState<MapMarker['list']>([]);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -37,7 +37,6 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   useEffect(() => {
     const viewPoint = markerGroup?.find(group => {
       const viewPhoto = group.list.find(photo => photo.id === photoId);
-      viewPhoto && setActiveId(viewPhoto.id);
       return viewPhoto;
     });
 
@@ -66,6 +65,19 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       }
     }));
 
+    // 没有url参数，居中显示地图
+    if (!photoId) {
+      const collection = featureCollection(features);
+      const bounds = bbox(collection);
+      mapInstance.fitBounds(
+        [
+          [bounds[0], bounds[1]], // 西南角
+          [bounds[2], bounds[3]] // 东北角
+        ],
+        { padding: 40 }
+      );
+    }
+
     // 更新数据源
     updateMarkers(features);
   }, [mapInstance, markerGroup, updateMarkers]);
@@ -89,7 +101,6 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       // 点击单点
       const data = JSON.parse(properties.data) as MapMarker;
       setViewList(data.list);
-      setActiveId(undefined);
       replaceUrl(`${window.location.pathname}?photoId=${data.list[0].id}`);
 
       mapInstance.flyTo({
@@ -107,7 +118,6 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       <PointDetail
         onClose={() => {
           setViewList([]);
-          setActiveId(undefined);
           replaceUrl(window.location.pathname);
         }}
         onBackLocation={(location: any) => {

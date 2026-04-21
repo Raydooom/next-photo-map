@@ -3,12 +3,6 @@ import { Recently } from '@/components/Home/Recently';
 import { HeroSection } from '@/components/Home/HeroSection';
 
 export default async function Home() {
-  const bannerPhotos = await Actions.getPhotoList({
-    pageSize: 5,
-    withLocation: true,
-    withExif: true
-  });
-
   const recentlyPhotos = await Actions.getPhotoList({
     pageSize: 20,
     withLocation: true,
@@ -18,7 +12,7 @@ export default async function Home() {
   return (
     <section className="relative min-h-screen mx-auto max-w-7xl">
       {/* Hot map */}
-      <HeroSection bannerPhotos={bannerPhotos} />
+      <HeroSection />
 
       {/* Recently captured */}
       <Recently photos={recentlyPhotos.list} />

@@ -43,8 +43,14 @@ export const locationService = {
   /**
    * 获取所有位置记录
    */
-  getAllLocations: async (): Promise<locations[]> => {
-    return await prisma.locations.findMany();
+  getAllLocations: async (
+    { select = {} } = { select: {} }
+  ): Promise<locations[] | any> => {
+    // 判断对象是否为空
+    const hasSelect = Object.keys(select).length > 0;
+    return await prisma.locations.findMany({
+      ...(hasSelect ? { select } : {})
+    });
   },
 
   /**
