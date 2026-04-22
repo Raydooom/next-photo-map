@@ -21,7 +21,7 @@ export const Navbar = ({ className }: { className?: string }) => {
     <div className="h-19 mb-5">
       <HeroUINavbar
         className={clsx(
-          'fixed top-5 left-1/2 -translate-x-1/2 z-[50] w-6xl h-14 rounded-full backdrop-blur-xl border border-border shadow-2xl',
+          'fixed top-5 left-1/2 -translate-x-1/2 z-[50] w-6xl h-14 rounded-full backdrop-blur-xl border-glass shadow-2xl',
           className
         )}
       >

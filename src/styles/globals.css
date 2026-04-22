@@ -4,39 +4,43 @@
 
 @layer base {
   :root {
-    --page-background: 238 238 238;
-    --background: 245 245 245;
+    --page-background: 251 251 249;
+    --background: 255 255 255;
     --background-light: 200 200 200;
-    --border: 228 228 231;
-    --text-main: 24 24 27;
-    --text-sub: 113 113 122; /* slate-500 */
-    --text-muted: 161 161 170; /* slate-400 */
+
+    --border-default: 232 228 219;
+
+    --text-main: 28 28 27;
+    --text-sub: 140 138 130; /* slate-500 */
+    --text-muted: 188 186 174; /* slate-400 */
+
     --radius: 24px;
 
-    --primary: 59 130 246;
-    --primary-light: 100 163 255;
-    --surface: 32 32 32;
+    --primary: 94 100 84;
+    --primary-light: 138 154 91;
+
+    /* 通用 */
+    --shadow-card: theme('shadow.2xl');
   }
 
   .dark {
     /* --- 核心扩展色板 --- */
     /* 基础背景 (Base) */
-    --page-background: 10, 10, 10;
-    --background: 22 22 22; /* 核心容器色 #161616 */
+    --page-background: 5, 5, 5;
+    --background: 18 18 20; /* 核心容器色 #161616 */
     --background-light: 55 55 55; /* 核心容器色 #373737 */
 
     /* 描边与分割线 (Stroke) */
-    --border: 38 38 38; /* 核心描边色 #262626 */
-    --border-light: 55 55 55; /* 悬浮时的加强描边 */
+    --border-default: 255 255 255; /* 核心描边色 #262626 */
 
     /* 文字层级 (Typography) */
-    --text-main: 242 242 242; /* 主文字：柔白色 */
-    --text-sub: 100 116 139; /* 副文字：slate-500 */
+    --text-main: 242 242 247; /* 主文字：柔白色 */
+    --text-sub: 142 142 147; /* 副文字：slate-500 */
     --text-muted: 148 163 184; /* 弱文字：slate-400 */
 
     /* 功能色 (Functional) */
-    --primary: 59 130 246; /* 蓝色作为点缀 */
-    --surface: 32 32 32; /* 输入框或按下态背景 */
+    --primary: 10 132 255;
+    --primary-light: 138 154 91;
   }
 }
 

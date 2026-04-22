@@ -47,11 +47,11 @@ export const ExtendInfo = memo(
     }, [photo.id]);
 
     return (
-      <div className="relative w-[300px] max-h-[70vh] bg-background/60 backdrop-blur-[40px] rounded-[2.2rem] border border-foreground/[0.1] shadow-2xl overflow-hidden flex flex-col">
-        <div className="p-4 pb-3 border-b border-foreground/[0.1]">
+      <div className="relative w-[300px] max-h-[70vh] bg-background/60 backdrop-blur-[40px] rounded-[2.2rem] border-glass shadow-2xl overflow-hidden flex flex-col">
+        <div className="p-4 pb-3 border-b border-glass">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-foreground/[0.05] border border-foreground/[0.1] rounded-lg">
+              <div className="p-1.5 bg-foreground/[0.05] border-glass rounded-lg">
                 <Camera size={20} />
               </div>
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/60">

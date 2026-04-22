@@ -31,7 +31,7 @@ export const Calendar: React.FC<CalendarProps> = ({ date, className }) => {
   return (
     <div
       className={clsx(
-        'flex flex-col bg-background backdrop-blur-md border border-border rounded p-4 shadow-xl h-full select-none',
+        'flex flex-col bg-background backdrop-blur-md border-glass rounded p-4 shadow-xl h-full select-none',
         className
       )}
     >
