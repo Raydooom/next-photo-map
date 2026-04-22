@@ -1,5 +1,4 @@
 'use server';
-import { Prisma } from '../lib/db';
 import { PhotoService } from '../services/photo.services';
 import { photoExifService } from '../services/photoExif.services';
 import { locationService } from '../services/location.services';

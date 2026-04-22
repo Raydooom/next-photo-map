@@ -14,7 +14,7 @@ export default function AboutPage() {
   };
 
   const getExif = async () => {
-    const exif = await PhotoAction.getPhotoExif();
+    const exif = await PhotoAction.getPhotoExif(1);
     console.log(exif);
   };
   return (
