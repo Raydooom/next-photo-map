@@ -63,7 +63,9 @@ export interface PhotoLocation {
   latitude: number;
   longitude: number;
   GPSLatitude: number[] | null; // 维度（度分秒）
-  GPSLongitude: number[] | null; // 经度 (度分秒)
+  GPSLatitudeRef?: string | null; // 纬度参考（N/S）
+  GPSLongitude: number[] | null; // 经度（度分秒）
+  GPSLongitudeRef?: string | null; // 经度参考（E/W）
   altitude?: number | null; // 朝向 (0-360)
   bearing?: number | null;
   bearingDirection?: string | null; // 中文朝向 (东、东南等)

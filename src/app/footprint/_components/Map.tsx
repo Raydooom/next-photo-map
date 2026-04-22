@@ -94,7 +94,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       const expansionZoom = await source.getClusterExpansionZoom(id);
       mapInstance.flyTo({
         center: coordinates,
-        zoom: expansionZoom + 1,
+        zoom: expansionZoom + 2,
         duration: 1000
       });
     } else {

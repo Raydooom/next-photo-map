@@ -14,6 +14,7 @@ import {
 import { PhotoItem, PhotoExif } from '@/types';
 import * as Actions from '@/server/actions/index';
 import { ExifTagList } from './ExifTag';
+import { SingleMarker } from '../Map';
 
 const InfoRow = ({
   label,
@@ -39,7 +40,7 @@ export const ExtendInfo = memo(
     photo: PhotoItem;
     setIsOpen: (isOpen: boolean) => void;
   }) => {
-    const [exifData, setExifData] = useState<PhotoExif | null>(null);
+    const [exifData, setExifData] = useState<Partial<PhotoExif> | null>(null);
     useEffect(() => {
       Actions.getPhotoExif(photo.id).then(data => {
         setExifData(data);
@@ -48,7 +49,7 @@ export const ExtendInfo = memo(
 
     return (
       <div className="relative w-[300px] max-h-[70vh] bg-background/60 backdrop-blur-[40px] rounded-[2.2rem] border-glass shadow-2xl overflow-hidden flex flex-col">
-        <div className="p-4 pb-3 border-b border-glass">
+        <div className="p-4 pb-3">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-foreground/[0.05] border-glass rounded-lg">
@@ -131,8 +132,14 @@ export const ExtendInfo = memo(
                 <InfoRow label="拍摄朝向" value={exifData?.bearingDirection} />
               </div>
               {exifData?.latitude && exifData?.longitude && (
-                <div className="rounded-2xl w-full h-40 overflow-hidden mt-2">
-                  {/* <Marker exifData={exifData} /> */}
+                <div className="rounded w-full border-glass h-40 overflow-hidden mt-4">
+                  <SingleMarker
+                    point={[
+                      exifData?.longitude as number,
+                      exifData?.latitude as number
+                    ]}
+                    photoId={photo.id}
+                  />
                 </div>
               )}
             </div>

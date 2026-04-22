@@ -74,12 +74,13 @@ export const formatFileSize = (size: number) => {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
 };
 
-export const formatLatLng = (location?: PhotoLocation | PhotoExif | null) => {
-  const { latitude, longitude } = location || {};
-  if (latitude && longitude) {
-    const latRef = latitude >= 0 ? 'N' : 'S';
-    const lngRef = longitude >= 0 ? 'E' : 'W';
-    return `${Math.abs(latitude).toFixed(6)}°${latRef}, ${Math.abs(longitude).toFixed(6)}°${lngRef}`;
+export const formatLatLng = (
+  location?: Partial<PhotoLocation> | Partial<PhotoExif> | null
+) => {
+  const { GPSLatitude, GPSLongitude, GPSLatitudeRef, GPSLongitudeRef } =
+    location || {};
+  if (GPSLatitude && GPSLongitude && GPSLatitudeRef && GPSLongitudeRef) {
+    return `${GPSLongitude[0]}°${GPSLongitude[1]}′${GPSLongitude[2]}″${GPSLongitudeRef}, ${GPSLatitude[0]}°${GPSLatitude[1]}′${GPSLatitude[2]}″${GPSLatitudeRef}`;
   }
   return '';
 };
