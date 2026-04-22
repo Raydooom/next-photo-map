@@ -48,7 +48,7 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
     window.open(`/footprint?photoId=${photoId}`, '_blank');
   };
   return (
-    <section className="relative border border-border bg-background rounded-3xl overflow-hidden shadow-2xl">
+    <section className="relative border-glass bg-background rounded overflow-hidden shadow-card">
       {/* 全屏轮播图区域 */}
       <div className="relative flex-1 h-full overflow-hidden">
         <Carousel
@@ -61,7 +61,7 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
         />
 
         {/* 左下方地图小卡片 */}
-        <div className="absolute left-4 bottom-4 w-80 p-3 bg-background/60 z-10 rounded shadow-2xl border border-border/10 backdrop-blur">
+        <div className="absolute left-4 bottom-4 w-80 p-3 bg-background/60 z-10 rounded shadow-card border-glass backdrop-blur">
           <div className="flex items-center gap-1 text-main/80 text-xs my-1 pl-1">
             <DateIcon className="w-3 h-3" />
             {formatTakenDate(selectedPhoto?.takenAt)}
@@ -90,25 +90,6 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
               </SingleMarker>
             )}
           </section>
-
-          {/* 悬浮统计信息 */}
-          {/* <div className=" top-3 right-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl text-white text-[10px] flex gap-3 border border-white/10">
-              <div className="flex flex-col items-center">
-                <span className="opacity-60 uppercase font-bold tracking-widest scale-75">
-                  Cities
-                </span>
-                <span className="font-bold text-sm leading-none mt-1">
-                </span>
-              </div>
-              <div className="w-[1px] h-4 bg-white/20 self-center" />
-              <div className="flex flex-col items-center">
-                <span className="opacity-60 uppercase font-bold tracking-widest scale-75">
-                  Photos
-                </span>
-                <span className="font-bold text-sm leading-none mt-1">
-                </span>
-              </div>
-            </div> */}
         </div>
       </div>
     </section>

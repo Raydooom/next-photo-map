@@ -44,7 +44,7 @@ export const PhotoCard = memo(
     return (
       <motion.div
         className={clsx(
-          'overflow-hidden relative cursor-pointer border border-border rounded',
+          'overflow-hidden relative cursor-pointer border-glass rounded',
           className
         )}
         style={{

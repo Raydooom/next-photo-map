@@ -24,8 +24,8 @@ export const Indicators: React.FC<IndicatorsProps> = ({
             'active:shadow-md active:shadow-white/20',
             'cursor-pointer',
             selectedIndex === index
-              ? 'w-6 bg-white shadow-md shadow-white/40'
-              : 'w-2 bg-white/40 hover:bg-white/70 hover:shadow-white/40'
+              ? 'w-6 bg-white shadow-button'
+              : 'w-2 bg-white/70 hover:bg-white hover:shadow-white/40'
           )}
           aria-label={`Go to slide ${index + 1}`}
         />
