@@ -7,8 +7,6 @@ import {
   PiSunDim,
   PiCubeFocusLight
 } from 'react-icons/pi';
-import { TbArrowBadgeUpFilled } from 'react-icons/tb';
-import { LiaLocationArrowSolid } from 'react-icons/lia';
 import { RiArrowDropUpLine } from 'react-icons/ri';
 
 import { Camera, BarChart3, CircleX, CalendarDays, MapPin } from 'lucide-react';

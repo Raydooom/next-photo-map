@@ -96,8 +96,6 @@ export function AreaMap({ data = [] }: AreaMapProps) {
 
     // 样式切换，重新初始化聚合图层
     mapInstance.on('style.load', handleStyleLoad);
-
-    return () => mapInstance?.remove();
   }, [data, mapInstance]); // 当数据库数据更新时，重新触发过滤
 
   return (

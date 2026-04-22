@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs';
 
 // 相片存储目录
 export const PHOTO_BASE_DIR = path.join(process.cwd(), 'photos');
