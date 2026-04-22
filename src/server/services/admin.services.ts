@@ -226,7 +226,7 @@ export class ScannerService {
           GPSLatitude: exifData.GPSLatitude,
           GPSLatitudeRef: exifData.GPSLatitudeRef,
           GPSLongitude: exifData.GPSLongitude,
-          GPSLongitudeRef: exifData.GPSLatitudeRef,
+          GPSLongitudeRef: exifData.GPSLongitudeRef,
           altitude: exifData.GPSAltitude
             ? Number(exifData.GPSAltitude.toFixed(2))
             : null,

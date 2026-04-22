@@ -35,10 +35,22 @@ export const photoExifService = {
   /**
    * 根据 photoId 获取EXIF记录
    */
-  getPhotoExifByPhotoId: async (photoId: number): Promise<photoExif | null> => {
-    return await prisma.photoExif.findUnique({
+  getPhotoExifByPhotoId: async (
+    photoId: number,
+    withRawData = false
+  ): Promise<Partial<photoExif> | null> => {
+    const data = await prisma.photoExif.findUnique({
       where: { photoId }
     });
+    if (withRawData) return data;
+    if (data) {
+      // 使用解构赋值剔除字段
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { rawData, ...rest } = data;
+      // 如果 withRawData 为 false，rawData 本来就是 undefined，rest 就是你要的结果
+      return rest;
+    }
+    return null;
   },
 
   /**

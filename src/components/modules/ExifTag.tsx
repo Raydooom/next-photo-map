@@ -33,7 +33,7 @@ export const ExifTag = ({
     </div>
   ) : null;
 
-export const ExifTagList = ({ exifData }: { exifData: PhotoExif | null }) => (
+export const ExifTagList = ({ exifData }: { exifData: Partial<PhotoExif> | null }) => (
   <div className="grid grid-cols-2 gap-2">
     <ExifTag
       label="曝光"
