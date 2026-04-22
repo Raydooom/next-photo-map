@@ -235,7 +235,7 @@ const MultiImage = ({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.05 * 8 }}
               className="aspect-square rounded-lg shadow-lg flex items-center justify-center
-                text-xl cursor-pointer border border-foreground/20
+                text-xl cursor-pointer border-glass
                 hover:bg-foreground/10 transition-all duration-200
               "
             >

@@ -22,7 +22,7 @@ export const ExifTag = ({
   Icon: React.ReactNode;
 }) =>
   value ? (
-    <div className="flex flex-col items-center justify-center p-2 bg-foreground/[0.03] backdrop-blur-xl rounded-2xl border border-foreground/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-foreground/[0.08] transition-all duration-300">
+    <div className="flex flex-col items-center justify-center p-2 bg-foreground/[0.03] backdrop-blur-xl rounded-2xl border-glass shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-foreground/[0.08] transition-all duration-300">
       {Icon}
       <span className="text-xs text-foreground/50 uppercase tracking-[0.1em]">
         {label}

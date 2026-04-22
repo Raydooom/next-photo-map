@@ -31,11 +31,11 @@ export async function HeroSection() {
     <main className="flex gap-4 h-[450px]">
       <Banner photos={bannerPhotos.list} />
       {/* 右侧日历区域 */}
-      <div className="w-80 h-full rounded border border-border overflow-hidden relative shrink-0">
+      <div className="w-80 h-full rounded border-glass shadow-card overflow-hidden relative shrink-0">
         <AreaMap data={locations} />
         <section
           className="absolute z-10 bottom-4 left-4 right-4
-          rounded border border-border/60
+          rounded border-glass
           backdrop-blur bg-background/40 
           flex items-center justify-around gap-2
           h-20 px-4"
@@ -46,7 +46,7 @@ export async function HeroSection() {
                 <b className="text-2xl font-medium tracking-tight">
                   {item.count}
                 </b>
-                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-sm font-medium text-sub">{item.label}</p>
               </div>
               {index < countList.length - 1 && (
                 <Divider className="h-10" orientation="vertical" />
