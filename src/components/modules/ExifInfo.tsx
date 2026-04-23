@@ -119,30 +119,35 @@ export const ExtendInfo = memo(
             </div>
 
             {/* 地图 */}
-            <div className="px-1">
-              <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
-                Location
-              </h3>
-              <div className="bg-foreground/[0.08] rounded-2xl px-4">
-                <InfoRow label="经纬度" value={formatLatLng(exifData)} />
-                <InfoRow
-                  label="海拔"
-                  value={formatAltitude(exifData?.altitude)}
-                />
-                <InfoRow label="拍摄朝向" value={exifData?.bearingDirection} />
-              </div>
-              {exifData?.latitude && exifData?.longitude && (
-                <div className="rounded w-full border-glass h-40 overflow-hidden mt-4">
-                  <SingleMarker
-                    point={[
-                      exifData?.longitude as number,
-                      exifData?.latitude as number
-                    ]}
-                    photoId={photo.id}
+            {formatLatLng(exifData) && (
+              <div className="px-1">
+                <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
+                  Location
+                </h3>
+                <div className="bg-foreground/[0.08] rounded-2xl px-4">
+                  <InfoRow label="经纬度" value={formatLatLng(exifData)} />
+                  <InfoRow
+                    label="海拔"
+                    value={formatAltitude(exifData?.altitude)}
+                  />
+                  <InfoRow
+                    label="拍摄朝向"
+                    value={exifData?.bearingDirection}
                   />
                 </div>
-              )}
-            </div>
+                {exifData?.latitude && exifData?.longitude && (
+                  <div className="rounded w-full border-glass h-40 overflow-hidden mt-4">
+                    <SingleMarker
+                      point={[
+                        exifData?.longitude as number,
+                        exifData?.latitude as number
+                      ]}
+                      photoId={photo.id}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </div>
 

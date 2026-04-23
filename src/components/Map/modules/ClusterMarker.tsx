@@ -63,7 +63,7 @@ export const ClusterMarker = ({
         <div
           className={`
                 w-12 h-12 rounded-full flex items-center justify-center
-                bg-background backdrop-blur-button border-1.5 border-default/[0.4]
+                bg-background-light backdrop-blur-button border-1.5 border-primary/[0.4]
                 shadow-lg overflow-hidden
                 hover:scale-105 transition-transform duration-200
               `}
@@ -96,11 +96,9 @@ export const ClusterMarker = ({
             </div>
           ) : null}
           <ClusterPointIcon
+            variant="shadow"
             onClick={() => onClick?.(cluster)}
-            className={clsx(
-              'bg-main border-glass text-xl text-main',
-              'bg-main-highlight text-main'
-            )}
+            className={clsx('bg-background-light border border-primary/60 text-xl text-primary')}
           />
         </>
       )}

@@ -26,7 +26,7 @@
   .dark {
     /* --- 核心扩展色板 --- */
     /* 基础背景 (Base) */
-    --page-background: 5, 5, 5;
+    --page-background: 5 5 5;
     --background: 18 18 20; /* 核心容器色 #161616 */
     --background-light: 55 55 55; /* 核心容器色 #373737 */
 
@@ -35,7 +35,7 @@
 
     /* 文字层级 (Typography) */
     --text-main: 242 242 247; /* 主文字：柔白色 */
-    --text-sub: 142 142 147; /* 副文字：slate-500 */
+    --text-sub: 180 177 180; /* 副文字 */
     --text-muted: 148 163 184; /* 弱文字：slate-400 */
 
     /* 功能色 (Functional) */
