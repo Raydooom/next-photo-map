@@ -59,7 +59,7 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
 
   return (
     <div className="absolute right-6 bottom-10 flex flex-col items-end gap-3 z-[100]">
-      <div className="mb-10 rounded-3xl flex-col flex shadow-xl">
+      <div className="mb-10 rounded-3xl flex-col flex shadow-button bg-background border-glass">
         <PlusIcon
           radius="none"
           className="rounded-t-3xl mb-[1px] shadow-none"
@@ -71,8 +71,8 @@ export const MapControls = ({ mapInstance }: MapControlsProps) => {
           onClick={handleZoomOut}
         />
       </div>
-      <RotationIcon onClick={handleResetRotation} />
-      <NavigationIcon onClick={handleLocate} />
+      <RotationIcon className="border-glass" onClick={handleResetRotation} />
+      <NavigationIcon className="border-glass" onClick={handleLocate} />
     </div>
   );
 };

@@ -22,19 +22,19 @@ export const siteConfig = {
       href: '/footprint',
       meta: { icon: MapPinned, fullscreen: true }
     },
-    {
-      label: 'Blog',
-      href: '/blog',
-      meta: { icon: SquareLibrary }
-    },
-    {
-      label: 'About',
-      href: '/about'
-    },
+    // {
+    //   label: 'Blog',
+    //   href: '/blog',
+    //   meta: { icon: SquareLibrary }
+    // },
+    // {
+    //   label: 'About',
+    //   href: '/about'
+    // },
     {
       label: 'Admin',
       href: '/admin',
-      meta: { icon: MapPinned, fullscreen: true }
+      meta: { icon: MapPinned, fullscreen: true, hidden: true }
     }
   ],
   links: {
