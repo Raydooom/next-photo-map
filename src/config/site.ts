@@ -10,17 +10,17 @@ export const siteConfig = {
     {
       label: 'Home',
       href: '/',
-      meta: { fullscreen: false }
+      meta: { fullscreen: false, needRefresh: true }
     },
     {
       label: 'Photos',
       href: '/photos',
-      meta: { icon: LayoutPanelTop }
+      meta: { icon: LayoutPanelTop, needRefresh: true }
     },
     {
       label: 'Map',
       href: '/footprint',
-      meta: { icon: MapPinned, fullscreen: true }
+      meta: { icon: MapPinned, fullscreen: true, needRefresh: true }
     },
     // {
     //   label: 'Blog',

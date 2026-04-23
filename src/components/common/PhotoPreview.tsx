@@ -2,7 +2,8 @@ import { Modal, ModalContent } from '@heroui/modal';
 import { PhotoItem } from '@/types';
 import Carousel from '../Carousel';
 import { useCallback } from 'react';
-import { getParams, replaceUrl } from '@/utils/url';
+import { useSearchParams } from 'next/navigation';
+import { replaceUrl } from '@/utils/url';
 
 export function PhotoPreview({
   list,
@@ -15,11 +16,13 @@ export function PhotoPreview({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const searchParams = useSearchParams();
+  const photoId = Number(searchParams.get('photoId')) || undefined;
+
   const onClickClose = () => {
     onClose();
   };
 
-  const photoId = Number(getParams('photoId')) || undefined;
   const handleSelect = useCallback(
     (item: PhotoItem) => {
       if (item.id !== photoId) {
