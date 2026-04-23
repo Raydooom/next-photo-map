@@ -4,8 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3100",
-    "restart": "rm -rf .next && next dev --port 3100",
+    "dev": "next dev --turbopack --port 3000",
+    "dev:nas": "NODE_ENV=nas next dev --turbopack --port 3000",
+    "restart": "rm -rf .next && next dev --port 3000",
     "build": "next build",
     "build:prod": "NODE_ENV=production next build",
     "start": "next start",

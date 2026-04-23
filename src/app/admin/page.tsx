@@ -19,7 +19,6 @@ export default function AboutPage() {
   };
   return (
     <div>
-      <h1>Admin</h1>
       <Button onPress={() => startScanner()}>Start Scanner</Button>
       <Button onPress={() => getList()}>Count Photos</Button>
       <Button onPress={() => getExif()}>Get Exif</Button>

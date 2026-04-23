@@ -34,14 +34,6 @@ export default function RootLayout({
     <html suppressHydrationWarning lang="zh-CN">
       <head />
       <body className="min-h-screen text-main bg-page-background font-sans antialiased">
-        <svg width="0" height="0">
-          <defs>
-            <mask id="myMask" maskUnits="objectBoundingBox">
-              <rect width="1" height="1" fill="white" />
-              <path d="M 0.8 1 L 1 1 L 1 0.8 Q 0.9 0.9 0.8 1 Z" fill="black" />
-            </mask>
-          </defs>
-        </svg>
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

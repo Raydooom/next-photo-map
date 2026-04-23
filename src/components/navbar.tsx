@@ -38,6 +38,9 @@ export const Navbar = ({ className }: { className?: string }) => {
         </NavbarBrand>
         <NavbarContent className="gap-2" justify="center">
           {siteConfig.navItems.map(item => {
+            if (item.meta?.hidden) {
+              return null;
+            }
             const isActive = pathname === item.href;
             return (
               <NavbarItem key={item.href}>
@@ -66,14 +69,14 @@ export const Navbar = ({ className }: { className?: string }) => {
         </NavbarContent>
 
         <NavbarContent className="gap-4" justify="end">
-          <Link
+          {/* <Link
             isExternal
             aria-label="Github"
             href={siteConfig.links.github}
             className="text-default-400 hover:text-main transition-colors"
           >
             <GithubIcon className="w-5 h-5" />
-          </Link>
+          </Link> */}
           <ThemeSwitch className="scale-85" />
         </NavbarContent>
       </HeroUINavbar>

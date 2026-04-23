@@ -9,8 +9,8 @@ const nextConfig = {
         pathname: '/**'
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        protocol: 'http',
+        hostname: '10.168.1.5',
         pathname: '/**'
       }
     ]
