@@ -4,9 +4,9 @@ import { PhotoItem } from '@/types';
 import { PhotoCard } from './PhotoCard';
 import { Masonry } from 'masonic';
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PhotoPreview } from '../common/PhotoPreview';
 import { replaceUrl } from '@/utils/url';
-import { useSearchParams } from 'next/navigation';
 
 export default function MasonryGrid({
   items,
@@ -33,7 +33,7 @@ export default function MasonryGrid({
         setIsOpen(true);
       }
     }
-  }, []);
+  }, [photoId, previewId, items]);
 
   // 点击图片时，设置预览图片id并打开预览弹窗
   const onClickItem = useCallback(async (item: { data: PhotoItem }) => {
@@ -46,7 +46,7 @@ export default function MasonryGrid({
   const onClosePreview = () => {
     setPreviewId(undefined);
     setIsOpen(false);
-    replaceUrl(`${window.location.pathname}`);
+    replaceUrl(window.location.pathname);
   };
 
   const renderItem = useCallback(
