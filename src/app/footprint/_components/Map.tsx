@@ -1,9 +1,9 @@
 'use client';
 import maplibreGl from 'maplibre-gl';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MapControls } from '@/components/Map/modules/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
-import { useSearchParams } from 'next/navigation';
 import { PointDetail } from './PointDetail';
 import { replaceUrl } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
@@ -80,7 +80,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
 
     // 更新数据源
     updateMarkers(features);
-  }, [mapInstance, markerGroup, updateMarkers]);
+  }, [mapInstance, markerGroup, updateMarkers, photoId]);
 
   // 添加点击事件监听
   const handleClusterClick = async (cluster: any) => {

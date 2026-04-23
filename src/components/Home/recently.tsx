@@ -1,6 +1,7 @@
 import { PhotoItem } from '@/types';
 import Link from 'next/link';
 import MasonryGrid from '../PhotoMasonry/MasonryGrid';
+import { Suspense } from 'react';
 
 interface PhotoGalleryProps {
   className?: string;
@@ -26,7 +27,9 @@ export function Recently({ photos: recentlyPhotos }: PhotoGalleryProps) {
       </div>
 
       {/* Masonry grid */}
-      <MasonryGrid items={recentlyPhotos} columns={5} />
+      <Suspense>
+        <MasonryGrid items={recentlyPhotos} columns={5} />
+      </Suspense>
     </section>
   );
 }
