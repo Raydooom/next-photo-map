@@ -3,6 +3,7 @@ import * as Actions from '@/server/actions/index';
 import { groupByLocation } from '@/components/Map/helper';
 import { Suspense } from 'react';
 import { MarkerPoint, PhotoLocation } from '@/types';
+export const dynamic = 'force-dynamic';
 
 export default async function FootprintPage() {
   const list = await Actions.getLocations();

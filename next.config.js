@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // 确保在生产环境中独立运行
   images: {
     remotePatterns: [
       {
