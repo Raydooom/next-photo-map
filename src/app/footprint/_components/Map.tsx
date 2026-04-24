@@ -133,16 +133,14 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       <div ref={mapRef} className="w-full h-full relative overflow-hidden">
         {/* 渲染 React 聚合组件层 */}
         {mapInstance &&
-          clusters.map(cluster => {
-            return (
-              <ClusterMarker
-                key={cluster.renderKey}
-                map={mapInstance}
-                cluster={cluster}
-                onClick={handleClusterClick}
-              />
-            );
-          })}
+          clusters.map(cluster => (
+            <ClusterMarker
+              key={cluster.renderKey}
+              map={mapInstance}
+              cluster={cluster}
+              onClick={handleClusterClick}
+            />
+          ))}
         {/* 使用 MapControls 组件 */}
         <MapControls mapInstance={mapInstance} />
       </div>
