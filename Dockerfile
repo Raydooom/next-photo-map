@@ -10,16 +10,20 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# 如果使用 Prisma，必须在这里生成 Client
-# RUN npx prisma generate 
+# 声明一个构建参数
+ARG DATABASE_URL
+# 将参数转为环境变量，供 build 阶段使用
+ENV DATABASE_URL=$DATABASE_URL
 
-RUN npm run build
+# 应用 Prisma 数据库迁移
+# RUN npm run prisma:push
+RUN npm run build:docker
 
 # 第三阶段：运行环境
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 # 禁用 Next.js 遥测数据收集
 ENV NEXT_TELEMETRY_DISABLED=1
 
