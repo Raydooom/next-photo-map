@@ -2,7 +2,7 @@ services:
   next:
     build:
       context: .
-      dockerfile: Dockerfile.docker
+      dockerfile: Dockerfile
       args:
         DATABASE_URL: postgresql://photo_user:wang619218505@photo-map-db:5432/photomap_db
     container_name: photo-map-next
