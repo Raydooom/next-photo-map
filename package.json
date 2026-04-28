@@ -7,16 +7,15 @@
     "dev": "next dev --turbopack --port 3000",
     "restart": "rm -rf .next && next dev --port 3000",
     "build": "prisma generate && next build",
-    "build:prod": "NODE_ENV=production prisma generate && next build",
+    "build:docker": "NODE_ENV=docker prisma generate && next build",
     "start": "next start",
-    "start:prod": "NODE_ENV=production next start",
+    "start:docker": "NODE_ENV=docker next start",
     "lint": "eslint",
-    "db:sync": "prisma migrate dev && prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:pull": "prisma db pull",
     "prisma:push": "prisma db push && prisma generate",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:push:local": "dotenv -e .env.local -- prisma db push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1021.0",
@@ -103,6 +102,7 @@
     "@types/react-dom": "18.3.0",
     "@typescript-eslint/eslint-plugin": "8.34.1",
     "@typescript-eslint/parser": "8.34.1",
+    "dotenv-cli": "11.0.0",
     "eslint": "9.25.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-react": "7.37.5",

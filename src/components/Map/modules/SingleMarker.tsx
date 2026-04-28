@@ -7,7 +7,7 @@ import { useMapBase } from '../hooks/useMapBase';
 import { MarkerIcon } from '@/components/Icons/custom';
 
 interface SingleMarkerProps {
-  point?: [number, number];
+  point: [number, number];
   photoId?: number;
 }
 
@@ -17,7 +17,7 @@ export const SingleMarker = ({ point, photoId }: SingleMarkerProps) => {
   const [isInit, setIsInit] = useState(true);
   useEffect(() => {
     // 初始化时设置地图中心
-    if (point && mapInstance) {
+    if (mapInstance) {
       if (isInit) {
         mapInstance.once('idle', () => {
           mapInstance.panTo(point);

@@ -13,6 +13,11 @@ const nextConfig = {
         protocol: 'http',
         hostname: '10.168.1.5',
         pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'sso.raydom.wang',
+        pathname: '/**'
       }
     ]
   },
