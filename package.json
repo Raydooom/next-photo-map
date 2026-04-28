@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack --port 3000",
     "restart": "rm -rf .next && next dev --port 3000",
     "build": "prisma generate && next build",
-    "build:docker": "dotenv -e .env.docker -- next build",
+    "build:docker": "dotenv -e .env.docker -- prisma generate && next build",
     "start": "next start",
     "start:docker": "dotenv -e .env.docker -- next start",
     "lint": "eslint",
