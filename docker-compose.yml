@@ -1,0 +1,19 @@
+services:
+  next:
+    build:
+      context: .
+      dockerfile: Dockerfile.docker
+      args:
+        DATABASE_URL: postgresql://photo_user:wang619218505@photo-map-db:5432/photomap_db
+    container_name: photo-map-next
+    ports:
+      - '3000:3000'
+    volumes:
+      - /mnt/map-photos:/photos
+    restart: always
+    networks:
+      - photo_map_network
+
+networks:
+  photo_map_network:
+    external: true

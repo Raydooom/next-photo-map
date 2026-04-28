@@ -10,8 +10,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# 声明一个构建参数
+ARG DATABASE_URL
+# 将参数转为环境变量，供 build 阶段使用
+ENV DATABASE_URL=$DATABASE_URL
+
 # 应用 Prisma 数据库迁移
-RUN npm run prisma:push
+# RUN npm run prisma:push
 RUN npm run build:prod
 
 # 第三阶段：运行环境

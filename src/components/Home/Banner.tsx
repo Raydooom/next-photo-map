@@ -17,9 +17,9 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   return (
-    <section className="relative border-glass bg-background rounded overflow-hidden shadow-card">
+    <section className="relative border-glass flex-auto bg-background rounded overflow-hidden shadow-card">
       {/* 全屏轮播图区域 */}
-      <div className="relative flex-1 h-full overflow-hidden">
+      <div className="relative h-full overflow-hidden">
         <Carousel
           slides={photosWithLocation}
           imageFit="cover"
@@ -30,25 +30,28 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
         />
 
         {/* 左下方地图小卡片 */}
-        <div className="absolute left-4 bottom-4 w-80 p-3 bg-background/60 z-10 rounded shadow-card border-glass backdrop-blur">
-          <div className="flex items-center gap-1 text-sub text-xs my-1 pl-1">
-            <DateIcon className="w-3 h-3" />
-            {formatTakenDate(selectedPhoto?.takenAt)}
-            <span className="px-1 text-lg line-height-1">·</span>
-            <LocationIcon className="w-3 h-3" />
-            {selectedPhoto?.locations?.city}{' '}
-            {selectedPhoto?.locations?.district}
-          </div>
-          <div className="w-full h-40 shadow-sm rounded overflow-hidden">
-            <SingleMarker
-              point={[
-                selectedPhoto?.locations?.longitude as number,
-                selectedPhoto?.locations?.latitude as number
-              ]}
-              photoId={selectedPhoto?.id}
-            />
-          </div>
-        </div>
+        {selectedPhoto?.locations?.latitude &&
+          selectedPhoto?.locations?.longitude && (
+            <div className="absolute left-4 bottom-4 w-80 p-3 bg-background/60 z-10 rounded shadow-card border-glass backdrop-blur">
+              <div className="flex items-center gap-1 text-sub text-xs my-1 pl-1">
+                <DateIcon className="w-3 h-3" />
+                {formatTakenDate(selectedPhoto?.takenAt)}
+                <span className="px-1 text-lg line-height-1">·</span>
+                <LocationIcon className="w-3 h-3" />
+                {selectedPhoto?.locations?.city}{' '}
+                {selectedPhoto?.locations?.district}
+              </div>
+              <div className="w-full h-40 shadow-sm rounded overflow-hidden">
+                <SingleMarker
+                  point={[
+                    selectedPhoto.locations.longitude,
+                    selectedPhoto.locations.latitude
+                  ]}
+                  photoId={selectedPhoto?.id}
+                />
+              </div>
+            </div>
+          )}
       </div>
     </section>
   );
