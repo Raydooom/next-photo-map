@@ -1,5 +1,5 @@
 import { prisma, Prisma } from '../lib/db';
-import { getImageUrl } from '@/server/lib/oss';
+import { getImageUrl, deleteFileFromMinio, checkObjectExists } from '@/server/lib/oss';
 
 export class PhotoService {
   private readonly photosBaseUrl = '/photos';
@@ -22,6 +22,91 @@ export class PhotoService {
    */
   async countAllPhotos() {
     return prisma.photos.count();
+  }
+
+  /**
+   * 获取所有照片列表（用于管理后台）
+   */
+  async getAllPhotos() {
+    return prisma.photos.findMany({
+      orderBy: { takenAt: 'desc' },
+      include: {
+        photoExif: true,
+        locations: true
+      }
+    });
+  }
+
+  /**
+   * 检查照片文件是否存在于 MinIO
+   */
+  async checkFileExists(photo: Prisma.photosGetPayload<{
+    include: { photoExif?: boolean; locations?: boolean };
+  }>): Promise<{ exists: boolean; key: string }> {
+    const key = photo.originalKey;
+    if (!key) {
+      return { exists: false, key: '' };
+    }
+    const exists = await checkObjectExists(key);
+    return { exists, key };
+  }
+
+  /**
+   * 批量检查文件是否存在于 MinIO
+   */
+  async batchCheckFileExists(photos: Prisma.photosGetPayload<{
+    include: { photoExif?: boolean; locations?: boolean };
+  }>[]) {
+    return Promise.all(
+      photos.map(async photo => {
+        const { exists, key } = await this.checkFileExists(photo);
+        return {
+          ...photo,
+          fileExists: exists,
+          fileKey: key
+        };
+      })
+    );
+  }
+
+  /**
+   * 删除照片（包括数据库记录和存储文件）
+   */
+  async deletePhoto(id: number) {
+    const photo = await prisma.photos.findUnique({
+      where: { id },
+      include: {
+        photoExif: true,
+        locations: true
+      }
+    });
+
+    if (!photo) {
+      throw new Error('照片不存在');
+    }
+
+    // 删除存储中的文件
+    const keysToDelete = [
+      photo.originalKey,
+      photo.thumbSmallKey,
+      photo.thumbLargeKey,
+      photo.videoKey
+    ].filter(Boolean) as string[];
+
+    for (const key of keysToDelete) {
+      try {
+        await deleteFileFromMinio(key);
+      } catch (error) {
+        console.warn(`Failed to delete file ${key}:`, error);
+      }
+    }
+
+    // 删除数据库记录（关联记录会级联删除）
+    await prisma.photos.delete({
+      where: { id }
+    });
+
+    return { success: true, message: '删除成功' };
   }
   /**
    * 创建照片照片

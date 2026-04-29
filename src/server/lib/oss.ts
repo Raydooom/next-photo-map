@@ -3,7 +3,8 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand
+  DeleteObjectCommand,
+  HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
@@ -48,6 +49,23 @@ export function deleteFileFromMinio(key: string) {
       Key: key
     })
   );
+}
+
+// 检查 MinIO 中对象是否存在
+export async function checkObjectExists(key: string): Promise<boolean> {
+  try {
+    await client.send(
+      new HeadObjectCommand({
+        Bucket: process.env['MINIO_BUCKET'],
+        Key: key
+      })
+    );
+    return true;
+  } catch (error) {
+    // 如果对象不存在，S3 SDK 会抛出 NoSuchKey 错误
+    // 我们认为这种情况是正常的，返回 false
+    return false;
+  }
 }
 
 /**
