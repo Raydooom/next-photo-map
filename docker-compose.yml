@@ -11,7 +11,7 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - /mnt/map-photos:/app/data/photos
+      - /mnt/map-photos:/app/photos
     restart: always
     networks:
       - photo_map_network
