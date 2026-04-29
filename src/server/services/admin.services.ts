@@ -12,6 +12,7 @@ import { photoExifService } from './photoExif.services';
 import { PHOTO_BASE_DIR } from '../config';
 import * as Utils from '../utils';
 import { GeocodingService } from '../utils/geocoding';
+import { createLogger } from '../utils/logger';
 
 interface FileGroup {
   fileName: string; // 包含扩展名的文件名
@@ -28,28 +29,47 @@ export class ScannerService {
   private photoService: PhotoService;
   private fileManageService: FileManageService;
   private geocodingService: GeocodingService;
+  private logger = createLogger('SCANNER');
+  private scanStartTime: number = 0;
+  private successCount: number = 0;
+  private failedCount: number = 0;
+  private skippedCount: number = 0;
+
   constructor(appUrl?: string) {
     this.photoService = new PhotoService(appUrl);
     this.fileManageService = new FileManageService();
     this.geocodingService = new GeocodingService();
   }
+
   /**
    * 开始扫描目录
    * @param force 是否强制重新扫描
    */
   async startScanner(force: boolean = false) {
+    this.scanStartTime = Date.now();
+    this.successCount = 0;
+    this.failedCount = 0;
+    this.skippedCount = 0;
+
+    this.logger.info(`========== 开始扫描图片目录 ==========`);
+    this.logger.info(`扫描模式: ${force ? '全量扫描' : '增量扫描'}`);
+    this.logger.info(`扫描目录: ${PHOTO_BASE_DIR}`);
+
     const files = await glob('**.{jpg,jpeg,png,heic,webp,mp4,mov}', {
       cwd: PHOTO_BASE_DIR,
       absolute: true,
       nocase: true
     });
 
-    const groups = this.groupFiles(files);
+    this.logger.info(`发现文件总数: ${files.length}`);
 
-    // 3. 处理每一组
+    const groups = this.groupFiles(files);
+    const totalGroups = Array.from(groups.values()).filter(g => g.imageAbsolutePath).length;
+
+    this.logger.info(`图片文件组数: ${totalGroups}`);
+
     let processedCount = 0;
     const currentPaths = new Set<string>();
-
     const dataMap = new Map<string, any>();
 
     for (const group of groups.values()) {
@@ -59,11 +79,22 @@ export class ScannerService {
           group.imageAbsolutePath
         );
         currentPaths.add(relativePath);
+        processedCount++;
+
+        this.logger.info(`[${processedCount}/${totalGroups}] 处理: ${relativePath}`);
+        
         const data = await this.processGroup(group, force);
         dataMap.set(relativePath, data);
-        processedCount++;
       }
     }
+
+    const scanDuration = ((Date.now() - this.scanStartTime) / 1000).toFixed(2);
+    
+    this.logger.success(`========== 扫描完成 ==========`);
+    this.logger.info(`扫描耗时: ${scanDuration} 秒`);
+    this.logger.success(`成功处理: ${this.successCount} 个`);
+    this.logger.warning(`跳过: ${this.skippedCount} 个`);
+    this.logger.error(`失败: ${this.failedCount} 个`);
 
     return dataMap;
   }
@@ -74,6 +105,8 @@ export class ScannerService {
   private async processGroup(group: FileGroup, force: boolean) {
     if (!group.imageAbsolutePath) return;
 
+    const relativePath = path.relative(PHOTO_BASE_DIR, group.imageAbsolutePath);
+
     // 根据原始路径检查数据库是否存在
     const existing = await this.photoService.checkPhotoExists(
       group.imageAbsolutePath
@@ -81,6 +114,8 @@ export class ScannerService {
 
     // 如果是增量模式且记录已存在，则跳过
     if (!force && existing) {
+      this.skippedCount++;
+      this.logger.warning(`跳过: ${relativePath} (已存在)`);
       return;
     }
 
@@ -89,8 +124,6 @@ export class ScannerService {
       const fileBuffer = await fs.promises.readFile(group.imageAbsolutePath);
 
       const sharpImage = await this.getSharpInstance(fileBuffer, group.ext);
-
-      // 用sharp实例，获取旋转后的元数据宽高
       const metadata = await sharpImage.metadata();
       const width = metadata.width || 0;
       const height = metadata.height || 0;
@@ -150,12 +183,14 @@ export class ScannerService {
         uploadTasks.push(videoUploadTask);
       }
 
-      // 执行上传
+      this.logger.info(`上传文件: ${relativePath}`);
       const uploadRes = await Promise.all(uploadTasks);
 
       const isSuccess = uploadRes.every(res => res?.key && res?.success);
 
       if (!isSuccess) {
+        this.failedCount++;
+        this.logger.error(`上传失败: ${relativePath}`);
         return null;
       }
 
@@ -183,13 +218,11 @@ export class ScannerService {
           photoData,
           existing.id as number
         );
-        // await locationService.deleteLocationByPhotoId(photo.id);
       } else {
         photo = await this.photoService.createPhoto(photoData);
       }
 
       if (exifData) {
-        // 处理曝光时间
         let exposureTimeStr = null;
         if (exifData.ExposureTime) {
           if (typeof exifData.ExposureTime === 'number') {
@@ -202,7 +235,7 @@ export class ScannerService {
             exposureTimeStr = String(exifData.ExposureTime);
           }
         }
-        // 处理方向
+
         let bearing: number | null = null;
         if (exifData.GPSImgDirection !== undefined) {
           bearing =
@@ -210,6 +243,7 @@ export class ScannerService {
               ? exifData.GPSImgDirection
               : parseFloat(exifData.GPSImgDirection);
         }
+
         const data = {
           make: exifData.Make,
           model: exifData.Model,
@@ -230,7 +264,6 @@ export class ScannerService {
           altitude: exifData.GPSAltitude
             ? Number(exifData.GPSAltitude.toFixed(2))
             : null,
-
           lensMake: exifData.LensMake,
           flash:
             typeof exifData.Flash === 'object'
@@ -245,14 +278,10 @@ export class ScannerService {
           focalLengthIn35mmFormat: exifData.FocalLengthIn35mmFormat,
           gpsTimeStamp: exifData.GPSTimeStamp,
           gpsImgDirection: bearing,
-
-          // 方向转换为方向字符串
           bearingDirection:
             bearing !== null ? Utils.getDirectionFromBearing(bearing) : null,
-
           exifImageWidth: exifData.ExifImageWidth,
           exifImageHeight: exifData.ExifImageHeight,
-
           rawData: exifData
         };
         await photoExifService.savePhotoExif(photo.id, data);
@@ -282,7 +311,7 @@ export class ScannerService {
             bearingDirection: bearingDirection,
             country: addressComponent.country,
             province: addressComponent.province,
-            city: addressComponent.city || addressComponent.province, // 直辖市
+            city: addressComponent.city || addressComponent.province,
             district: addressComponent.district,
             township: addressComponent.township,
             adcode: addressComponent.adcode,
@@ -293,15 +322,14 @@ export class ScannerService {
           });
         }
       } else {
-        // 删除旧记录
         await photoExifService.deletePhotoExifByPhotoId(photo.id);
       }
 
-      console.log(
-        `Processed photo: ${group.imageAbsolutePath} (ID: ${photo.id})`
-      );
+      this.successCount++;
+      this.logger.success(`处理成功: ${relativePath} (ID: ${photo.id})`);
     } catch (error) {
-      console.error(`Error processing ${group.imageAbsolutePath}:`, error);
+      this.failedCount++;
+      this.logger.error(`处理失败: ${relativePath} - ${(error as Error).message}`);
     }
   }
 
