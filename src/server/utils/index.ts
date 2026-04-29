@@ -1,5 +1,6 @@
 import path from 'path';
 import exifr from 'exifr';
+export { Logger, createLogger, logger } from './logger';
 
 // 获取文件MIME类型
 export function getMimeType(filePath: string): string {
