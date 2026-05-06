@@ -55,10 +55,10 @@ export default function ScanPage() {
     const url = `/api/admin/scan?force=${forceScan}`;
     eventSourceRef.current = new EventSource(url);
 
-    eventSourceRef.current.onmessage = (event) => {
+    eventSourceRef.current.onmessage = event => {
       try {
         const data: ScanProgress = JSON.parse(event.data);
-        
+
         setLogs(prev => [...prev, data]);
 
         if (data.type === 'start') {
@@ -92,15 +92,18 @@ export default function ScanPage() {
       }
     };
 
-    eventSourceRef.current.onerror = (error) => {
+    eventSourceRef.current.onerror = error => {
       console.error('SSE 连接错误:', error);
       setIsScanning(false);
       eventSourceRef.current?.close();
-      setLogs(prev => [...prev, {
-        type: 'error',
-        message: '连接中断',
-        error: 'SSE 连接错误'
-      }]);
+      setLogs(prev => [
+        ...prev,
+        {
+          type: 'error',
+          message: '连接中断',
+          error: 'SSE 连接错误'
+        }
+      ]);
     };
   };
 
@@ -149,32 +152,53 @@ export default function ScanPage() {
   const getLogBadge = (type: ScanProgress['type']) => {
     switch (type) {
       case 'start':
-        return <Badge color="primary">开始</Badge>;
+        return (
+          <Badge color="primary" size="sm">
+            开始
+          </Badge>
+        );
       case 'progress':
-        return <Badge color="default">进度</Badge>;
+        return (
+          <Badge color="default" size="sm">
+            进度
+          </Badge>
+        );
       case 'complete':
-        return <Badge color="success">完成</Badge>;
+        return (
+          <Badge color="success" size="sm">
+            完成
+          </Badge>
+        );
       case 'error':
-        return <Badge color="danger">错误</Badge>;
+        return (
+          <Badge color="danger" size="sm">
+            错误
+          </Badge>
+        );
       case 'end':
-        return <Badge color="default">结束</Badge>;
+        return (
+          <Badge color="default" size="sm">
+            结束
+          </Badge>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">扫描控制</h2>
-        <div className="flex items-center gap-4">
+    <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden">
+      {/* 控制栏 */}
+      <div className="flex items-center justify-between flex-shrink-0">
+        <h2 className="text-lg font-semibold">扫描控制</h2>
+        <div className="flex items-center gap-3">
           <Switch
             isSelected={forceScan}
             onValueChange={setForceScan}
             disabled={isScanning}
             size="sm"
           >
-            强制全量扫描
+            强制更新
           </Switch>
           {isScanning ? (
             <Button color="danger" onPress={stopScan} size="sm">
@@ -188,78 +212,97 @@ export default function ScanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardBody className="pt-6">
-            <p className="text-sm text-gray-600">发现文件总数</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.totalFiles}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-purple-50 border-purple-200">
-          <CardBody className="pt-6">
-            <p className="text-sm text-gray-600">图片文件组数</p>
-            <p className="text-3xl font-bold text-purple-600">{stats.totalGroups}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-green-50 border-green-200">
-          <CardBody className="pt-6">
-            <p className="text-sm text-gray-600">成功处理</p>
-            <p className="text-3xl font-bold text-green-600">{stats.success}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-red-50 border-red-200">
-          <CardBody className="pt-6">
-            <p className="text-sm text-gray-600">处理失败</p>
-            <p className="text-3xl font-bold text-red-600">{stats.failed}</p>
-          </CardBody>
-        </Card>
-      </div>
+      {/* 统计卡片 + 进度条 + 扫描结果 */}
+      <Card className="flex-shrink-0 pt-3">
+        <CardBody className="p-3">
+          {/* 统计数字 */}
+          <div className="grid grid-cols-6 gap-3 mb-3">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">发现文件</p>
+              <p className="text-xl font-bold text-blue-600">
+                {stats.totalFiles}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">图片组数</p>
+              <p className="text-xl font-bold text-purple-600">
+                {stats.totalGroups}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">成功</p>
+              <p className="text-xl font-bold text-green-600">
+                {stats.success}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">跳过</p>
+              <p className="text-xl font-bold text-yellow-600">
+                {stats.skipped}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">失败</p>
+              <p className="text-xl font-bold text-red-600">{stats.failed}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">耗时</p>
+              <p className="text-xl font-bold">{stats.duration || '--'}s</p>
+            </div>
+          </div>
 
-      {isScanning && (
-        <Card>
-          <CardHeader>
-            <h4>扫描进度</h4>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>当前进度</span>
-                <span>{stats.current} / {stats.totalGroups}</span>
+          {/* 进度条或结果 */}
+          {isScanning ? (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span>扫描进度</span>
+                <span>
+                  {stats.current} / {stats.totalGroups} (
+                  {getProgressPercentage()}%)
+                </span>
               </div>
               <Progress
                 value={getProgressPercentage()}
                 color="primary"
-                className="w-full"
+                className="w-full h-2"
               />
-              <div className="text-center text-sm text-gray-600">
-                {getProgressPercentage()}%
-              </div>
             </div>
-          </CardBody>
-        </Card>
-      )}
+          ) : stats.duration ? (
+            <div className="text-center text-xs text-gray-400 rounded py-1">
+              ✓ 扫描完成，共处理 {stats.totalGroups} 组图片
+            </div>
+          ) : (
+            <div className="text-center text-xs text-gray-400 py-1">
+              等待开始扫描...
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
-      <Card>
-        <CardHeader>
-          <h4>扫描日志</h4>
+      {/* 日志区域 */}
+      <Card className="flex-1 overflow-hidden">
+        <CardHeader className="pb-2">
+          <h4 className="text-sm">扫描日志</h4>
         </CardHeader>
-        <CardBody>
-          <ScrollShadow className="h-[500px]">
-            <div className="space-y-2 font-mono text-sm">
+        <CardBody className="p-3 h-full">
+          <ScrollShadow className="h-full">
+            <div className="space-y-1 font-mono text-xs">
               {logs.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">暂无日志</p>
+                <p className="text-gray-400 text-center py-4">
+                  点击 开始扫描 开始处理
+                </p>
               ) : (
                 logs.map((log, index) => (
                   <div key={index} className="flex items-start gap-2">
-                    <span className="text-gray-400 shrink-0">
-                      {new Date().toLocaleTimeString('zh-CN')}
+                    <span className="text-gray-400 shrink-0 text-[10px]">
+                      {new Date().toLocaleTimeString('zh-CN', {
+                        hour12: false
+                      })}
                     </span>
                     {getLogBadge(log.type)}
-                    <span className={getLogColor(log.type)}>
-                      {log.message}
-                    </span>
+                    <span className={getLogColor(log.type)}>{log.message}</span>
                     {log.data?.filename && (
-                      <span className="text-gray-500">
+                      <span className="text-gray-500 truncate max-w-[300px]">
                         - {log.data.filename}
                       </span>
                     )}
@@ -271,34 +314,6 @@ export default function ScanPage() {
           </ScrollShadow>
         </CardBody>
       </Card>
-
-      {stats.duration && (
-        <Card>
-          <CardHeader>
-            <h4>扫描结果</h4>
-          </CardHeader>
-          <CardBody>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-600">扫描耗时</p>
-                <p className="text-xl font-bold">{stats.duration} 秒</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">成功处理</p>
-                <p className="text-xl font-bold text-green-600">{stats.success}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">跳过</p>
-                <p className="text-xl font-bold text-yellow-600">{stats.skipped}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">失败</p>
-                <p className="text-xl font-bold text-red-600">{stats.failed}</p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      )}
     </div>
   );
 }
