@@ -14,15 +14,15 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   // 获取当前路由配置
   const currentRoute = siteConfig.navItems.find(item => pathname === item.href);
-  const isFullscreen = currentRoute?.meta?.fullscreen;
+  const isShowTopBar = currentRoute?.meta?.showTopBar;
 
   return (
     <div className="relative min-h-screen">
-      {!isFullscreen && <Navbar />}
+      {isShowTopBar && <Navbar />}
       <main>{children}</main>
-      {!isFullscreen && (
+      {/* {isShowTopBar && (
         <footer className="w-full flex items-center justify-center py-3"></footer>
-      )}
+      )} */}
     </div>
   );
 }
