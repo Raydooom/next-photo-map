@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import * as Admin from '@/server/actions/admin';
 import { Button } from '@heroui/button';
-import { Card, CardBody, CardHeader } from '@heroui/card';
+import { Card, CardBody } from '@heroui/card';
 import { Badge } from '@heroui/badge';
 import { ScrollShadow } from '@heroui/scroll-shadow';
 import {
@@ -130,7 +130,7 @@ export default function PhotosManagementPage() {
       setPhotos(updatedPhotos);
       updateStats(updatedPhotos);
       filterPhotos(updatedPhotos, activeTab);
-      onDeleteModalOpenChange(false);
+      onDeleteModalOpenChange();
     } catch (error) {
       console.error('Failed to delete photo:', error);
     }
@@ -144,7 +144,7 @@ export default function PhotosManagementPage() {
       setPhotos(updatedPhotos);
       updateStats(updatedPhotos);
       filterPhotos(updatedPhotos, activeTab);
-      onBatchDeleteModalOpenChange(false);
+      onBatchDeleteModalOpenChange();
       alert(
         `批量删除完成\n检查总数: ${result.totalChecked}\n缺失数量: ${result.missingCount}\n删除成功: ${result.success}\n删除失败: ${result.failed}`
       );
@@ -202,7 +202,7 @@ export default function PhotosManagementPage() {
       updateStats(updatedPhotos);
       filterPhotos(updatedPhotos, activeTab);
 
-      onLocationModalOpenChange(false);
+      onLocationModalOpenChange();
       alert('位置更新成功');
     } catch (error) {
       console.error('Failed to update location:', error);
@@ -229,36 +229,6 @@ export default function PhotosManagementPage() {
           </Button>
         </div>
       </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardBody className="pt-2">
-            <p className="text-sm text-gray-600">总图片数</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-green-50 border-green-200">
-          <CardBody className="pt-2">
-            <p className="text-sm text-gray-600">文件存在</p>
-            <p className="text-3xl font-bold text-green-600">{stats.exists}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-red-50 border-red-200">
-          <CardBody className="pt-2">
-            <p className="text-sm text-gray-600">文件丢失</p>
-            <p className="text-3xl font-bold text-red-600">{stats.missing}</p>
-          </CardBody>
-        </Card>
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardBody className="pt-2">
-            <p className="text-sm text-gray-600">无地理坐标</p>
-            <p className="text-3xl font-bold text-yellow-600">
-              {stats.noLocation}
-            </p>
-          </CardBody>
-        </Card>
-      </div>
-
       <Card>
         <CardBody>
           <Tabs
