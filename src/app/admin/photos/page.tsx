@@ -213,7 +213,7 @@ export default function PhotosManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">图片列表</h2>
         <div className="flex gap-4">
@@ -274,9 +274,9 @@ export default function PhotosManagementPage() {
                           <Image
                             src={getThumbnailUrl(photo) || ''}
                             alt={photo.filename}
-                            width={80}
-                            height={80}
-                            className="object-cover rounded"
+                            width={50}
+                            height={50}
+                            className="object-cover rounded-lg"
                           />
                         ) : (
                           <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
