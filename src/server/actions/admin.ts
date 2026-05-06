@@ -94,15 +94,20 @@ export const updatePhotoLocation = async (
       latitude,
       longitude
     });
-
+    const { formatted_address, addressComponent } = addressInfo;
     await locationService.saveLocation(photoId, {
       latitude,
       longitude,
-      country: addressInfo.addressComponent.country || '',
-      province: addressInfo.addressComponent.province || '',
-      city: addressInfo.addressComponent.city || '',
-      district: addressInfo.addressComponent.district || '',
-      rawData: addressInfo || {}
+      country: addressComponent.country,
+      province: addressComponent.province,
+      city: addressComponent.city || addressComponent.province,
+      district: addressComponent.district,
+      township: addressComponent.township,
+      adcode: addressComponent.adcode,
+      neighborhood: addressComponent.neighborhood.name,
+      type: addressComponent.neighborhood.type,
+      formattedAddress: formatted_address,
+      rawData: addressInfo
     });
 
     for (const path of refreshPaths) {
@@ -112,6 +117,29 @@ export const updatePhotoLocation = async (
     return { success: true, message: '位置更新成功' };
   } catch (error) {
     console.error('Failed to update photo location:', error);
+    throw error;
+  }
+};
+
+export const deletePhotoLocation = async (photoId: number) => {
+  try {
+    await locationService.deleteLocationByPhotoId(photoId).catch(() => {});
+    
+    const exif = await photoExifService.getPhotoExifByPhotoId(photoId);
+    if (exif) {
+      await photoExifService.savePhotoExif(photoId, {
+        latitude: null,
+        longitude: null
+      });
+    }
+
+    for (const path of refreshPaths) {
+      revalidatePath(path);
+    }
+
+    return { success: true, message: '位置删除成功' };
+  } catch (error) {
+    console.error('Failed to delete photo location:', error);
     throw error;
   }
 };

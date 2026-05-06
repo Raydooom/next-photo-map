@@ -74,7 +74,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
           [bounds[0], bounds[1]], // 西南角
           [bounds[2], bounds[3]] // 东北角
         ],
-        { padding: 40 }
+        { padding: { top: 60, bottom: 60, left: 60, right: 100 } }
       );
     }
 
