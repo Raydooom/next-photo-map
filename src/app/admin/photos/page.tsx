@@ -69,6 +69,12 @@ export default function PhotosManagementPage() {
     onOpenChange: onLocationModalOpenChange
   } = useDisclosure();
 
+  const {
+    isOpen: isDeleteLocationModalOpen,
+    onOpen: openDeleteLocationModal,
+    onOpenChange: onDeleteLocationModalOpenChange
+  } = useDisclosure();
+
   const loadPhotos = async () => {
     setLoading(true);
     try {
@@ -147,6 +153,26 @@ export default function PhotosManagementPage() {
   const handleOpenLocationModal = (photo: Photo) => {
     setSelectedPhoto(photo);
     openLocationModal();
+  };
+
+  const handleOpenDeleteLocationModal = (photo: Photo) => {
+    setSelectedPhoto(photo);
+    openDeleteLocationModal();
+  };
+
+  const handleDeleteLocation = async () => {
+    if (!selectedPhoto) return;
+    try {
+      await Admin.deletePhotoLocation(selectedPhoto.id);
+      setPhotos(prev =>
+        prev.map(p =>
+          p.id === selectedPhoto.id ? { ...p, hasLocation: false } : p
+        )
+      );
+    } catch (error) {
+      console.error('删除位置失败:', error);
+    }
+    onDeleteLocationModalOpenChange();
   };
 
   useEffect(() => {
@@ -296,13 +322,24 @@ export default function PhotosManagementPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {!photo.hasLocation && (
+                          {!photo.hasLocation ? (
                             <Button
                               variant="bordered"
                               size="sm"
                               onPress={() => handleOpenLocationModal(photo)}
                             >
                               标记位置
+                            </Button>
+                          ) : (
+                            <Button
+                              color="warning"
+                              variant="bordered"
+                              size="sm"
+                              onPress={() =>
+                                handleOpenDeleteLocationModal(photo)
+                              }
+                            >
+                              删除位置
                             </Button>
                           )}
                           <Button
@@ -372,6 +409,36 @@ export default function PhotosManagementPage() {
                   取消
                 </Button>
                 <Button color="primary" onPress={handleDeleteMissingPhotos}>
+                  确认删除
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* 删除位置 Modal */}
+      <Modal
+        isOpen={isDeleteLocationModalOpen}
+        onOpenChange={onDeleteLocationModalOpenChange}
+      >
+        <ModalContent>
+          {onClose => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                确认删除位置
+              </ModalHeader>
+              <ModalBody>
+                <p>
+                  将删除图片 &quot;{selectedPhoto?.filename}
+                  &quot; 的地理位置信息，此操作不可恢复。
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  取消
+                </Button>
+                <Button color="primary" onPress={handleDeleteLocation}>
                   确认删除
                 </Button>
               </ModalFooter>
