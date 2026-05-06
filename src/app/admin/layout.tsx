@@ -17,11 +17,11 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-2 max-w-7xl mx-auto">
       <Tabs
         aria-label="Admin modules"
         selectedKey={getSelectedKey()}
-        className="mb-6"
+        className="mb-4"
       >
         <Tab
           key="overview"
