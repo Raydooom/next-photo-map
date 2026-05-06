@@ -5,5 +5,6 @@ export { useMapClusters } from './hooks/useMapClusters';
 export { SingleMarker } from './modules/SingleMarker';
 export { ClusterMarker } from './modules/ClusterMarker';
 export { MapControls } from './modules/MapControls';
+export { MapMarker } from './modules/MapMarker';
 
 export * from './helper';

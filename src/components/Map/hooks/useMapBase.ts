@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import maplibreGl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -27,8 +27,15 @@ export const useMapBase = ({
   config = {},
   events
 }: MapLibreProps = {}) => {
-  const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<maplibreGl.Map | null>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  // 使用 Callback Ref 替代 useRef
+  const mapRef = useCallback((node: HTMLDivElement) => {
+    if (node !== null) {
+      setContainer(node);
+    }
+  }, []);
 
   const themeInfo = useTheme();
   const mapStyle = useMemo(
@@ -63,10 +70,10 @@ export const useMapBase = ({
 
   // 初始化地图
   useEffect(() => {
-    if (!mapRef.current || !mapStyle) return;
+    if (!container || !mapStyle) return;
 
     const map = new maplibreGl.Map({
-      container: mapRef.current,
+      container: container,
       style: mapStyle,
       center,
       zoom: config.zoom || 12,
@@ -82,8 +89,9 @@ export const useMapBase = ({
 
     return () => {
       map.remove();
+      setMapInstance(null);
     };
-  }, []);
+  }, [container]);
 
   // 处理主题/样式切换
   useEffect(() => {
