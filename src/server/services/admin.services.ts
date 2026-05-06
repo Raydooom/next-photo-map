@@ -34,11 +34,36 @@ export class ScannerService {
   private successCount: number = 0;
   private failedCount: number = 0;
   private skippedCount: number = 0;
+  private progressCallback?: (data: {
+    type: 'start' | 'progress' | 'complete' | 'error';
+    message: string;
+    data?: any;
+  }) => void;
 
   constructor(appUrl?: string) {
     this.photoService = new PhotoService(appUrl);
     this.fileManageService = new FileManageService();
     this.geocodingService = new GeocodingService();
+  }
+
+  setProgressCallback(
+    callback: (data: {
+      type: 'start' | 'progress' | 'complete' | 'error';
+      message: string;
+      data?: any;
+    }) => void
+  ) {
+    this.progressCallback = callback;
+  }
+
+  private emitProgress(
+    type: 'start' | 'progress' | 'complete' | 'error',
+    message: string,
+    data?: any
+  ) {
+    if (this.progressCallback) {
+      this.progressCallback({ type, message, data });
+    }
   }
 
   /**
@@ -55,6 +80,11 @@ export class ScannerService {
     this.logger.info(`扫描模式: ${force ? '全量扫描' : '增量扫描'}`);
     this.logger.info(`扫描目录: ${PHOTO_BASE_DIR}`);
 
+    this.emitProgress('start', '开始扫描图片目录', {
+      mode: force ? 'full' : 'incremental',
+      directory: PHOTO_BASE_DIR
+    });
+
     const files = await glob('**.{jpg,jpeg,png,heic,webp,mp4,mov}', {
       cwd: PHOTO_BASE_DIR,
       absolute: true,
@@ -63,10 +93,20 @@ export class ScannerService {
 
     this.logger.info(`发现文件总数: ${files.length}`);
 
+    this.emitProgress('progress', `发现文件总数: ${files.length}`, {
+      totalFiles: files.length
+    });
+
     const groups = this.groupFiles(files);
-    const totalGroups = Array.from(groups.values()).filter(g => g.imageAbsolutePath).length;
+    const totalGroups = Array.from(groups.values()).filter(
+      g => g.imageAbsolutePath
+    ).length;
 
     this.logger.info(`图片文件组数: ${totalGroups}`);
+
+    this.emitProgress('progress', `图片文件组数: ${totalGroups}`, {
+      totalGroups
+    });
 
     let processedCount = 0;
     const currentPaths = new Set<string>();
@@ -81,20 +121,45 @@ export class ScannerService {
         currentPaths.add(relativePath);
         processedCount++;
 
-        this.logger.info(`[${processedCount}/${totalGroups}] 处理: ${relativePath}`);
-        
-        const data = await this.processGroup(group, force);
+        this.logger.info(
+          `[${processedCount}/${totalGroups}] 处理: ${relativePath}`
+        );
+
+        this.emitProgress(
+          'progress',
+          `开始处理[${processedCount}/${totalGroups}]`,
+          {
+            current: processedCount,
+            total: totalGroups,
+            filename: relativePath
+          }
+        );
+
+        const data = await this.processGroup(
+          group,
+          force,
+          processedCount,
+          totalGroups
+        );
         dataMap.set(relativePath, data);
       }
     }
 
     const scanDuration = ((Date.now() - this.scanStartTime) / 1000).toFixed(2);
-    
+
     this.logger.success(`========== 扫描完成 ==========`);
     this.logger.info(`扫描耗时: ${scanDuration} 秒`);
     this.logger.success(`成功处理: ${this.successCount} 个`);
     this.logger.warning(`跳过: ${this.skippedCount} 个`);
     this.logger.error(`失败: ${this.failedCount} 个`);
+
+    this.emitProgress('complete', '扫描完成', {
+      duration: scanDuration,
+      success: this.successCount,
+      skipped: this.skippedCount,
+      failed: this.failedCount,
+      total: totalGroups
+    });
 
     return dataMap;
   }
@@ -102,7 +167,12 @@ export class ScannerService {
   /**
    * 处理单个文件组
    */
-  private async processGroup(group: FileGroup, force: boolean) {
+  private async processGroup(
+    group: FileGroup,
+    force: boolean,
+    processedCount: number,
+    totalGroups: number
+  ): Promise<any> {
     if (!group.imageAbsolutePath) return;
 
     const relativePath = path.relative(PHOTO_BASE_DIR, group.imageAbsolutePath);
@@ -116,6 +186,9 @@ export class ScannerService {
     if (!force && existing) {
       this.skippedCount++;
       this.logger.warning(`跳过: ${relativePath} (已存在)`);
+      this.emitProgress('progress', `跳过(已存在)`, {
+        filename: relativePath
+      });
       return;
     }
 
@@ -327,9 +400,20 @@ export class ScannerService {
 
       this.successCount++;
       this.logger.success(`处理成功: ${relativePath} (ID: ${photo.id})`);
+      this.emitProgress(
+        'progress',
+        `处理完成[${processedCount}/${totalGroups}]`,
+        {
+          current: processedCount,
+          total: totalGroups,
+          filename: relativePath
+        }
+      );
     } catch (error) {
       this.failedCount++;
-      this.logger.error(`处理失败: ${relativePath} - ${(error as Error).message}`);
+      this.logger.error(
+        `处理失败: ${relativePath} - ${(error as Error).message}`
+      );
     }
   }
 

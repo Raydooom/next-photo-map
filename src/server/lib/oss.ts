@@ -9,7 +9,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
 
-const client = new S3Client({
+export const client = new S3Client({
   endpoint: process.env['MINIO_ENDPOINT'],
   credentials: {
     accessKeyId: process.env['MINIO_ACCESS_KEY'] || '',
