@@ -10,17 +10,17 @@ export const siteConfig = {
     {
       label: 'Home',
       href: '/',
-      meta: { fullscreen: false, needRefresh: true }
+      meta: { showTopBar: true, needRefresh: true }
     },
     {
       label: 'Photos',
       href: '/photos',
-      meta: { icon: LayoutPanelTop, needRefresh: true }
+      meta: { icon: LayoutPanelTop, showTopBar: true, needRefresh: true }
     },
     {
       label: 'Map',
       href: '/footprint',
-      meta: { icon: MapPinned, fullscreen: true, needRefresh: true }
+      meta: { icon: MapPinned, needRefresh: true }
     },
     // {
     //   label: 'Blog',
@@ -34,7 +34,7 @@ export const siteConfig = {
     {
       label: 'Admin',
       href: '/admin',
-      meta: { icon: MapPinned, fullscreen: true, hidden: true }
+      meta: { icon: MapPinned, hidden: true }
     }
   ],
   links: {
