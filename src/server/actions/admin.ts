@@ -49,9 +49,9 @@ export const deleteMissingPhotos = async () => {
   const photos = await photoService.getAllPhotos();
   const photosWithStatus = await photoService.batchCheckFileExists(photos);
   const missingPhotos = photosWithStatus.filter(p => !p.fileExists);
-  
+
   const deletedCount = { success: 0, failed: 0 };
-  
+
   for (const photo of missingPhotos) {
     try {
       await photoService.deletePhoto(photo.id);
@@ -61,11 +61,11 @@ export const deleteMissingPhotos = async () => {
       console.warn(`Failed to delete missing photo ${photo.id}:`, error);
     }
   }
-  
+
   for (const path of refreshPaths) {
     revalidatePath(path);
   }
-  
+
   return {
     ...deletedCount,
     totalChecked: photos.length,
@@ -79,10 +79,13 @@ export const updatePhotoLocation = async (
   longitude: number
 ) => {
   const geocodingService = new GeocodingService();
-  
+
   try {
-    const addressInfo = await geocodingService.reverseGeocode(latitude, longitude);
-    
+    const addressInfo = await geocodingService.reverseGeocode(
+      latitude,
+      longitude
+    );
+
     if (!addressInfo) {
       throw new Error('地理编码失败');
     }
@@ -95,12 +98,11 @@ export const updatePhotoLocation = async (
     await locationService.saveLocation(photoId, {
       latitude,
       longitude,
-      country: addressInfo.country || '',
-      province: addressInfo.province || '',
-      city: addressInfo.city || '',
-      district: addressInfo.district || '',
-      address: addressInfo.address || '',
-      rawData: addressInfo.rawData || {}
+      country: addressInfo.addressComponent.country || '',
+      province: addressInfo.addressComponent.province || '',
+      city: addressInfo.addressComponent.city || '',
+      district: addressInfo.addressComponent.district || '',
+      rawData: addressInfo || {}
     });
 
     for (const path of refreshPaths) {
