@@ -1,4 +1,4 @@
-import { LayoutPanelTop, MapPinned, SquareLibrary } from 'lucide-react';
+import { LayoutPanelTop, MapPinned } from 'lucide-react';
 
 export type SiteConfig = typeof siteConfig;
 
