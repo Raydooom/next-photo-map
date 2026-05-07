@@ -14,6 +14,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
+    "db:push:prod": "dotenv -e .env.prod -- prisma db push",
     "db:migrate:docker": "dotenv -e .env.docker -- prisma migrate deploy",
     "db:migrate:local": "dotenv -e .env.local -- prisma migrate dev",
     "db:push:local": "dotenv -e .env.local -- prisma db push && dotenv -e .env.local -- prisma generate"
