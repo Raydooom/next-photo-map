@@ -2,6 +2,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json ./
+COPY prisma ./prisma/
 RUN npm i -dd
 
 # 第二阶段：构建源码
