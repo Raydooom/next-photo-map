@@ -9,13 +9,15 @@ export const getPhotoList = async ({
   page = 1,
   pageSize = 20,
   withLocation = false,
-  withExif = false
+  withExif = false,
+  top = false
 } = {}) => {
   return await photoService.listPhotos({
     page,
     pageSize,
     withLocation,
-    withExif
+    withExif,
+    top
   });
 };
 

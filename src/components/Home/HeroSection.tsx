@@ -9,7 +9,8 @@ export async function HeroSection() {
   const bannerPhotos = await Actions.getPhotoList({
     pageSize: 5,
     withLocation: true,
-    withExif: true
+    withExif: true,
+    top: true
   });
 
   const locations = await Actions.getLocations({
