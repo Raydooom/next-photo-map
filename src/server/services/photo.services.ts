@@ -1,5 +1,9 @@
 import { prisma, Prisma } from '../lib/db';
-import { getImageUrl, deleteFileFromMinio, checkObjectExists } from '@/server/lib/oss';
+import {
+  getImageUrl,
+  deleteFileFromMinio,
+  checkObjectExists
+} from '@/server/lib/oss';
 
 export class PhotoService {
   private readonly photosBaseUrl = '/photos';
@@ -40,9 +44,11 @@ export class PhotoService {
   /**
    * 检查照片文件是否存在于 MinIO
    */
-  async checkFileExists(photo: Prisma.photosGetPayload<{
-    include: { photoExif?: boolean; locations?: boolean };
-  }>): Promise<{ exists: boolean; key: string }> {
+  async checkFileExists(
+    photo: Prisma.photosGetPayload<{
+      include: { photoExif?: boolean; locations?: boolean };
+    }>
+  ): Promise<{ exists: boolean; key: string }> {
     const key = photo.originalKey;
     if (!key) {
       return { exists: false, key: '' };
@@ -54,9 +60,11 @@ export class PhotoService {
   /**
    * 批量检查文件是否存在于 MinIO
    */
-  async batchCheckFileExists(photos: Prisma.photosGetPayload<{
-    include: { photoExif?: boolean; locations?: boolean };
-  }>[]) {
+  async batchCheckFileExists(
+    photos: Prisma.photosGetPayload<{
+      include: { photoExif?: boolean; locations?: boolean };
+    }>[]
+  ) {
     return Promise.all(
       photos.map(async photo => {
         const { exists, key } = await this.checkFileExists(photo);

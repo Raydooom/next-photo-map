@@ -4,6 +4,7 @@ import { Button } from '@heroui/button';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Badge } from '@heroui/badge';
 import { ScrollShadow } from '@heroui/scroll-shadow';
+import { Switch } from '@heroui/switch';
 
 interface LogEntry {
   step: string;
@@ -30,6 +31,7 @@ export default function DeployPage() {
   const [isKilled, setIsKilled] = useState(false);
   const [totalDuration, setTotalDuration] = useState(0);
   const [showDetailLogs, setShowDetailLogs] = useState(true);
+  const [syncDatabase, setSyncDatabase] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -54,7 +56,9 @@ export default function DeployPage() {
     setTotalDuration(0);
 
     const startTime = Date.now();
-    const eventSource = new EventSource('/api/deploy');
+    const url = new URL('/api/deploy', window.location.origin);
+    url.searchParams.set('syncDb', syncDatabase.toString());
+    const eventSource = new EventSource(url.toString());
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = event => {
@@ -126,7 +130,7 @@ export default function DeployPage() {
       setIsComplete(true);
       setIsSuccess(false);
     };
-  }, []);
+  }, [syncDatabase]);
 
   const handleStop = useCallback(async () => {
     if (!eventSourceRef.current) return;
@@ -194,54 +198,126 @@ export default function DeployPage() {
     }
   };
 
+  const getCurrentStatus = () => {
+    if (isKilled) {
+      return { text: '已停止', color: 'warning' };
+    }
+    if (isDeploying) {
+      return { text: '进行中', color: 'secondary' };
+    }
+    if (isComplete) {
+      if (isSuccess) {
+        return { text: '成功', color: 'success' };
+      } else {
+        return { text: '失败', color: 'danger' };
+      }
+    }
+    return null;
+  };
   const displayLogs = showDetailLogs ? logs : logs.filter(log => !log.isDetail);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">重建服务</h2>
-        <div className="flex gap-2">
-          {isComplete && (
-            <Button color="secondary" size="sm" onPress={handleReset}>
-              重置日志
-            </Button>
-          )}
-          <Button
-            variant="bordered"
-            size="sm"
-            onPress={() => setShowDetailLogs(!showDetailLogs)}
-          >
-            {showDetailLogs ? '隐藏详细日志' : '显示详细日志'}
-          </Button>
-          {isDeploying ? (
-            <Button
-              color="danger"
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">同步数据库</span>
+            <Switch
               size="sm"
-              onPress={handleStop}
-              disabled={isStopping}
+              isSelected={syncDatabase}
+              onValueChange={setSyncDatabase}
+              disabled={isDeploying}
+            />
+          </div>
+          <div className="flex gap-2">
+            {isComplete && (
+              <Button color="secondary" size="sm" onPress={handleReset}>
+                重置日志
+              </Button>
+            )}
+            <Button
+              variant="bordered"
+              size="sm"
+              onPress={() => setShowDetailLogs(!showDetailLogs)}
             >
-              {isStopping ? '正在停止...' : '停止构建'}
+              {showDetailLogs ? '隐藏详细日志' : '显示详细日志'}
             </Button>
-          ) : (
-            <Button color="primary" size="sm" onPress={handleRebuild}>
-              执行重建
-            </Button>
-          )}
+            {isDeploying ? (
+              <Button
+                color="danger"
+                size="sm"
+                onPress={handleStop}
+                disabled={isStopping}
+              >
+                {isStopping ? '正在停止...' : '停止构建'}
+              </Button>
+            ) : (
+              <Button color="primary" size="sm" onPress={handleRebuild}>
+                执行重建
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       <Card>
         <CardHeader className="pb-2 flex items-center justify-between">
-          <h4 className="text-sm">实时日志</h4>
-          <span className="text-xs text-gray-500">
-            共 {logs.length} 条日志
-            {showDetailLogs ? '（含详细输出）' : '（仅关键步骤）'}
-          </span>
+          <div className="flex items-center gap-2 pl-4">
+            <div className="flex-auto text-sm text-gray-400">
+              {getCurrentStatus()?.color && (
+                <>
+                  <Badge
+                    color={
+                      getCurrentStatus()!.color as
+                        | 'warning'
+                        | 'secondary'
+                        | 'success'
+                        | 'danger'
+                        | 'default'
+                        | 'primary'
+                        | undefined
+                    }
+                    content=""
+                  >
+                    {getCurrentStatus()!.text!}
+                  </Badge>
+                  <span className="pl-2 text-xs text-gray-400">
+                    总耗时: {formatDuration(totalDuration)}
+                  </span>
+                </>
+              )}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {stepResults.map((result, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs ${
+                      result.success
+                        ? 'bg-green-900/50 text-green-300'
+                        : 'bg-red-900/50 text-red-300'
+                    }`}
+                  >
+                    <span className="w-1 h-1 rounded-full bg-current" />
+                    <span>{result.step}</span>
+                    {result.duration && (
+                      <span className="text-xs opacity-70">
+                        ({formatDuration(result.duration)})
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* <span className="text-xs w-50 text-gray-500">
+              共 {logs.length} 条日志
+              {showDetailLogs ? '（含详细输出）' : '（仅关键步骤）'}
+            </span> */}
+          </div>
         </CardHeader>
         <CardBody className="p-4">
           <ScrollShadow
             ref={scrollRef}
-            className="h-96 bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-y-auto"
+            className="h-[calc(100vh-250px)] p-3 bg-gray-900 rounded-lg font-mono text-sm overflow-y-auto"
           >
             {displayLogs.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
@@ -273,8 +349,11 @@ export default function DeployPage() {
                           color={getStatusColor(log.status)}
                           className="flex-shrink-0 mt-0.5"
                           size="sm"
+                          content=""
                         >
-                          {getStatusText(log.status)}
+                          <span className="w-11">
+                            {getStatusText(log.status)}
+                          </span>
                         </Badge>
                         <span className="text-gray-200">
                           <span className="text-gray-400">[{log.step}]</span>{' '}
@@ -295,52 +374,6 @@ export default function DeployPage() {
           </ScrollShadow>
         </CardBody>
       </Card>
-
-      {isComplete && (
-        <Card>
-          <CardHeader className="pb-2">
-            <h4 className="text-sm">重建结果</h4>
-          </CardHeader>
-          <CardBody className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Badge
-                color={isKilled ? 'warning' : isSuccess ? 'success' : 'danger'}
-              >
-                {isKilled ? '已停止' : isSuccess ? '重建成功' : '重建失败'}
-              </Badge>
-              <span className="text-sm text-gray-500">
-                总耗时: {formatDuration(totalDuration)}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {stepResults.map((result, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg border ${
-                    result.success
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-red-50 border-red-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">{result.step}</span>
-                    <Badge color={result.success ? 'success' : 'danger'}>
-                      {result.success ? '成功' : '失败'}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-gray-600">{result.message}</div>
-                  {result.duration && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      耗时: {formatDuration(result.duration)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
-      )}
     </div>
   );
 }

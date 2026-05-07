@@ -1,21 +1,21 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+// import { revalidatePath } from 'next/cache';
 import { ScannerService } from '../services/admin.services';
 import { PhotoService } from '../services/photo.services';
 import { photoExifService } from '../services/photoExif.services';
 import { locationService } from '../services/location.services';
 import { GeocodingService } from '../utils/geocoding';
-import { siteConfig } from '../../config/site';
+// import { siteConfig } from '../../config/site';
 import { deployService } from '../services/deploy.services';
 
 const scannerService = new ScannerService();
 const photoService = new PhotoService();
 
 // 需要更新静态页面的路径
-const refreshPaths = siteConfig.navItems
-  .filter(item => item.meta.needRefresh)
-  .map(item => item.href);
+// const refreshPaths = siteConfig.navItems
+//   .filter(item => item.meta.needRefresh)
+//   .map(item => item.href);
 
 const refreshPages = () => {
   // for (const path of refreshPaths) {
