@@ -117,6 +117,18 @@ export class PhotoService {
       data: photo
     });
   }
+
+  /**
+   * 更新照片置顶状态
+   * @param id 照片ID
+   * @param top 是否置顶
+   */
+  async updatePhotoTop(id: number, top: boolean) {
+    return prisma.photos.update({
+      where: { id },
+      data: { top }
+    });
+  }
   /**
    * 更新照片照片
    * @param photo 照片数据
@@ -139,7 +151,8 @@ export class PhotoService {
     pageSize = 20,
     keyword = '',
     withLocation = false,
-    withExif = false
+    withExif = false,
+    top = false
   } = {}) {
     const skip = (page - 1) * pageSize;
 
@@ -150,6 +163,9 @@ export class PhotoService {
         { description: { contains: keyword, mode: 'insensitive' } },
         { tags: { has: keyword } }
       ];
+    }
+    if (top) {
+      where.top = true;
     }
     const [total, list] = await prisma.$transaction([
       prisma.photos.count({ where: where }),

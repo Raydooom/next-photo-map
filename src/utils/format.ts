@@ -92,11 +92,11 @@ export const formatAltitude = (altitude?: number | null) => {
   return `约 ${altitude.toFixed(2)} 米`;
 };
 
-export const formatTakenCN = (takenAt?: string | null) => {
-  if (!takenAt) {
+export const formatDateCN = (datetime?: string | null) => {
+  if (!datetime) {
     return '';
   }
-  const date = new Date(takenAt);
+  const date = new Date(datetime);
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: '2-digit',

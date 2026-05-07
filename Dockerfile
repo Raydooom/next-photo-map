@@ -16,7 +16,7 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 # 应用 Prisma 数据库迁移
-# RUN npm run prisma:push
+RUN npm run prisma:push:docker
 RUN npm run build:docker
 
 # 第三阶段：运行环境

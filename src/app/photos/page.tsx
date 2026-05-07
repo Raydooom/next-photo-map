@@ -8,7 +8,7 @@ export default async function DocsPage() {
   return (
     <div className="min-h-screen px-4">
       <Suspense>
-        <MasonryGrid items={list} />
+        <MasonryGrid items={list} columns={6} />
       </Suspense>
     </div>
   );

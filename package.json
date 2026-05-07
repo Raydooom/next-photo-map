@@ -7,15 +7,15 @@
     "dev": "next dev --turbopack --port 3000",
     "restart": "rm -rf .next && next dev --port 3000",
     "build": "prisma generate && next build",
-    "build:docker": "dotenv -e .env.docker -- prisma generate && next build",
+    "build:docker": "dotenv -e .env.docker -- next build",
     "start": "next start",
     "start:docker": "dotenv -e .env.docker -- next start",
     "lint": "eslint",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:push": "prisma db push && prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "prisma:push:local": "dotenv -e .env.local -- prisma db push"
+    "prisma:push:docker": "dotenv -e .env.docker -- prisma db push && dotenv -e .env.docker -- prisma generate",
+    "prisma:push:local": "dotenv -e .env.local -- prisma db push && dotenv -e .env.local -- prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1021.0",
