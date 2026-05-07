@@ -32,6 +32,10 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # 仅拷贝构建好的独立运行文件
+# 必须显式拷贝 prisma 目录，否则运行时无法执行迁移
+COPY --from=builder /app/prisma ./prisma
+# 拷贝 package.json 以确保 npx 命令在当前目录能找到上下文
+COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
