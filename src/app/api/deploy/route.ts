@@ -5,8 +5,10 @@ import { deployService } from '@/server/services/deploy.services';
 
 let isDeploying = false;
 
-export async function GET() {
+export async function GET(request: Request) {
   const encoder = new TextEncoder();
+  const url = new URL(request.url);
+  const syncDb = url.searchParams.get('syncDb') !== 'false';
   
   const stream = new ReadableStream({
     async start(controller) {
@@ -77,7 +79,46 @@ export async function GET() {
           return;
         }
 
-        // Step 2: Docker Compose Build
+        // Step 2: Prisma DB Push (optional)
+        if (syncDb) {
+          sendMessage({ step: 'prisma db push', status: 'running', message: '正在同步数据库...' });
+          const prismaResult = await deployService.prismaPushDocker((log) => {
+            if (isDeploying) {
+              sendDetailLog('prisma db push', log.type, log.message);
+            }
+          });
+
+          if (!isDeploying) {
+            sendKilledMessage();
+            controller.close();
+            return;
+          }
+
+          if (!prismaResult.success) {
+            deployService.setError();
+          }
+
+          sendMessage({
+            step: 'prisma db push',
+            status: prismaResult.killed ? 'killed' : (prismaResult.success ? 'success' : 'error'),
+            message: prismaResult.killed ? '已停止' : (prismaResult.success ? '数据库同步成功' : `数据库同步失败: ${prismaResult.error}`),
+            duration: prismaResult.duration
+          });
+
+          if (!prismaResult.success || !isDeploying) {
+            if (!isDeploying) {
+              sendKilledMessage();
+            } else {
+              sendMessage({ step: 'done', status: 'error', message: `重建失败: ${prismaResult.error}` });
+            }
+            controller.close();
+            return;
+          }
+        } else {
+          sendMessage({ step: 'prisma db push', status: 'success', message: '跳过数据库同步' });
+        }
+
+        // Step 3: Docker Compose Build
         sendMessage({ step: 'docker compose build', status: 'running', message: '正在构建镜像...' });
         const buildResult = await deployService.dockerComposeBuild((log) => {
           if (isDeploying) {

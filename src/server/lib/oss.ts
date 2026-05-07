@@ -64,6 +64,7 @@ export async function checkObjectExists(key: string): Promise<boolean> {
   } catch (error) {
     // 如果对象不存在，S3 SDK 会抛出 NoSuchKey 错误
     // 我们认为这种情况是正常的，返回 false
+    console.log('MinIO object not found:', error);
     return false;
   }
 }

@@ -4,14 +4,12 @@ import {
   NavbarBrand,
   NavbarItem
 } from '@heroui/navbar';
-import { Link } from '@heroui/link';
 import NextLink from 'next/link';
 import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
 
 import { siteConfig } from '@/config/site';
 import { ThemeSwitch } from '@/components/theme-switch';
-import { GithubIcon } from '@/components/Icons/icon';
 import { Logo } from '@/components/Icons/custom';
 
 export const Navbar = ({ className }: { className?: string }) => {
