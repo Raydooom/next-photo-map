@@ -13,6 +13,7 @@ export default function AdminLayout({
   const getSelectedKey = () => {
     if (pathname.includes('/photos')) return 'photos';
     if (pathname.includes('/scan')) return 'scan';
+    if (pathname.includes('/deploy')) return 'deploy';
     return 'overview';
   };
 
@@ -44,6 +45,14 @@ export default function AdminLayout({
           title={
             <Link href="/admin/scan" className="flex items-center gap-2">
               图片扫描
+            </Link>
+          }
+        />
+        <Tab
+          key="deploy"
+          title={
+            <Link href="/admin/deploy" className="flex items-center gap-2">
+              重建服务
             </Link>
           }
         />
