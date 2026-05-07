@@ -7,6 +7,7 @@ import { photoExifService } from '../services/photoExif.services';
 import { locationService } from '../services/location.services';
 import { GeocodingService } from '../utils/geocoding';
 import { siteConfig } from '../../config/site';
+import { deployService } from '../services/deploy.services';
 
 const scannerService = new ScannerService();
 const photoService = new PhotoService();
@@ -151,4 +152,88 @@ export const updatePhotoTop = async (photoId: number, top: boolean) => {
     console.error('Failed to update photo top:', error);
     throw error;
   }
+};
+
+export interface DeployStepResult {
+  step: string;
+  success: boolean;
+  output: string;
+  error?: string;
+  duration: number;
+}
+
+export interface DeployResult {
+  success: boolean;
+  steps: DeployStepResult[];
+  totalDuration: number;
+}
+
+export const rebuild = async (): Promise<DeployResult> => {
+  const startTime = Date.now();
+  const steps: DeployStepResult[] = [];
+
+  console.log('Starting rebuild...');
+
+  console.log('Step 1: Git Pull');
+  const gitResult = await deployService.gitPull();
+  steps.push({
+    step: 'git pull',
+    ...gitResult
+  });
+
+  if (!gitResult.success) {
+    console.error('Git pull failed:', gitResult.error);
+    return {
+      success: false,
+      steps,
+      totalDuration: Date.now() - startTime
+    };
+  }
+
+  console.log('Step 2: Docker Compose Build');
+  const buildResult = await deployService.dockerComposeBuild();
+  steps.push({
+    step: 'docker compose build',
+    ...buildResult
+  });
+
+  if (!buildResult.success) {
+    console.error('Docker compose build failed:', buildResult.error);
+    return {
+      success: false,
+      steps,
+      totalDuration: Date.now() - startTime
+    };
+  }
+
+  console.log('Step 3: Docker Compose Down');
+  const downResult = await deployService.dockerComposeDown();
+  steps.push({
+    step: 'docker compose down',
+    ...downResult
+  });
+
+  console.log('Step 4: Docker Compose Up');
+  const upResult = await deployService.dockerComposeUp();
+  steps.push({
+    step: 'docker compose up',
+    ...upResult
+  });
+
+  if (!upResult.success) {
+    console.error('Docker compose up failed:', upResult.error);
+    return {
+      success: false,
+      steps,
+      totalDuration: Date.now() - startTime
+    };
+  }
+
+  console.log('Rebuild completed successfully');
+
+  return {
+    success: true,
+    steps,
+    totalDuration: Date.now() - startTime
+  };
 };
