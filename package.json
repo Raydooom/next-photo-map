@@ -1,5 +1,5 @@
 {
-  "name": "next-photo-map",
+  "name": "photo-map-next",
   "version": "0.0.1",
   "type": "module",
   "private": true,
@@ -14,8 +14,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "prisma:push:docker": "dotenv -e .env.docker -- prisma db push",
-    "prisma:push:local": "dotenv -e .env.local -- prisma db push && dotenv -e .env.local -- prisma generate"
+    "db:migrate:docker": "dotenv -e .env.docker -- prisma migrate deploy",
+    "db:migrate:local": "dotenv -e .env.local -- prisma migrate dev",
+    "db:push:local": "dotenv -e .env.local -- prisma db push && dotenv -e .env.local -- prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1021.0",

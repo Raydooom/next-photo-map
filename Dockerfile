@@ -40,5 +40,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 
-# 注意：standalone 模式下入口是 server.js
-CMD ["node", "server.js"]
+# 在compose中启动
+# CMD ["node", "server.js"]
