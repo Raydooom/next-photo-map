@@ -6,8 +6,9 @@ services:
       args:
         DATABASE_URL: postgresql://photo_user:wang619218505@photo-map-db:5432/photomap_db
     container_name: photo-map-next
-    env_file: 
+    env_file:
       - .env.docker
+    command: sh -c "npx prisma migrate deploy && node server.js"
     ports:
       - '3000:3000'
     volumes:
