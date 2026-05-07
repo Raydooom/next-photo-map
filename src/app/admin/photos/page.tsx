@@ -24,6 +24,7 @@ import {
 import { Image } from '@heroui/image';
 import { Tabs, Tab } from '@heroui/tabs';
 import { LocationModal } from './components/LocationModal';
+import { formatDateCN } from '@/utils/format';
 
 interface Photo {
   id: number;
@@ -35,6 +36,7 @@ interface Photo {
   fileExists: boolean;
   createdAt: string;
   hasLocation?: boolean;
+  top?: boolean;
 }
 
 export default function PhotosManagementPage() {
@@ -45,7 +47,8 @@ export default function PhotosManagementPage() {
     total: 0,
     exists: 0,
     missing: 0,
-    noLocation: 0
+    noLocation: 0,
+    top: 0
   });
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [activeTab, setActiveTab] = useState('all');
@@ -88,7 +91,8 @@ export default function PhotosManagementPage() {
         takenAt: p.takenAt?.toISOString() || null,
         fileExists: p.fileExists,
         createdAt: p.createdAt.toISOString(),
-        hasLocation: Boolean(p.locations) || false
+        hasLocation: Boolean(p.locations) || false,
+        top: p.top || false
       }));
       setPhotos(formattedPhotos);
       setFilteredPhotos(formattedPhotos);
@@ -105,7 +109,8 @@ export default function PhotosManagementPage() {
     const exists = photoList.filter(p => p.fileExists).length;
     const missing = photoList.filter(p => !p.fileExists).length;
     const noLocation = photoList.filter(p => !p.hasLocation).length;
-    setStats({ total, exists, missing, noLocation });
+    const top = photoList.filter(p => p.top).length;
+    setStats({ total, exists, missing, noLocation, top });
   };
 
   const filterPhotos = (tab: string) => {
@@ -123,21 +128,12 @@ export default function PhotosManagementPage() {
       case 'no-location':
         setFilteredPhotos(photos.filter(p => !p.hasLocation));
         break;
+      case 'top':
+        setFilteredPhotos(photos.filter(p => p.top));
+        break;
       default:
         setFilteredPhotos(photos);
     }
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getThumbnailUrl = (photo: Photo) => {
@@ -175,12 +171,24 @@ export default function PhotosManagementPage() {
     onDeleteLocationModalOpenChange();
   };
 
+  const handleUpdateTop = async (photo: Photo) => {
+    try {
+      await Admin.updatePhotoTop(photo.id, !photo.top);
+      setPhotos(prev =>
+        prev.map(p => (p.id === photo.id ? { ...p, top: !p.top } : p))
+      );
+    } catch (error) {
+      console.error('更新置顶状态失败:', error);
+    }
+  };
+
   useEffect(() => {
     loadPhotos();
   }, []);
 
   useEffect(() => {
     filterPhotos(activeTab);
+    calculateStats(photos);
   }, [activeTab, photos]);
 
   const handleDeletePhoto = async () => {
@@ -233,7 +241,7 @@ export default function PhotosManagementPage() {
           </Button>
           <Button
             color="danger"
-            variant="bordered"
+            variant="flat"
             size="sm"
             onPress={openBatchDeleteModal}
             disabled={stats.missing === 0}
@@ -255,6 +263,7 @@ export default function PhotosManagementPage() {
             <Tab key="exists" title={`文件存在(${stats.exists})`} />
             <Tab key="missing" title={`文件丢失(${stats.missing})`} />
             <Tab key="no-location" title={`文件无坐标(${stats.noLocation})`} />
+            <Tab key="top" title={`已置顶(${stats.top})`} />
           </Tabs>
           <ScrollShadow className="h-[calc(100vh-220px)]">
             <Table>
@@ -265,19 +274,18 @@ export default function PhotosManagementPage() {
                 <TableColumn>拍摄时间</TableColumn>
                 <TableColumn>创建时间</TableColumn>
                 <TableColumn>文件状态</TableColumn>
-                <TableColumn>坐标</TableColumn>
                 <TableColumn>操作</TableColumn>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={7} className="text-center">
                       加载中...
                     </TableCell>
                   </TableRow>
                 ) : filteredPhotos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={7} className="text-center">
                       暂无图片
                     </TableCell>
                   </TableRow>
@@ -289,9 +297,7 @@ export default function PhotosManagementPage() {
                           <Image
                             src={getThumbnailUrl(photo) || ''}
                             alt={photo.filename}
-                            width={50}
-                            height={50}
-                            className="object-cover rounded-lg"
+                            className="object-cover max-w-[50px] max-h-[50px] rounded-lg"
                           />
                         ) : (
                           <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
@@ -306,25 +312,18 @@ export default function PhotosManagementPage() {
                       >
                         {photo.filename}
                       </TableCell>
-                      <TableCell>{formatDate(photo.takenAt)}</TableCell>
-                      <TableCell>{formatDate(photo.createdAt)}</TableCell>
+                      <TableCell>{formatDateCN(photo.takenAt)}</TableCell>
+                      <TableCell>{formatDateCN(photo.createdAt)}</TableCell>
                       <TableCell>
                         <Badge color={photo.fileExists ? 'success' : 'danger'}>
                           {photo.fileExists ? '存在' : '丢失'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          color={photo.hasLocation ? 'success' : 'warning'}
-                        >
-                          {photo.hasLocation ? '有' : '无'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         <div className="flex gap-2">
                           {!photo.hasLocation ? (
                             <Button
-                              variant="bordered"
+                              variant="flat"
                               size="sm"
                               onPress={() => handleOpenLocationModal(photo)}
                             >
@@ -333,7 +332,7 @@ export default function PhotosManagementPage() {
                           ) : (
                             <Button
                               color="warning"
-                              variant="bordered"
+                              variant="flat"
                               size="sm"
                               onPress={() =>
                                 handleOpenDeleteLocationModal(photo)
@@ -343,7 +342,16 @@ export default function PhotosManagementPage() {
                             </Button>
                           )}
                           <Button
-                            variant="shadow"
+                            color={photo.top ? 'primary' : 'secondary'}
+                            variant="flat"
+                            size="sm"
+                            onPress={() => handleUpdateTop(photo)}
+                          >
+                            {photo.top ? '取消置顶' : '置顶'}
+                          </Button>
+                          <Button
+                            variant="flat"
+                            color="danger"
                             size="sm"
                             onPress={() => handleOpenDeleteModal(photo)}
                           >
