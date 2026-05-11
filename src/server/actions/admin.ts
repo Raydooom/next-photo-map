@@ -1,32 +1,18 @@
 'use server';
 
-// import { revalidatePath } from 'next/cache';
 import { ScannerService } from '../services/admin.services';
 import { PhotoService } from '../services/photo.services';
 import { photoExifService } from '../services/photoExif.services';
 import { locationService } from '../services/location.services';
 import { GeocodingService } from '../utils/geocoding';
-// import { siteConfig } from '../../config/site';
 import { deployService } from '../services/deploy.services';
 
 const scannerService = new ScannerService();
 const photoService = new PhotoService();
 
-// 需要更新静态页面的路径
-// const refreshPaths = siteConfig.navItems
-//   .filter(item => item.meta.needRefresh)
-//   .map(item => item.href);
-
-const refreshPages = () => {
-  // for (const path of refreshPaths) {
-  //   revalidatePath(path);
-  // }
-};
-
 export const scanner = async (force: boolean = false) => {
   const result = await scannerService.startScanner(force);
   // 更新静态页面缓存数据
-  refreshPages();
   return result;
 };
 
@@ -44,7 +30,6 @@ export const getPhotosWithFileStatus = async () => {
 
 export const deletePhoto = async (id: number) => {
   const result = await photoService.deletePhoto(id);
-  refreshPages();
   return result;
 };
 
@@ -64,8 +49,6 @@ export const deleteMissingPhotos = async () => {
       console.warn(`Failed to delete missing photo ${photo.id}:`, error);
     }
   }
-
-  refreshPages();
 
   return {
     ...deletedCount,
@@ -111,8 +94,6 @@ export const updatePhotoLocation = async (
       rawData: addressInfo
     });
 
-    refreshPages();
-
     return { success: true, message: '位置更新成功' };
   } catch (error) {
     console.error('Failed to update photo location:', error);
@@ -132,8 +113,6 @@ export const deletePhotoLocation = async (photoId: number) => {
       });
     }
 
-    refreshPages();
-
     return { success: true, message: '位置删除成功' };
   } catch (error) {
     console.error('Failed to delete photo location:', error);
@@ -145,11 +124,20 @@ export const updatePhotoTop = async (photoId: number, top: boolean) => {
   try {
     await photoService.updatePhotoTop(photoId, top);
 
-    refreshPages();
-
     return { success: true, message: top ? '置顶成功' : '取消置顶成功' };
   } catch (error) {
     console.error('Failed to update photo top:', error);
+    throw error;
+  }
+};
+
+export const updatePhotoTags = async (photoId: number, tags: string[]) => {
+  try {
+    await photoService.updatePhotoTags(photoId, tags);
+
+    return { success: true, message: '标签更新成功' };
+  } catch (error) {
+    console.error('Failed to update photo tags:', error);
     throw error;
   }
 };

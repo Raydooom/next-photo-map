@@ -138,6 +138,18 @@ export class PhotoService {
     });
   }
   /**
+   * 更新照片标签
+   * @param id 照片ID
+   * @param tags 标签数组
+   */
+  async updatePhotoTags(id: number, tags: string[]) {
+    return prisma.photos.update({
+      where: { id },
+      data: { tags }
+    });
+  }
+
+  /**
    * 更新照片照片
    * @param photo 照片数据
    */
