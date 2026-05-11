@@ -29,6 +29,40 @@ export function uploadFileToMinio(key: string, body: Buffer) {
   );
 }
 
+// 获取图片base64编码
+export async function getImageBase64(key: string): Promise<string> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env['MINIO_BUCKET'],
+      Key: key
+    });
+
+    const response = await client.send(command);
+    // 将 Body 转换为 Uint8Array
+    // response.Body 在 Node.js 环境下是 IncomingMessage 或流
+    const transformToBuffer = async (stream: any): Promise<Buffer> => {
+      return new Promise((resolve, reject) => {
+        const chunks: any[] = [];
+        stream.on('data', (chunk: any) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+      });
+    };
+    if (!response.Body) {
+      throw new Error('Empty body received from S3');
+    }
+    const buffer = await transformToBuffer(response.Body);
+    // 获取 MIME 类型（根据 key 后缀简单判断）
+    const ext = key.split('.').pop()?.toLowerCase();
+    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+    return `data:${mimeType};base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    console.error('S3 Error:', error);
+    throw error;
+  }
+}
+
 // 获取图片访问链接
 export async function getImageUrl(key: string) {
   const command = new GetObjectCommand({

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import * as Admin from '@/server/actions/admin';
+import * as AI from '@/server/actions/ai';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { Badge } from '@heroui/badge';
@@ -25,8 +26,9 @@ import { Image } from '@heroui/image';
 import { Tabs, Tab } from '@heroui/tabs';
 import { LocationModal } from './components/LocationModal';
 import { formatDateCN } from '@/utils/format';
+import { PhotoItem } from '@/types';
 
-interface Photo {
+type Photo = {
   id: number;
   filename: string;
   originalPath: string;
@@ -37,7 +39,7 @@ interface Photo {
   createdAt: string;
   hasLocation?: boolean;
   top?: boolean;
-}
+} & Partial<PhotoItem>;
 
 export default function PhotosManagementPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -85,9 +87,11 @@ export default function PhotosManagementPage() {
       const formattedPhotos: Photo[] = data.map(p => ({
         id: p.id,
         filename: p.filename,
+        tags: p.tags || [],
         originalPath: p.originalPath,
         originalKey: p.originalKey,
         thumbLargeKey: p.thumbLargeKey,
+        thumbSmallKey: p.thumbSmallKey,
         takenAt: p.takenAt?.toISOString() || null,
         fileExists: p.fileExists,
         createdAt: p.createdAt.toISOString(),
@@ -182,6 +186,23 @@ export default function PhotosManagementPage() {
     }
   };
 
+  const handleAIAnalysis = async (photo: Photo) => {
+    try {
+      const res = await AI.analysis(photo);
+      if (res.success) {
+        await Admin.updatePhotoTags(photo.id, res.tags || []);
+        setPhotos(prev =>
+          prev.map(p =>
+            p.id === photo.id ? { ...p, tags: res.tags || [] } : p
+          )
+        );
+      }
+      // console.log(res);
+    } catch (error) {
+      
+    }
+  };
+
   useEffect(() => {
     loadPhotos();
   }, []);
@@ -271,6 +292,7 @@ export default function PhotosManagementPage() {
                 <TableColumn>缩略图</TableColumn>
                 <TableColumn>ID</TableColumn>
                 <TableColumn>文件名</TableColumn>
+                <TableColumn>AI标签</TableColumn>
                 <TableColumn>拍摄时间</TableColumn>
                 <TableColumn>创建时间</TableColumn>
                 <TableColumn>文件状态</TableColumn>
@@ -279,13 +301,13 @@ export default function PhotosManagementPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={8} className="text-center">
                       加载中...
                     </TableCell>
                   </TableRow>
                 ) : filteredPhotos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={8} className="text-center">
                       暂无图片
                     </TableCell>
                   </TableRow>
@@ -312,6 +334,7 @@ export default function PhotosManagementPage() {
                       >
                         {photo.filename}
                       </TableCell>
+                      <TableCell>{photo.tags?.join(', ') || '-'}</TableCell>
                       <TableCell>{formatDateCN(photo.takenAt)}</TableCell>
                       <TableCell>{formatDateCN(photo.createdAt)}</TableCell>
                       <TableCell>
@@ -356,6 +379,14 @@ export default function PhotosManagementPage() {
                             onPress={() => handleOpenDeleteModal(photo)}
                           >
                             删除
+                          </Button>
+                          <Button
+                            variant="flat"
+                            color="danger"
+                            size="sm"
+                            onPress={() => handleAIAnalysis(photo)}
+                          >
+                            AI分析
                           </Button>
                         </div>
                       </TableCell>
