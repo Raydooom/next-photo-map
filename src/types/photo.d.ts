@@ -40,8 +40,11 @@ export interface PhotoItem {
   size: number;
   mimeType: string;
   thumbSmallUrl: string;
+  thumbSmallKey: string | null;
   thumbLargeUrl: string;
+  thumbLargeKey: string | null;
   videoUrl?: string;
+  videoKey?: string | null;
   width: number;
   height: number;
   takenAt: string | null;
@@ -50,6 +53,7 @@ export interface PhotoItem {
   locations: PhotoLocation | null;
   createdAt: string;
   updatedAt: string;
+  tags?: string[] | null;
 }
 export interface PhotoDetail extends PhotoItem {
   photoExif?: PhotoExif;
