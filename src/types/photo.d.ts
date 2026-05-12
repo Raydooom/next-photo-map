@@ -50,7 +50,7 @@ export interface PhotoItem {
   takenAt: string | null;
   dominantColor: string | null;
   photoExif: PhotoExif | null;
-  locations: PhotoLocation | null;
+  location?: PhotoLocation | null;
   photoAiAnalysis?: PhotoAiAnalysis | null;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +59,7 @@ export interface PhotoItem {
 export interface PhotoDetail extends PhotoItem {
   photoExif?: PhotoExif;
   location?: PhotoLocation;
+  photoAiAnalysis?: PhotoAiAnalysis;
 }
 
 export interface PhotoLocation {
