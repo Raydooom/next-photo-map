@@ -1,5 +1,11 @@
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "vector";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "postgis";
+
 -- CreateTable
-CREATE TABLE "photoExif" (
+CREATE TABLE "photo_exifs" (
     "id" SERIAL NOT NULL,
     "photoId" INTEGER NOT NULL,
     "make" TEXT,
@@ -33,7 +39,7 @@ CREATE TABLE "photoExif" (
     "bearingDirection" TEXT,
     "gpsImgDirection" DOUBLE PRECISION,
 
-    CONSTRAINT "photoExif_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "photo_exifs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -85,8 +91,22 @@ CREATE TABLE "photos" (
     CONSTRAINT "photos_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "photo_ai_analyses" (
+    "id" SERIAL NOT NULL,
+    "photoId" INTEGER NOT NULL,
+    "description" TEXT,
+    "tags" TEXT[],
+    "embedding" vector(768),
+    "location" geography(Point, 4326),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "photo_ai_analyses_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
-CREATE UNIQUE INDEX "photoExif_photoId_key" ON "photoExif"("photoId");
+CREATE UNIQUE INDEX "photo_exifs_photoId_key" ON "photo_exifs"("photoId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "locations_photoId_key" ON "locations"("photoId");
@@ -97,8 +117,14 @@ CREATE INDEX "locations_latitude_longitude_idx" ON "locations"("latitude", "long
 -- CreateIndex
 CREATE UNIQUE INDEX "photos_originalPath_key" ON "photos"("originalPath");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "photo_ai_analyses_photoId_key" ON "photo_ai_analyses"("photoId");
+
 -- AddForeignKey
-ALTER TABLE "photoExif" ADD CONSTRAINT "photoExif_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "photos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "photo_exifs" ADD CONSTRAINT "photo_exifs_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "photos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "locations" ADD CONSTRAINT "locations_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "photos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "photo_ai_analyses" ADD CONSTRAINT "photo_ai_analyses_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "photos"("id") ON DELETE CASCADE ON UPDATE CASCADE;

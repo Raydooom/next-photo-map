@@ -87,7 +87,7 @@ export default function PhotosManagementPage() {
       const formattedPhotos: Photo[] = data.map(p => ({
         id: p.id,
         filename: p.filename,
-        tags: p.tags || [],
+        tags: p.photoAiAnalysis?.tags || [],
         originalPath: p.originalPath,
         originalKey: p.originalKey,
         thumbLargeKey: p.thumbLargeKey,
@@ -95,7 +95,7 @@ export default function PhotosManagementPage() {
         takenAt: p.takenAt?.toISOString() || null,
         fileExists: p.fileExists,
         createdAt: p.createdAt.toISOString(),
-        hasLocation: Boolean(p.locations) || false,
+        hasLocation: Boolean(p.location) || false,
         top: p.top || false
       }));
       setPhotos(formattedPhotos);
@@ -188,19 +188,13 @@ export default function PhotosManagementPage() {
 
   const handleAIAnalysis = async (photo: Photo) => {
     try {
-      const res = await AI.analysis(photo);
-      if (res.success) {
-        await Admin.updatePhotoTags(photo.id, res.tags || []);
+      const { tags } = await AI.analysis(photo);
+      if (tags?.length) {
         setPhotos(prev =>
-          prev.map(p =>
-            p.id === photo.id ? { ...p, tags: res.tags || [] } : p
-          )
+          prev.map(p => (p.id === photo.id ? { ...p, tags } : p))
         );
       }
-      // console.log(res);
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

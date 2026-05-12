@@ -1,12 +1,14 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] // 开启PostgreSQL扩展功能
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector"), postgis] // 开启 pgvector 和 postgis 扩展
 }
 
-model photoExif {
+model PhotoExif {
   id                      Int     @id @default(autoincrement())
   photoId                 Int     @unique
   make                    String?
@@ -39,10 +41,12 @@ model photoExif {
   GPSLongitudeRef         String?
   bearingDirection        String?
   gpsImgDirection         Float?
-  photos                  photos  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photos                  Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@map("photo_exifs")
 }
 
-model locations {
+model Location {
   id               Int     @id @default(autoincrement())
   photoId          Int     @unique
   latitude         Float
@@ -62,30 +66,47 @@ model locations {
   neighborhood     String?
   type             String?
   rawData          Json?
-  photos           photos  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photo            Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
   @@index([latitude, longitude])
+  @@map("locations")
 }
 
-model photos {
-  id            Int        @id @default(autoincrement())
-  filename      String
-  originalPath  String     @unique
-  size          Int
-  mimeType      String
-  originalKey   String?
-  thumbSmallKey String?
-  thumbLargeKey String?
-  videoKey      String?
-  width         Int?
-  height        Int?
-  takenAt       DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now())
-  dominantColor String?
-  description   String?
-  tags          String[]   @default([])
-  photoExif     photoExif?
-  locations     locations?
-  top           Boolean    @default(false)
+model Photo {
+  id              Int              @id @default(autoincrement())
+  filename        String
+  originalPath    String           @unique
+  size            Int
+  mimeType        String
+  originalKey     String
+  thumbSmallKey   String
+  thumbLargeKey   String
+  videoKey        String?
+  width           Int?
+  height          Int?
+  takenAt         DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now())
+  dominantColor   String?
+  top             Boolean          @default(false)
+  photoExif       PhotoExif?
+  location        Location?
+  photoAiAnalysis PhotoAiAnalysis?
+
+  @@map("photos")
+}
+
+model PhotoAiAnalysis {
+  id                 Int                                    @id @default(autoincrement())
+  photoId            Int                                    @unique @map("photo_id")
+  description        String?
+  chineseDescription String?                                @map("chinese_description")
+  tags               String[]
+  embedding          Unsupported("vector(768)")? // 向量字段
+  location           Unsupported("geography(Point, 4326)")? // 地理坐标字段
+  createdAt          DateTime                               @default(now()) @map("created_at")
+  updatedAt          DateTime                               @default(now()) @updatedAt @map("updated_at")
+  photo              Photo                                  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@map("photo_ai_analyses")
 }

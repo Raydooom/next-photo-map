@@ -51,6 +51,7 @@ export interface PhotoItem {
   dominantColor: string | null;
   photoExif: PhotoExif | null;
   locations: PhotoLocation | null;
+  photoAiAnalysis?: PhotoAiAnalysis | null;
   createdAt: string;
   updatedAt: string;
   tags?: string[] | null;
@@ -83,4 +84,11 @@ export interface PhotoLocation {
   street?: string | null; // 街道
   adcode?: string | null; // 行政区划代码
   neighborhood?: string | null; // 小区
+}
+
+export interface PhotoAiAnalysis {
+  id: number;
+  photoId: number;
+  tags?: string[] | null;
+  description?: string | null;
 }
