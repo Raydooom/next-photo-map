@@ -17,7 +17,7 @@ export class PhotoService {
    * @param originalPath 照片原始路径
    */
   async checkPhotoExists(originalPath: string) {
-    return prisma.photos.findUnique({
+    return prisma.photo.findUnique({
       where: { originalPath }
     });
   }
@@ -25,18 +25,29 @@ export class PhotoService {
    * 获取所有照片数量
    */
   async countAllPhotos() {
-    return prisma.photos.count();
+    return prisma.photo.count();
   }
 
   /**
    * 获取所有照片列表（用于管理后台）
    */
   async getAllPhotos() {
-    return prisma.photos.findMany({
+    return prisma.photo.findMany({
       orderBy: { takenAt: 'desc' },
       include: {
         photoExif: true,
-        locations: true
+        location: true,
+        photoAiAnalysis: {
+          select: {
+            id: true,
+            photoId: true,
+            description: true,
+            chineseDescription: true,
+            tags: true,
+            updatedAt: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
@@ -45,8 +56,8 @@ export class PhotoService {
    * 检查照片文件是否存在于 MinIO
    */
   async checkFileExists(
-    photo: Prisma.photosGetPayload<{
-      include: { photoExif?: boolean; locations?: boolean };
+    photo: Prisma.PhotoGetPayload<{
+      include: { photoExif?: boolean; location?: boolean };
     }>
   ): Promise<{ exists: boolean; key: string }> {
     const key = photo.originalKey;
@@ -61,8 +72,12 @@ export class PhotoService {
    * 批量检查文件是否存在于 MinIO
    */
   async batchCheckFileExists(
-    photos: Prisma.photosGetPayload<{
-      include: { photoExif?: boolean; locations?: boolean };
+    photos: Prisma.PhotoGetPayload<{
+      include: {
+        photoExif?: boolean;
+        location?: boolean;
+        photoAiAnalysis?: boolean;
+      };
     }>[]
   ) {
     return Promise.all(
@@ -81,11 +96,11 @@ export class PhotoService {
    * 删除照片（包括数据库记录和存储文件）
    */
   async deletePhoto(id: number) {
-    const photo = await prisma.photos.findUnique({
+    const photo = await prisma.photo.findUnique({
       where: { id },
       include: {
         photoExif: true,
-        locations: true
+        location: true
       }
     });
 
@@ -110,7 +125,7 @@ export class PhotoService {
     }
 
     // 删除数据库记录（关联记录会级联删除）
-    await prisma.photos.delete({
+    await prisma.photo.delete({
       where: { id }
     });
 
@@ -120,8 +135,8 @@ export class PhotoService {
    * 创建照片照片
    * @param photos 照片数据
    */
-  async createPhoto(photo: Prisma.photosCreateManyInput) {
-    return prisma.photos.create({
+  async createPhoto(photo: Prisma.PhotoCreateManyInput) {
+    return prisma.photo.create({
       data: photo
     });
   }
@@ -132,20 +147,9 @@ export class PhotoService {
    * @param top 是否置顶
    */
   async updatePhotoTop(id: number, top: boolean) {
-    return prisma.photos.update({
+    return prisma.photo.update({
       where: { id },
       data: { top }
-    });
-  }
-  /**
-   * 更新照片标签
-   * @param id 照片ID
-   * @param tags 标签数组
-   */
-  async updatePhotoTags(id: number, tags: string[]) {
-    return prisma.photos.update({
-      where: { id },
-      data: { tags }
     });
   }
 
@@ -153,8 +157,8 @@ export class PhotoService {
    * 更新照片照片
    * @param photo 照片数据
    */
-  async updatePhoto(photo: Prisma.photosUpdateInput, id: number) {
-    return prisma.photos.update({
+  async updatePhoto(photo: Prisma.PhotoUpdateInput, id: number) {
+    return prisma.photo.update({
       where: { id },
       data: photo
     });
@@ -176,26 +180,22 @@ export class PhotoService {
   } = {}) {
     const skip = (page - 1) * pageSize;
 
-    const where: Prisma.photosWhereInput = {};
+    const where: Prisma.PhotoWhereInput = {};
     if (keyword) {
-      where.OR = [
-        { filename: { contains: keyword, mode: 'insensitive' } },
-        { description: { contains: keyword, mode: 'insensitive' } },
-        { tags: { has: keyword } }
-      ];
+      where.OR = [{ filename: { contains: keyword, mode: 'insensitive' } }];
     }
     if (top) {
       where.top = true;
     }
     const [total, list] = await prisma.$transaction([
-      prisma.photos.count({ where: where }),
-      prisma.photos.findMany({
+      prisma.photo.count({ where: where }),
+      prisma.photo.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: { takenAt: 'desc' },
         include: {
-          locations: withLocation,
+          location: withLocation,
           photoExif: withExif
         }
       })
@@ -214,7 +214,7 @@ export class PhotoService {
    * @param id 照片ID
    */
   async getPhotoById(id: number) {
-    const photo = await prisma.photos.findUnique({
+    const photo = await prisma.photo.findUnique({
       where: { id },
       include: {
         photoExif: true // 默认包含 EXIF 信息
@@ -246,7 +246,7 @@ export class PhotoService {
     maxLng: number
   ) {
     // 1. 先查出范围内的 photoId
-    const locations = await prisma.locations.findMany({
+    const locations = await prisma.location.findMany({
       where: {
         latitude: { gte: minLat, lte: maxLat },
         longitude: { gte: minLng, lte: maxLng }
@@ -263,7 +263,7 @@ export class PhotoService {
     const photoIds = locations.map(l => l.photoId);
 
     // 2. 查照片详情
-    const photos = await prisma.photos.findMany({
+    const photos = await prisma.photo.findMany({
       where: { id: { in: photoIds } },
       orderBy: { takenAt: 'desc' }
     });
@@ -279,13 +279,13 @@ export class PhotoService {
       return [];
     }
 
-    const photos = await prisma.photos.findMany({
+    const photos = await prisma.photo.findMany({
       where: {
         id: { in: ids }
       },
       include: {
         photoExif: true,
-        locations: true
+        location: true
       }
     });
 
@@ -303,10 +303,10 @@ export class PhotoService {
    * 转换照片数据，处理 URL
    */
   private async transformPhoto(
-    photo: Prisma.photosGetPayload<{
+    photo: Prisma.PhotoGetPayload<{
       include?: {
         photoExif?: boolean;
-        locations?: boolean;
+        location?: boolean;
       };
     }>
   ) {

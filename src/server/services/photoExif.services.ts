@@ -1,5 +1,5 @@
 import { prisma, Prisma } from '../lib/db';
-import type { photoExif } from '@prisma/client';
+import type { PhotoExif } from '@prisma/client';
 
 /**
  * 照片EXIF服务 - 提供 photoExif 数据表的增删改查操作
@@ -26,7 +26,7 @@ export const photoExifService = {
   /**
    * 根据 ID 获取EXIF记录
    */
-  getPhotoExifById: async (id: number): Promise<photoExif | null> => {
+  getPhotoExifById: async (id: number): Promise<PhotoExif | null> => {
     return await prisma.photoExif.findUnique({
       where: { id }
     });
@@ -38,7 +38,7 @@ export const photoExifService = {
   getPhotoExifByPhotoId: async (
     photoId: number,
     withRawData = false
-  ): Promise<Partial<photoExif> | null> => {
+  ): Promise<Partial<PhotoExif> | null> => {
     const data = await prisma.photoExif.findUnique({
       where: { photoId }
     });
@@ -56,7 +56,7 @@ export const photoExifService = {
   /**
    * 获取所有EXIF记录
    */
-  getAllPhotoExif: async (): Promise<photoExif[]> => {
+  getAllPhotoExif: async (): Promise<PhotoExif[]> => {
     return await prisma.photoExif.findMany();
   },
 
@@ -69,12 +69,5 @@ export const photoExifService = {
     return await prisma.photoExif.deleteMany({
       where: { photoId }
     });
-  },
-
-  /**
-   * 统计EXIF记录数量
-   */
-  countPhotoExifs: async (): Promise<number> => {
-    return await prisma.photoExif.count();
   }
 };
