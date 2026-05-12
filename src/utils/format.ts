@@ -81,8 +81,11 @@ export const formatLatLng = (
     location || {};
   if (GPSLatitude && GPSLongitude && GPSLatitudeRef && GPSLongitudeRef) {
     return `${GPSLongitude[0]}°${GPSLongitude[1]}′${GPSLongitude[2]}″${GPSLongitudeRef}, ${GPSLatitude[0]}°${GPSLatitude[1]}′${GPSLatitude[2]}″${GPSLatitudeRef}`;
+  } else if (location?.latitude && location?.longitude) {
+    return `${location.longitude.toFixed(6)}, ${location.latitude.toFixed(6)}`;
+  } else {
+    return '';
   }
-  return '';
 };
 
 export const formatAltitude = (altitude?: number | null) => {
