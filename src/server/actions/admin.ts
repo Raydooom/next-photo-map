@@ -131,17 +131,6 @@ export const updatePhotoTop = async (photoId: number, top: boolean) => {
   }
 };
 
-export const updatePhotoTags = async (photoId: number, tags: string[]) => {
-  try {
-    await photoService.updatePhotoTags(photoId, tags);
-
-    return { success: true, message: '标签更新成功' };
-  } catch (error) {
-    console.error('Failed to update photo tags:', error);
-    throw error;
-  }
-};
-
 export interface DeployStepResult {
   step: string;
   success: boolean;

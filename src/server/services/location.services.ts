@@ -1,15 +1,15 @@
 import { Prisma, prisma } from '../lib/db';
-import type { locations } from '@prisma/client';
+import type { Location } from '@prisma/client';
 
 /**
- * 位置服务 - 提供 locations 数据表的增删改查操作
+ * 位置服务 - 提供 location 数据表的增删改查操作
  */
 export const locationService = {
   /**
    * 创建位置记录
    */
   saveLocation: async (photoId: number, location: any) => {
-    return await prisma.locations.upsert({
+    return await prisma.location.upsert({
       where: { photoId },
       update: {
         ...location,
@@ -25,8 +25,8 @@ export const locationService = {
   /**
    * 根据 ID 获取位置记录
    */
-  getLocationById: async (id: number): Promise<locations | null> => {
-    return await prisma.locations.findUnique({
+  getLocationById: async (id: number): Promise<Location | null> => {
+    return await prisma.location.findUnique({
       where: { id }
     });
   },
@@ -34,8 +34,8 @@ export const locationService = {
   /**
    * 根据 photoId 获取位置记录
    */
-  getLocationByPhotoId: async (photoId: number): Promise<locations | null> => {
-    return await prisma.locations.findUnique({
+  getLocationByPhotoId: async (photoId: number): Promise<Location | null> => {
+    return await prisma.location.findUnique({
       where: { photoId }
     });
   },
@@ -45,10 +45,10 @@ export const locationService = {
    */
   getAllLocations: async (
     { select = {} } = { select: {} }
-  ): Promise<locations[] | any> => {
+  ): Promise<Location[] | any> => {
     // 判断对象是否为空
     const hasSelect = Object.keys(select).length > 0;
-    return await prisma.locations.findMany({
+    return await prisma.location.findMany({
       ...(hasSelect ? { select } : {})
     });
   },
@@ -61,8 +61,8 @@ export const locationService = {
     maxLat: number,
     minLng: number,
     maxLng: number
-  ): Promise<locations[]> => {
-    return await prisma.locations.findMany({
+  ): Promise<Location[]> => {
+    return await prisma.location.findMany({
       where: {
         latitude: {
           gte: minLat,
@@ -79,8 +79,8 @@ export const locationService = {
   /**
    * 删除位置记录
    */
-  deleteLocation: async (id: number): Promise<locations> => {
-    return await prisma.locations.delete({
+  deleteLocation: async (id: number): Promise<Location> => {
+    return await prisma.location.delete({
       where: { id }
     });
   },
@@ -88,8 +88,8 @@ export const locationService = {
   /**
    * 根据 photoId 删除位置记录
    */
-  deleteLocationByPhotoId: async (photoId: number): Promise<locations> => {
-    return await prisma.locations.delete({
+  deleteLocationByPhotoId: async (photoId: number): Promise<Location> => {
+    return await prisma.location.delete({
       where: { photoId }
     });
   },
@@ -98,6 +98,6 @@ export const locationService = {
    * 统计位置数量
    */
   countLocations: async (): Promise<number> => {
-    return await prisma.locations.count();
+    return await prisma.location.count();
   }
 };
