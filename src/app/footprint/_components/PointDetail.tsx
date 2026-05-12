@@ -3,7 +3,7 @@ import { PhotoLocation, PhotoDetail } from '@/types';
 import * as Action from '@/server/actions/index';
 import { useEffect, useState } from 'react';
 import { Card } from '@heroui/card';
-import { formatTakenDate } from '@/utils/format';
+import { formatLatLng, formatTakenDate } from '@/utils/format';
 import Image from 'next/image';
 import {
   CloseIcon,
@@ -168,10 +168,7 @@ const SingleImage = ({
           {photoInfo.photoExif?.lensModel}
         </p>
         <p className="text-tiny mt-1">{formatTakenDate(photoInfo.takenAt)}</p>
-        <LocationInfo
-          onClick={onClickLocation}
-          photoLocation={photoInfo.location}
-        />
+        <LocationInfo onClick={onClickLocation} photo={photoInfo} />
       </div>
     </motion.div>
   </>
@@ -243,34 +240,29 @@ const MultiImage = ({
             </motion.div>
           )}
         </div>
-        <LocationInfo
-          onClick={onClickLocation}
-          photoLocation={photoList[0].location}
-        />
+        <LocationInfo onClick={onClickLocation} photo={photoList[0]} />
       </motion.div>
     </>
   );
 };
 
 const LocationInfo = ({
-  photoLocation,
+  photo,
   onClick
 }: {
-  photoLocation?: PhotoLocation;
+  photo: PhotoDetail;
   onClick: () => void;
 }) => {
-  if (!photoLocation) {
+  if (!photo.location) {
     return null;
   }
   return (
     <>
       <div className="mt-3 flex gap-1 items-center justify-between">
         <div>
-          <div className="text-xs">
-            {photoLocation.GPSLatitude} , {photoLocation.GPSLongitude}
-          </div>
+          <div className="text-xs">{formatLatLng(photo.photoExif)}</div>
           <div className="text-xs text-default-500">
-            {photoLocation.address || ''}
+            {photo.location.city || ''} {photo.location.district || ''}
           </div>
         </div>
         <MoveLocationIcon onClick={onClick} variant="flat" color="primary" />

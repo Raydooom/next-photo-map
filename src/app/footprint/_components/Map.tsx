@@ -122,8 +122,9 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
         }}
         onBackLocation={(location: any) => {
           if (location) {
-            mapInstance?.flyTo(location.bPoint, {
-              zoom: 16
+            mapInstance?.flyTo({
+              center: location.point,
+              duration: 400
             });
           }
         }}
