@@ -11,10 +11,11 @@ import {
   formatTakenDate
 } from '@/utils/format';
 
-import { PhotoItem, PhotoExif } from '@/types';
+import { PhotoItem } from '@/types';
 import * as Actions from '@/server/actions/index';
 import { ExifTagList } from './ExifTag';
 import { SingleMarker } from '../Map';
+import { Chip } from '@heroui/chip';
 
 const InfoRow = ({
   label,
@@ -40,10 +41,12 @@ export const ExtendInfo = memo(
     photo: PhotoItem;
     setIsOpen: (isOpen: boolean) => void;
   }) => {
-    const [exifData, setExifData] = useState<Partial<PhotoExif> | null>(null);
+    const [photoItem, setPhotoItem] = useState<Partial<PhotoItem> | null>(null);
     useEffect(() => {
-      Actions.getPhotoExif(photo.id).then(data => {
-        setExifData(data);
+      Actions.getPhotoDetail(photo.id).then(data => {
+        setPhotoItem(data);
+
+        console.log('👾 ~ :49 ~ datalog:', data);
       });
     }, [photo.id]);
 
@@ -72,7 +75,7 @@ export const ExtendInfo = memo(
 
         <div className="p-3 space-y-3 overflow-y-auto max-h-[80vh] custom-scrollbar">
           {/* 参数网格 */}
-          <ExifTagList exifData={exifData} />
+          <ExifTagList exifData={photoItem?.photoExif || null} />
 
           {/* 拍摄信息 */}
           <section className="space-y-2">
@@ -81,73 +84,106 @@ export const ExtendInfo = memo(
                 Shooting
               </h3>
               <div className="bg-foreground/[0.08] rounded-2xl px-4">
-                <InfoRow label="相机" value={exifData?.model} />
-                <InfoRow label="镜头" value={exifData?.lensModel} />
+                <InfoRow label="相机" value={photoItem?.photoExif?.model} />
+                <InfoRow label="镜头" value={photoItem?.photoExif?.lensModel} />
                 <InfoRow
                   label="焦距"
-                  value={formatFocalLength(exifData?.focalLength)}
+                  value={formatFocalLength(photoItem?.photoExif?.focalLength)}
                 />
                 <InfoRow
                   label="等效 35mm"
-                  value={formatFocalLength(exifData?.focalLengthIn35mmFormat)}
+                  value={formatFocalLength(
+                    photoItem?.photoExif?.focalLengthIn35mmFormat
+                  )}
                 />
                 <InfoRow
                   label="曝光补偿"
-                  value={formatExposurebias(exifData?.exposureBias)}
+                  value={formatExposurebias(photoItem?.photoExif?.exposureBias)}
                 />
-                <InfoRow label="白平衡" value={exifData?.whiteBalance} />
-                <InfoRow label="测光模式" value={exifData?.meteringMode} />
+                <InfoRow
+                  label="白平衡"
+                  value={photoItem?.photoExif?.whiteBalance}
+                />
+                <InfoRow
+                  label="测光模式"
+                  value={photoItem?.photoExif?.meteringMode}
+                />
                 <InfoRow
                   label="尺寸"
                   value={formatDimension(
-                    exifData?.exifImageWidth || 0,
-                    exifData?.exifImageHeight || 0
+                    photoItem?.photoExif?.exifImageWidth || 0,
+                    photoItem?.photoExif?.exifImageHeight || 0
                   )}
                 />
                 <InfoRow
                   label="像素"
                   value={formatPixel(
-                    exifData?.exifImageWidth || 0,
-                    exifData?.exifImageHeight || 0
+                    photoItem?.photoExif?.exifImageWidth || 0,
+                    photoItem?.photoExif?.exifImageHeight || 0
                   )}
                 />
                 <InfoRow
                   label="文件大小"
-                  value={formatFileSize(photo.size || 0)}
+                  value={formatFileSize(photoItem?.size || 0)}
                 />
               </div>
             </div>
 
             {/* 地图 */}
-            {formatLatLng(exifData) && (
+            {formatLatLng(photoItem?.location) && (
               <div className="px-1">
                 <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
                   Location
                 </h3>
                 <div className="bg-foreground/[0.08] rounded-2xl px-4">
-                  <InfoRow label="经纬度" value={formatLatLng(exifData)} />
+                  <InfoRow
+                    label="经纬度"
+                    value={formatLatLng(photoItem?.location)}
+                  />
                   <InfoRow
                     label="海拔"
-                    value={formatAltitude(exifData?.altitude)}
+                    value={formatAltitude(photoItem?.photoExif?.altitude)}
                   />
                   <InfoRow
                     label="拍摄朝向"
-                    value={exifData?.bearingDirection}
+                    value={photoItem?.photoExif?.bearingDirection}
                   />
                 </div>
-                {exifData?.latitude && exifData?.longitude && (
-                  <div className="rounded w-full border-glass h-40 overflow-hidden mt-4">
-                    <SingleMarker
-                      point={[
-                        exifData?.longitude as number,
-                        exifData?.latitude as number
-                      ]}
-                      photoId={photo.id}
-                    />
-                  </div>
-                )}
+                {photoItem?.location?.latitude &&
+                  photoItem?.location?.longitude && (
+                    <div className="rounded w-full border-glass h-40 overflow-hidden mt-4">
+                      <SingleMarker
+                        point={[
+                          photoItem?.location?.longitude as number,
+                          photoItem?.location?.latitude as number
+                        ]}
+                        photoId={photo.id}
+                      />
+                    </div>
+                  )}
               </div>
             )}
+
+            <div className="px-1">
+              <h3 className="text-[9px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-3">
+                Tags
+              </h3>
+              <div className="flex gap-2 flex-wrap">
+                {photoItem?.photoAiAnalysis?.tags?.map(tag => (
+                  <Chip
+                    classNames={{
+                      base: 'border-small bg-background-light/30 hover:bg-background-light/80 transition border-glass cursor-pointer',
+                      content: 'text-main'
+                    }}
+                    variant="shadow"
+                    key={tag}
+                    onClick={() => console.log(123)}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+            </div>
           </section>
         </div>
 

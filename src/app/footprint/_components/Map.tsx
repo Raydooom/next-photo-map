@@ -36,7 +36,9 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   // 根据url参数，居中显示地图
   useEffect(() => {
     const viewPoint = markerGroup?.find(group => {
-      const viewPhoto = group.list.find(photo => photo.id === photoId);
+      const viewPhoto = group.list.find(
+        location => location.photoId === photoId
+      );
       return viewPhoto;
     });
 
@@ -101,7 +103,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       // 点击单点
       const data = JSON.parse(properties.data) as MapMarker;
       setViewList(data.list);
-      replaceUrl(`${window.location.pathname}?photoId=${data.list[0].id}`);
+      replaceUrl(`${window.location.pathname}?photoId=${data.list[0].photoId}`);
 
       mapInstance.flyTo({
         center: data.point,
