@@ -1,6 +1,5 @@
 'use server';
 import { PhotoService } from '../services/photo.services';
-import { photoExifService } from '../services/photoExif.services';
 import { locationService } from '../services/location.services';
 
 const photoService = new PhotoService();
@@ -10,6 +9,7 @@ export const getPhotoList = async ({
   pageSize = 20,
   withLocation = false,
   withExif = false,
+  withAiAnalysis = false,
   top = false
 } = {}) => {
   return await photoService.listPhotos({
@@ -17,6 +17,7 @@ export const getPhotoList = async ({
     pageSize,
     withLocation,
     withExif,
+    withAiAnalysis,
     top
   });
 };
@@ -25,8 +26,8 @@ export const countAllPhotos = async () => {
   return await photoService.countAllPhotos();
 };
 
-export const getPhotoExif = async (photoId: number) => {
-  return await photoExifService.getPhotoExifByPhotoId(photoId);
+export const getPhotoDetail = async (photoId: number) => {
+  return await photoService.getPhotoById(photoId);
 };
 
 export const getPhotoDetailBatch = async (photoIds: number[]) => {

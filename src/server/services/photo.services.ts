@@ -176,6 +176,7 @@ export class PhotoService {
     keyword = '',
     withLocation = false,
     withExif = false,
+    withAiAnalysis = false,
     top = false
   } = {}) {
     const skip = (page - 1) * pageSize;
@@ -196,7 +197,8 @@ export class PhotoService {
         orderBy: { takenAt: 'desc' },
         include: {
           location: withLocation,
-          photoExif: withExif
+          photoExif: withExif,
+          photoAiAnalysis: withAiAnalysis
         }
       })
     ]);
@@ -217,7 +219,9 @@ export class PhotoService {
     const photo = await prisma.photo.findUnique({
       where: { id },
       include: {
-        photoExif: true // 默认包含 EXIF 信息
+        photoExif: true, // 默认包含 EXIF 信息
+        location: true,
+        photoAiAnalysis: true
       }
     });
 
