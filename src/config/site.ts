@@ -22,15 +22,11 @@ export const siteConfig = {
       href: '/footprint',
       meta: { icon: MapPinned, needRefresh: true }
     },
-    // {
-    //   label: 'Blog',
-    //   href: '/blog',
-    //   meta: { icon: SquareLibrary }
-    // },
-    // {
-    //   label: 'About',
-    //   href: '/about'
-    // },
+    {
+      label: 'AIChat',
+      href: '/ai',
+      meta: {}
+    },
     {
       label: 'Admin',
       href: '/admin',

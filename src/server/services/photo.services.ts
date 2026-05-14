@@ -4,7 +4,16 @@ import {
   deleteFileFromMinio,
   checkObjectExists
 } from '@/server/lib/oss';
-
+interface ListPhotosInput {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  withLocation?: boolean;
+  withExif?: boolean;
+  withAiAnalysis?: boolean;
+  top?: boolean;
+  ids?: number[];
+}
 export class PhotoService {
   private readonly photosBaseUrl = '/photos';
   private appUrl: string;
@@ -169,7 +178,9 @@ export class PhotoService {
    * @param pageSize 每页数量
    * @param keyword 搜索关键词
    * @param select 可选的字段选择
+   * @param ids 照片ID列表
    */
+
   async listPhotos({
     page = 1,
     pageSize = 20,
@@ -177,13 +188,17 @@ export class PhotoService {
     withLocation = false,
     withExif = false,
     withAiAnalysis = false,
-    top = false
-  } = {}) {
+    top = false,
+    ids = []
+  }: ListPhotosInput = {}) {
     const skip = (page - 1) * pageSize;
 
     const where: Prisma.PhotoWhereInput = {};
     if (keyword) {
       where.OR = [{ filename: { contains: keyword, mode: 'insensitive' } }];
+    }
+    if (ids.length > 0) {
+      where.id = { in: ids };
     }
     if (top) {
       where.top = true;
@@ -199,6 +214,16 @@ export class PhotoService {
           location: withLocation,
           photoExif: withExif,
           photoAiAnalysis: withAiAnalysis
+            ? {
+                select: {
+                  id: true,
+                  photoId: true,
+                  description: true,
+                  chineseDescription: true,
+                  tags: true
+                }
+              }
+            : false
         }
       })
     ]);
