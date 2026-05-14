@@ -63,6 +63,7 @@
     "@heroui/toast": "2.0.17",
     "@heroui/tooltip": "2.2.24",
     "@heroui/user": "2.2.22",
+    "@microsoft/fetch-event-source": "2.0.1",
     "@prisma/adapter-pg": "7.5.0",
     "@prisma/client": "7.5.0",
     "@react-aria/ssr": "3.9.10",
