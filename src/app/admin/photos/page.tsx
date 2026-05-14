@@ -24,7 +24,8 @@ import {
 } from '@heroui/modal';
 import { Image } from '@heroui/image';
 import { Tabs, Tab } from '@heroui/tabs';
-import { LocationModal } from './components/LocationModal';
+import { LocationModal } from './_components/LocationModal';
+import { AnalysisAll } from './_components/Analysis';
 import { formatDateCN } from '@/utils/format';
 import { PhotoItem } from '@/types';
 
@@ -251,6 +252,7 @@ export default function PhotosManagementPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">图片管理</h2>
         <div className="flex gap-3">
+          <AnalysisAll onFinish={loadPhotos} />
           <Button onPress={loadPhotos} size="sm">
             刷新列表
           </Button>
