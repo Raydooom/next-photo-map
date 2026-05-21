@@ -20,7 +20,12 @@ export async function GET() {
         controller.sendMessage({
           current: count,
           total: allPhotos.length,
-          done: count === allPhotos.length
+          status: count === allPhotos.length ? 'done' : 'loading',
+          message:
+            count === allPhotos.length
+              ? '已完成'
+              : `正在分析照片 ${count}/${allPhotos.length}`,
+          type: 'text'
         });
         if (count === allPhotos.length) {
           controller.close();

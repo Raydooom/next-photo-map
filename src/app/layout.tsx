@@ -5,7 +5,7 @@ import { Providers } from './providers';
 
 import { siteConfig } from '@/config/site';
 import { LayoutWrapper } from '@/components/layout-wrapper';
-import Script from 'next/script'
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: {
@@ -37,12 +37,8 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
-        {process.env.NODE_ENV}
         {process.env.NODE_ENV === 'production' && (
-          <Script
-            id="baidu-analytics"
-            strategy="afterInteractive"
-          >
+          <Script id="baidu-analytics" strategy="afterInteractive">
             {`
               var _hmt = _hmt || [];
               (function() {

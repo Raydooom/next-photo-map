@@ -97,16 +97,17 @@ model Photo {
 }
 
 model PhotoAiAnalysis {
-  id                 Int                                    @id @default(autoincrement())
-  photoId            Int                                    @unique @map("photo_id")
-  description        String?
-  chineseDescription String?                                @map("chinese_description")
-  tags               String[]
-  embedding          Unsupported("vector(768)")? // 向量字段
-  location           Unsupported("geography(Point, 4326)")? // 地理坐标字段
-  createdAt          DateTime                               @default(now()) @map("created_at")
-  updatedAt          DateTime                               @default(now()) @updatedAt @map("updated_at")
-  photo              Photo                                  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  id           Int                                    @id @default(autoincrement())
+  photoId      Int                                    @unique @map("photo_id")
+  theme        String?
+  description  String?
+  tags         String[]
+  embedding    Unsupported("vector(1024)")? // 向量字段
+  tagEmbedding Unsupported("vector(1024)")?            @map("tag_embedding")
+  location     Unsupported("geography(Point, 4326)")? // 地理坐标字段
+  createdAt    DateTime                               @default(now()) @map("created_at")
+  updatedAt    DateTime                               @default(now()) @updatedAt @map("updated_at")
+  photo        Photo                                  @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
   @@map("photo_ai_analyses")
 }

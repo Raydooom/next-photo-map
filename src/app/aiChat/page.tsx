@@ -1,162 +1,93 @@
 'use client';
-import { useState } from 'react';
-import { ScrollShadow } from '@heroui/scroll-shadow';
-import { Button } from '@heroui/button';
-import { Textarea } from '@heroui/input';
-import { Avatar } from '@heroui/avatar';
-import { Card, CardBody } from '@heroui/card';
-import { Send, Plus } from 'lucide-react';
-import { ThemeSwitch } from '@/components/theme-switch';
 
-type Message = {
-  id: string;
-  role: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
-};
+import { useRef, useState } from 'react';
+import {
+  ChatSidebar,
+  ChatHeader,
+  ChatInput,
+  ChatMessageList,
+  ChatHistory
+} from './_components';
+import { useChat } from './_hooks';
+
+// Mock 数据，实际应从 API 获取
+const MOCK_CHAT_HISTORIES: ChatHistory[] = [
+  {
+    id: '1',
+    title: '故宫附近的雪景照片',
+    createdAt: new Date(),
+    preview: '找到了5张照片...'
+  },
+  {
+    id: '2',
+    title: '夕阳下的建筑构图',
+    createdAt: new Date(Date.now() - 86400000),
+    preview: '分析光影效果...'
+  },
+  {
+    id: '3',
+    title: '春季樱花拍摄技巧',
+    createdAt: new Date(Date.now() - 172800000),
+    preview: '推荐拍摄角度...'
+  }
+];
 
 export default function ChatPage() {
-  const [sendMsg, setSendMsg] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'ai',
-      content: '我在故宫周边 3km 范围内为你找到了 5 张照片。',
-      timestamp: new Date()
-    }
-  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [chatHistories] = useState<ChatHistory[]>(MOCK_CHAT_HISTORIES);
 
-  const onSend = async () => {
-    if (!sendMsg.trim()) return;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: sendMsg,
-      timestamp: new Date()
-    };
+  const { messages, isTyping, sendMessage, clearMessages } = useChat({
+    onError: (error) => console.error('发送消息失败:', error)
+  });
 
-    setMessages(prev => [...prev, userMessage]);
-    // setSendMsg('');
+  const handleSend = () => {
+    if (!inputValue.trim() || isTyping) return;
+    sendMessage(inputValue);
+    setInputValue('');
+  };
 
-    try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputText: userMessage.content })
-      });
+  const handleNewChat = () => {
+    clearMessages();
+    setInputValue('');
+  };
 
-      const data = await response.json();
+  const handleDeleteChat = (id: string) => {
+    console.log('删除对话:', id);
+    // TODO: 调用删除 API
+  };
 
-      if (data.success) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'ai',
-          content: data.data.message,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-      }
-    } catch (error) {
-      console.error('发送消息失败:', error);
-    }
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    inputRef.current?.focus();
   };
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      {/* --- 左侧侧边栏 Sidebar --- */}
-      <aside className="hidden md:flex flex-col w-[260px] border-r border-divider bg-content1/50">
-        <div className="p-4">
-          <Button
-            className="w-full justify-start font-medium"
-            variant="flat"
-            startContent={<Plus size={18} />}
-          >
-            新对话
-          </Button>
-        </div>
-        <ScrollShadow className="flex-1 px-2">
-          {/* 这里循环展示历史对话列表 */}
-          {[1, 2, 3].map(i => (
-            <div
-              key={i}
-              className="p-3 my-1 rounded-xl hover:bg-content2 cursor-pointer transition-colors text-sm text-default-600"
-            >
-              故宫附近的雪景照片分析...
-            </div>
-          ))}
-        </ScrollShadow>
-      </aside>
+      <ChatSidebar
+        chatHistories={chatHistories}
+        onNewChat={handleNewChat}
+        onDeleteChat={handleDeleteChat}
+      />
 
-      {/* --- 主聊天区域 Main Content --- */}
       <main className="flex flex-col flex-1 relative bg-background">
-        {/* 顶部导航 */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-divider">
-          <div className="flex items-center gap-2">
-            <h1 className="font-semibold">AI 助手</h1>
-          </div>
-          <ThemeSwitch className="scale-85" />
-        </header>
+        <ChatHeader />
 
-        {/* 聊天内容区 */}
-        <ScrollShadow className="flex-1 p-4 md:p-8 space-y-6">
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 max-w-4xl mx-auto ${
-                msg.role === 'user' ? 'flex-row-reverse' : ''
-              }`}
-            >
-              {msg.role === 'user' ? (
-                <Avatar
-                  size="sm"
-                  src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-                />
-              ) : (
-                <Avatar size="sm" name="AI" className="bg-secondary" />
-              )}
-              <Card
-                className={`${
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-content2'
-                }`}
-              >
-                <CardBody className="py-2 px-4">{msg.content}</CardBody>
-              </Card>
-            </div>
-          ))}
-        </ScrollShadow>
+        <ChatMessageList
+          messages={messages}
+          scrollRef={scrollRef}
+          onSuggestionClick={handleSuggestionClick}
+        />
 
-        {/* --- 底部输入框 Input Area --- */}
-        <footer className="p-4 md:pb-8 max-w-4xl w-full mx-auto">
-          <div className="relative group">
-            <Textarea
-              variant="bordered"
-              placeholder="问问 AI 摄影助手..."
-              disableAnimation
-              disableAutosize
-              classNames={{
-                input: 'min-h-[54px] py-4',
-                inputWrapper:
-                  'pr-12 shadow-sm group-hover:border-primary transition-colors'
-              }}
-              onValueChange={setSendMsg}
-            />
-            <Button
-              isIconOnly
-              size="sm"
-              color="primary"
-              className="absolute right-2 bottom-2 z-10"
-              onPress={onSend}
-            >
-              <Send size={18} />
-            </Button>
-          </div>
-          <p className="text-center text-tiny text-default-400 mt-2">
-            由 Moondream & Qwen 提供语义支持
-          </p>
-        </footer>
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSend}
+          isTyping={isTyping}
+          inputRef={inputRef}
+        />
       </main>
     </div>
   );
