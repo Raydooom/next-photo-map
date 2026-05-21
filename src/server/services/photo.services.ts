@@ -51,7 +51,7 @@ export class PhotoService {
             id: true,
             photoId: true,
             description: true,
-            chineseDescription: true,
+            theme: true,
             tags: true,
             updatedAt: true,
             createdAt: true
@@ -219,7 +219,7 @@ export class PhotoService {
                   id: true,
                   photoId: true,
                   description: true,
-                  chineseDescription: true,
+                  theme: true,
                   tags: true
                 }
               }

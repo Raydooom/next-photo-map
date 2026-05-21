@@ -1,114 +1,102 @@
-import { ollama } from 'ollama-ai-provider-v2';
-import { generateText, embed } from 'ai';
 import { prisma, Prisma } from '../lib/db';
 import { getImageBase64 } from '../lib/oss';
-
-// 图片描述模型
-const IMAGE_DESC_MODEL = process.env.IMAGE_DESC_MODEL || 'moondream';
-// 翻译模型，关键词提取
-const TRANSLATE_MODEL = process.env.TRANSLATE_MODEL || 'qwen2.5:1.5b';
-// 向量模型
-const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
+import { generateAnalysis, generateEmbedding } from '../lib/ai';
 
 export class AIService {
-  // 生成向量描述
-  static async generateEmbedding(value: string) {
-    const { embedding } = await embed({
-      model: ollama.embedding(EMBEDDING_MODEL),
-      value: value
-    });
-    return embedding;
-  }
   // ai分析
   async analysis(key: string) {
     const base64Image = await getImageBase64(key);
     const cleanBase64 = base64Image.includes(',')
       ? base64Image.split(',')[1]
       : base64Image;
-
-    const { text: description } = await generateText({
-      model: ollama(IMAGE_DESC_MODEL),
+    const text = await generateAnalysis({
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `Analyze this image as a professional digital curator and photography critic. 
-                Please provide a deep, sophisticated analysis (approx. 150-200 words) covering:
-                1. Photographic Aesthetics: Evaluate composition (e.g., leading lines, symmetry), lighting quality, and color theory.
-                2. Spatiotemporal Context: Describe the atmosphere, season, and time of day, focusing on the "Genius Loci" (spirit of the place).
-                3. Humanistic Narrative: Interpret cultural traces, emotional undertones, or the story behind the visual elements.
-
-                Requirements:
-                - Use professional terminology.
-                - Write in a fluid, poetic, yet academic tone.
-                - Avoid phrases like "I see" or "This image shows".
-                - Output the analysis in a single cohesive paragraph.
+              text: `以一位专业的数字策展人和摄影评论家的视角来分析这张图片。
+                请提供一份深入且精妙的分析（约 150 - 200 字），涵盖以下内容：
+                  1. 摄影美学：评估构图（例如引导线、对称性）、光线质量以及色彩理论。
+                  2. 时空背景：描述当时的氛围、季节以及具体时间，重点突出“场所之灵”（即该地点所蕴含的独特精神）。
+                  3. 人文叙事：解读文化痕迹、情感内涵或视觉元素背后的故事。
+                要求：
+                  - 使用专业术语。
+                  - 以流畅、富有诗意且严谨的学术风格进行书写。
+                  - 避免使用诸如“我明白”或“此图像显示”这样的表述。
+                  - 将分析内容整合成一个连贯的段落呈现。
+                  - 根据分析结果，提取出照片的主要主题和关键元素。
+                请只返回符合要求的 JSON 对象：
+                  {
+                    "description": "照片的详细描述",
+                    "theme": "照片的主要主题或内容",
+                    "tags": "照片的主要元素或特征，每个标签2-4个字符，标签之间用逗号隔开, 如：["雪山", "暖色调", "极简", "构图", "静"]"
+                  }
               `
             },
             { type: 'image', image: cleanBase64 }
           ]
         }
-      ],
-      temperature: 0 // 设置为 0，降低随机性，防止模型“发疯”输出感叹号
+      ]
     });
-
-    const { text: chineseDescription } = await generateText({
-      model: ollama(TRANSLATE_MODEL),
-      system: `你是一个专业的摄影描述翻译器。`,
-      prompt: `请从以下英文描述中翻译为中文：\n${description}\n请开始输出：`,
-      temperature: 0
-    });
-
-    const { text: tags } = await generateText({
-      model: ollama(TRANSLATE_MODEL),
-      system: `你是一位精通摄影美学、人文地理和文学创作的资深编辑。
-        你的任务是将输入的英文视觉分析描述（由图像识别模型生成），转化并润色为三个不同视角的中文专业文案。
-      【核心规则】：
-        1. 主题提取：从描述中提取出照片的主要主题或内容。
-        2. 构图/光影/色调描述：根据主题，描述照片的构图方法、光影效果、色调等。
-        3. 时间/季节/场景提取：从描述中提取出与照片时间、季节、场景相关的关键词。
-        5. 只能输出关键词，禁止输出序号（如 1. 2. 3.）。
-        6. 关键词之间必须用英文逗号隔开。
-        7. 禁止输出任何开场白（如“好的”、“根据描述...”）。
-      `,
-      prompt: `请从以下描述中提取2~5个简短的摄影标签，每个标签2-4个字符，标签之间用英文逗号隔开：\n${chineseDescription}\n\n标签示例：雪山, 暖色调, 极简, 构图, 宁静\n请开始输出：`,
-      temperature: 0
-    });
+    const formattedDescription = text.replace(/```json\n|```/g, '').trim();
+    const { description, theme, tags } = JSON.parse(formattedDescription);
 
     // 步骤 2: 让轻量文本模型“提炼标签”
-    const embedding = await AIService.generateEmbedding(
-      `search_document: ${chineseDescription}`
+    const embedding = await generateEmbedding(
+      `search_document: ${description}`
     );
-
+    const tagEmbedding = await generateEmbedding(
+      `search_document: ${tags.join(',')}`
+    );
     return {
-      tags: tags.split(',').map(tag => tag.trim()),
+      tags,
+      theme,
       description,
-      chineseDescription,
-      embedding
+      embedding,
+      tagEmbedding
     };
   }
 
   // 将ai分析出的内容，存入数据
   async createAiInfo(photo: Prisma.PhotoGetPayload<{}>) {
-    const { tags, description, chineseDescription, embedding } =
-      await this.analysis(photo.thumbSmallKey);
-    const vectorString = `[${embedding.join(',')}]`;
+    const { tags, description, theme, embedding, tagEmbedding } =
+      await this.analysis(photo.thumbLargeKey);
 
     await prisma.$executeRaw`
       INSERT INTO "photo_ai_analyses" 
-        (photo_id, description, chinese_description, tags, embedding, updated_at)
+        (photo_id, theme, description, tags, embedding, tag_embedding, updated_at)
       VALUES 
-        (${photo.id}, ${description}, ${chineseDescription}, ${tags}, ${vectorString}::vector, NOW())
+        (${photo.id}, ${theme}, ${description}, ${tags}, ${embedding}::vector, ${tagEmbedding}::vector, NOW())
       ON CONFLICT (photo_id) 
       DO UPDATE SET
         description = EXCLUDED.description,
-        chinese_description = EXCLUDED.chinese_description,
         tags = EXCLUDED.tags,
         embedding = EXCLUDED.embedding,
+        tag_embedding = EXCLUDED.tag_embedding,
         updated_at = NOW();
     `;
-    return { tags, description, chineseDescription, success: true };
+    return { tags, description, theme, success: true };
+  }
+
+  // 根据当前照片的分析结果，更新向量
+  async updateEmbedding(photoId: number) {
+    const photo = await prisma.photoAiAnalysis.findUnique({
+      where: { photoId }
+    });
+
+    if (!photo) return null;
+
+    const vectorString = await generateEmbedding(photo.description || '');
+    const tagVectorString = await generateEmbedding(photo.tags.join(',') || '');
+
+    await prisma.$executeRaw`
+      UPDATE "photo_ai_analyses" 
+        SET embedding = ${vectorString}::vector,
+        tag_embedding = ${tagVectorString}::vector,
+        updated_at = NOW()
+      WHERE photo_id = ${photoId};
+    `;
   }
 }

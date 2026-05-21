@@ -20,3 +20,13 @@ export const analysis = async (
     throw { success: false, error };
   }
 };
+
+export const updateEmbedding = async (photoId: number) => {
+  try {
+    await aiService.updateEmbedding(photoId);
+    return { success: true };
+  } catch (error) {
+    console.error('AI Error:', error);
+    throw { success: false, error };
+  }
+};

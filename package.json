@@ -21,6 +21,7 @@
     "db:push:local": "dotenv -e .env.local -- prisma db push"
   },
   "dependencies": {
+    "@ai-sdk/openai": "3.0.63",
     "@aws-sdk/client-s3": "3.1021.0",
     "@aws-sdk/s3-request-presigner": "3.1023.0",
     "@heroui/accordion": "2.2.24",
@@ -94,7 +95,8 @@
     "react-bmapgl": "1.0.1",
     "react-dom": "18.3.1",
     "react-icons": "5.5.0",
-    "sharp": "0.34.5"
+    "sharp": "0.34.5",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@eslint/compat": "2.0.2",
