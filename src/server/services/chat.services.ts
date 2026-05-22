@@ -2,54 +2,93 @@ import { PhotoService } from './photo.services';
 import { prisma } from '../lib/db';
 import { generateEmbedding, intentionAnalysis } from '../lib/ai';
 
-const INTENTIONS = ['PHOTO_SEARCH', 'PHOTO_ANALYSIS', 'GENERAL_CHAT'];
-const photoService = new PhotoService();
-
-interface MathPhoto {
-  id: number;
-  semantic_distance: number;
+// 意图类型枚举
+export enum ChatIntent {
+  PHOTO_SEARCH = 'PHOTO_SEARCH',
+  PHOTO_ANALYSIS = 'PHOTO_ANALYSIS',
+  GENERAL_CHAT = 'GENERAL_CHAT'
 }
 
-interface Intention {
-  intent: string;
+// 意图参数
+export interface IntentionParams {
+  keywords?: string;
+  location?: string;
+  time?: string;
+  tone?: string;
+  light?: string;
+}
+
+// 意图分析结果
+export interface Intention {
+  intent: ChatIntent;
   reasoning: string;
-  params: any;
+  params: IntentionParams;
   embeddingDesc: string;
   reply: string;
 }
 
+// 向量查询结果
+interface PhotoMatch {
+  id: number;
+  semantic_distance: number;
+}
+
+const photoService = new PhotoService();
+
 export class AiChatService {
-  // ai意图解析
+  /**
+   * 解析用户意图
+   */
   async queryIntention(input: string): Promise<Intention> {
     const intention = await intentionAnalysis({
       input,
-      intention: INTENTIONS.join(',')
+      intentions: Object.values(ChatIntent) as string[]
     });
 
-    return intention;
+    return intention as Intention;
   }
 
-  // 根据向量描述查询照片
-  async queryPhotosByEmbedding(embeddingDesc: string, pageSize = 6) {
+  /**
+   * 根据向量描述搜索照片
+   */
+  async queryPhotosByEmbedding(
+    embeddingDesc: string,
+    _params?: IntentionParams,
+    pageSize = 6
+  ) {
     const embedding = await generateEmbedding(`search_query: ${embeddingDesc}`);
+    const embeddingStr = `[${embedding.join(',')}]`;
 
-    const photos: MathPhoto[] = await prisma.$queryRaw`
-        SELECT 
-          p.id, 
-          -- 计算语义相似度 (向量距离)
-          pa.embedding::vector <=> ${embedding}::vector AS semantic_distance
-        FROM "photos" p
-        JOIN "photo_ai_analyses" pa ON p.id = pa.photo_id
-        -- 向量距离小于等于 0.5 为匹配照片
-        WHERE pa.tag_embedding <=> ${embedding}::vector < 0.5
-        ORDER BY 
-          semantic_distance ASC  -- 优先按内容匹配度排序
-        LIMIT ${pageSize};
-      `;
+    const photos: PhotoMatch[] = await prisma.$queryRawUnsafe(`
+      SELECT 
+        p.id, 
+        pa.embedding::vector <=> '${embeddingStr}'::vector AS semantic_distance
+      FROM "photos" p
+      JOIN "photo_ai_analyses" pa ON p.id = pa.photo_id
+      WHERE pa.embedding::vector <=> '${embeddingStr}'::vector < 0.8
+      ORDER BY semantic_distance ASC
+      LIMIT ${pageSize}
+    `);
 
-    return await photoService.listPhotos({
+    if (photos.length === 0) {
+      return { total: 0, list: [] };
+    }
+
+    return photoService.listPhotos({
       pageSize,
-      ids: photos.map(photo => photo.id)
+      ids: photos.map((photo) => photo.id)
     });
+  }
+
+  /**
+   * 分析指定照片
+   */
+  async analyzePhoto(photoId: number) {
+    const photo = await photoService.getPhotoById(photoId);
+    if (!photo) {
+      throw new Error('照片不存在');
+    }
+    // TODO: 实现照片分析逻辑
+    return photo;
   }
 }

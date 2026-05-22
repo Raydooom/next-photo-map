@@ -272,11 +272,11 @@ export class ScannerService {
         originalPath: group.imageAbsolutePath,
         size,
         mimeType: group.mimeType,
-        originalKey: uploadRes[0]?.key,
-        thumbSmallKey: uploadRes[1]?.key,
-        thumbLargeKey: uploadRes[2]?.key,
+        originalKey: uploadRes[0]!.key,
+        thumbSmallKey: uploadRes[1]!.key,
+        thumbLargeKey: uploadRes[2]!.key,
         videoKey: group.videoAbsolutePath
-          ? uploadRes[3]?.key
+          ? uploadRes[3]!.key
           : videoRelativePath,
         width,
         height,
