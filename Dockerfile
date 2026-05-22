@@ -12,6 +12,7 @@ COPY . .
 
 # 应用 Prisma 数据库迁移
 RUN npm run build:docker
+RUN npm run db:migrate:docker
 
 # 第三阶段：运行环境
 FROM node:20-alpine AS runner
