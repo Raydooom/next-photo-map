@@ -24,8 +24,8 @@ export const siteConfig = {
     },
     {
       label: 'AIChat',
-      href: '/ai',
-      meta: {}
+      href: '/chat',
+      meta: { icon: MapPinned, hidden: true }
     },
     {
       label: 'Admin',
