@@ -99,7 +99,7 @@ export class ScannerService {
 
     const groups = this.groupFiles(files);
     const totalGroups = Array.from(groups.values()).filter(
-      g => g.imageAbsolutePath
+      (g) => g.imageAbsolutePath
     ).length;
 
     this.logger.info(`图片文件组数: ${totalGroups}`);
@@ -259,7 +259,7 @@ export class ScannerService {
       this.logger.info(`上传文件: ${relativePath}`);
       const uploadRes = await Promise.all(uploadTasks);
 
-      const isSuccess = uploadRes.every(res => res?.key && res?.success);
+      const isSuccess = uploadRes.every((res) => res?.key && res?.success);
 
       if (!isSuccess) {
         this.failedCount++;
