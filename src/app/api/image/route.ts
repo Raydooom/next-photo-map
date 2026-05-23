@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client } from '@/server/lib/oss';
+import { internalClient, BUCKET } from '@/server/lib/oss';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 
 export const dynamic = 'force-dynamic';
@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const command = new GetObjectCommand({
-      Bucket: process.env['MINIO_BUCKET'],
+      Bucket: BUCKET,
       Key: key
     });
 
-    const response = await client.send(command);
+    // 使用内网客户端读取图片
+    const response = await internalClient.send(command);
 
     const body = await response.Body?.transformToByteArray();
 
