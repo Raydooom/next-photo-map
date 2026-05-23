@@ -44,31 +44,31 @@ export class AIService {
     const { description, theme, tags } = JSON.parse(formattedDescription);
 
     // 步骤 2: 让轻量文本模型“提炼标签”
-    const embedding = await generateEmbedding(
+    const embeddingStr = await generateEmbedding(
       `search_document: ${description}`
     );
-    const tagEmbedding = await generateEmbedding(
+    const tagEmbeddingStr = await generateEmbedding(
       `search_document: ${tags.join(',')}`
     );
     return {
       tags,
       theme,
       description,
-      embedding,
-      tagEmbedding
+      embeddingStr,
+      tagEmbeddingStr
     };
   }
 
   // 将ai分析出的内容，存入数据
   async createAiInfo(photo: Prisma.PhotoGetPayload<{}>) {
-    const { tags, description, theme, embedding, tagEmbedding } =
+    const { tags, description, theme, embeddingStr, tagEmbeddingStr } =
       await this.analysis(photo.thumbLargeKey);
 
     await prisma.$executeRaw`
       INSERT INTO "photo_ai_analyses" 
         (photo_id, theme, description, tags, embedding, tag_embedding, updated_at)
       VALUES 
-        (${photo.id}, ${theme}, ${description}, ${tags}, ${embedding}::vector, ${tagEmbedding}::vector, NOW())
+        (${photo.id}, ${theme}, ${description}, ${tags}, ${embeddingStr}::vector, ${tagEmbeddingStr}::vector, NOW())
       ON CONFLICT (photo_id) 
       DO UPDATE SET
         description = EXCLUDED.description,
