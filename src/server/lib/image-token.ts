@@ -6,19 +6,35 @@ export const TOKEN_EXPIRES_IN = 7 * 24 * 60 * 60;
 const TOKEN_SECRET = process.env.IMAGE_TOKEN_SECRET || 'photo-map-image-secret';
 
 /**
+ * 计算过期时间戳（对齐到 7 天边界）
+ *
+ * 例如：现在是第 3 天，过期时间 = 第 7 天末
+ * 这样在同一个 7 天周期内，生成的 token 始终相同
+ */
+function calculateExpTimestamp(): number {
+  const now = Math.floor(Date.now() / 1000);
+  // 计算当前是第几个 7 天周期，然后 +1 作为过期时间
+  const periodIndex = Math.floor(now / TOKEN_EXPIRES_IN);
+  return (periodIndex + 1) * TOKEN_EXPIRES_IN;
+}
+
+/**
  * 生成图片访问 Token
- * 格式: base64url(JSON.stringify({key, exp, sign}))
+ *
+ * 策略：使用固定时间窗口，7 天内的 token 保持一致
+ * - 同一个 key 在同一个 7 天周期内生成相同 token
+ * - 浏览器可以缓存 7 天
+ * - 7 天后 token 失效，需要重新获取
  */
 export function generateImageToken(key: string): string {
-  const exp = Math.floor(Date.now() / 1000) + TOKEN_EXPIRES_IN;
-  const payload = { key, exp };
+  const exp = calculateExpTimestamp();
   const sign = crypto
     .createHmac('sha256', TOKEN_SECRET)
     .update(`${key}:${exp}`)
     .digest('hex')
     .slice(0, 16);
 
-  const tokenData = { ...payload, sign };
+  const tokenData = { key, exp, sign };
   return Buffer.from(JSON.stringify(tokenData)).toString('base64url');
 }
 
