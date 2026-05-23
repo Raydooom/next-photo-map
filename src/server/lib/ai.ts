@@ -18,7 +18,7 @@ const AI_CONFIG = {
   imageAnalysis: {
     model: process.env.IMAGE_ANALYSIS_MODEL || 'Qwen/Qwen3.5-35B-A3B',
     provider: 'modelscope',
-    apiKey: process.env.MODEL_SCOPE_KEY || '',
+    apiKey: process.env.MODEL_SCOPE_KEY || 'ms-772d1363-fe02-4275-8444-492d23f9205e',
     baseURL: 'https://api-inference.modelscope.cn/v1/'
   }
 } as const;
@@ -83,7 +83,7 @@ export async function generateAnalysis({
 /**
  * 生成向量嵌入
  */
-export async function generateEmbedding(value: string): Promise<number[]> {
+export async function generateEmbedding(value: string): Promise<string> {
   if (!value?.trim()) {
     throw new Error('向量化的文本不能为空');
   }
@@ -94,7 +94,7 @@ export async function generateEmbedding(value: string): Promise<number[]> {
       value
     });
 
-    return embedding;
+    return `[${embedding.join(',')}]`;
   } catch (error) {
     console.error('向量生成失败:', error);
     throw new Error('向量生成服务暂时不可用');
