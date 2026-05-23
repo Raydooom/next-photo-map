@@ -55,7 +55,7 @@ interface IntentionResult {
 
 const ollama = createOllama({
   // 从环境变量中读取，如果没有则 fallback 到 host.docker.internal
-  baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+  baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api'
 });
 
 // ============ 导出函数 ============
