@@ -56,8 +56,7 @@ export class AiChatService {
     _params?: IntentionParams,
     pageSize = 6
   ) {
-    const embedding = await generateEmbedding(`search_query: ${embeddingDesc}`);
-    const embeddingStr = `[${embedding.join(',')}]`;
+    const embeddingStr = await generateEmbedding(`search_query: ${embeddingDesc}`);
 
     const photos: PhotoMatch[] = await prisma.$queryRawUnsafe(`
       SELECT 
