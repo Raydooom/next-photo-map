@@ -104,16 +104,22 @@ export async function getImageBase64(key: string): Promise<string> {
 
 // ============ 签名 URL（走外网） ============
 
-export async function getImageUrl(key: string) {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    ResponseCacheControl: `public, max-age=${process.env.IMAGE_EXPIRES_IN || '604800'}`
-  });
-  // 使用外网客户端生成签名 URL，供前端访问
-  return await getSignedUrl(externalClient, command, {
-    expiresIn: Number(process.env.IMAGE_EXPIRES_IN) || 604800
-  });
+export async function getImageUrl(key: string): Promise<string> {
+  // 方案 1: 使用代理接口 + Token（推荐，支持长期缓存）
+  const { generateImageToken } = require('@/app/api/image/route');
+  const token = generateImageToken(key);
+  const baseUrl = process.env.APP_URL || '';
+  return `${baseUrl}/api/image?key=${encodeURIComponent(key)}&token=${token}`;
+
+  // 方案 2: 使用 MinIO 签名 URL（短期有效，无法长期缓存）
+  // const command = new GetObjectCommand({
+  //   Bucket: BUCKET,
+  //   Key: key,
+  //   ResponseCacheControl: `public, max-age=${process.env.IMAGE_EXPIRES_IN || '604800'}`
+  // });
+  // return await getSignedUrl(externalClient, command, {
+  //   expiresIn: Number(process.env.IMAGE_EXPIRES_IN) || 604800
+  // });
 }
 
 // ============ 辅助函数 ============
