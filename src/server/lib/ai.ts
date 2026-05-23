@@ -1,4 +1,4 @@
-import { ollama } from 'ollama-ai-provider-v2';
+import { createOllama } from 'ollama-ai-provider-v2';
 import { generateText, embed } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 
@@ -18,7 +18,8 @@ const AI_CONFIG = {
   imageAnalysis: {
     model: process.env.IMAGE_ANALYSIS_MODEL || 'Qwen/Qwen3.5-35B-A3B',
     provider: 'modelscope',
-    apiKey: process.env.MODEL_SCOPE_KEY || 'ms-772d1363-fe02-4275-8444-492d23f9205e',
+    apiKey:
+      process.env.MODEL_SCOPE_KEY || 'ms-772d1363-fe02-4275-8444-492d23f9205e',
     baseURL: 'https://api-inference.modelscope.cn/v1/'
   }
 } as const;
@@ -51,6 +52,11 @@ interface IntentionResult {
   embeddingDesc: string;
   reply: string;
 }
+
+const ollama = createOllama({
+  // 从环境变量中读取，如果没有则 fallback 到 host.docker.internal
+  baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+});
 
 // ============ 导出函数 ============
 
@@ -139,34 +145,33 @@ export async function intentionAnalysis({
 }
 
 // ============ 辅助函数 ============
-
 function buildIntentionSystemPrompt(intentions: string[]): string {
   return `
-# Role
-你是一个摄影地图助手系统的意图解析引擎。
+    # Role
+    你是一个摄影地图助手系统的意图解析引擎。
 
-# Task
-解析用户输入，并输出符合以下 JSON 格式的指令。
+    # Task
+    解析用户输入，并输出符合以下 JSON 格式的指令。
 
-# Response Format
-{
-  "intent": "${intentions.join('|')}",
-  "reasoning": "简短说明为什么要判定为此意图",
-  "params": {
-    "keywords": "关键词1,关键词2",
-    "location": "地点",
-    "time": "描述的季节或月份",
-    "tone": "色调",
-    "light": "光影"
-  },
-  "embeddingDesc": "提炼用户意图的向量描述，用于照片搜索",
-  "reply": "回复给用户的内容，简洁自然，不要追问"
-}
+    # Response Format
+    {
+      "intent": "${intentions.join('|')}",
+      "reasoning": "简短说明为什么要判定为此意图",
+      "params": {
+        "keywords": "关键词1,关键词2",
+        "location": "地点",
+        "time": "描述的季节或月份",
+        "tone": "色调",
+        "light": "光影"
+      },
+      "embeddingDesc": "提炼用户意图的向量描述，用于照片搜索",
+      "reply": "回复给用户的内容，简洁自然，不要追问"
+    }
 
-# Rules
-- 如果用户说"想看...附近"、"找...照片"，意图必须是 PHOTO_SEARCH。
-- 如果用户提到"构图、光影、分析这张照片"，意图必须是 PHOTO_ANALYSIS。
-- 必须严格输出 JSON，不要包含任何多余文字。
-- embeddingDesc 应该是用于向量搜索的描述性文本，提取照片的关键特征。
-`;
+    # Rules
+    - 如果用户说"想看...附近"、"找...照片"，意图必须是 PHOTO_SEARCH。
+    - 如果用户提到"构图、光影、分析这张照片"，意图必须是 PHOTO_ANALYSIS。
+    - 必须严格输出 JSON，不要包含任何多余文字。
+    - embeddingDesc 应该是用于向量搜索的描述性文本，提取照片的关键特征。
+    `;
 }
