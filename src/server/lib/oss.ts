@@ -18,7 +18,7 @@ const INTERNAL_ENDPOINT =
 const EXTERNAL_ENDPOINT = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
 
 // 上传客户端（走内网）
-const internalClient = new S3Client({
+export const internalClient = new S3Client({
   endpoint: INTERNAL_ENDPOINT,
   credentials: {
     accessKeyId: process.env.MINIO_ACCESS_KEY || '',
@@ -39,7 +39,7 @@ const externalClient = new S3Client({
   forcePathStyle: true
 });
 
-const BUCKET = process.env.MINIO_BUCKET || '';
+export const BUCKET = process.env.MINIO_BUCKET || '';
 
 // ============ 上传操作（走内网） ============
 
