@@ -10,9 +10,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# 应用 Prisma 数据库迁移
+# 构建 Next.js 应用
 RUN npm run build:docker
-RUN npm run prisma:generate
 
 # 第三阶段：运行环境
 FROM node:22-alpine AS runner

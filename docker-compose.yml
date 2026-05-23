@@ -15,6 +15,9 @@ services:
     restart: always
     networks:
       - photo_map_network
+    # 映射宿主机host，需要访问Ollama服务
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   photo_map_network:
