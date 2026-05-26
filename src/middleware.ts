@@ -3,7 +3,10 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   // 1. 只拦截 /admin 开头的路径
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  if (
+    request.nextUrl.pathname.startsWith('/admin') &&
+    process.env.NODE_ENV === 'production'
+  ) {
     const authCookie = request.cookies.get('admin_auth')?.value;
     const secret = process.env.ADMIN_PASSWORD;
 
