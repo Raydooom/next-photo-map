@@ -8,64 +8,65 @@ import { useSearchParams } from 'next/navigation';
 import { PhotoPreview } from '../common/PhotoPreview';
 import { replaceUrl } from '@/utils/url';
 
-export default function MasonryGrid({
-  items,
-  columns = 5
-}: {
+interface MasonryGridProps {
   items: PhotoItem[];
   columns?: number;
-}) {
-  const [mounted, setMounted] = useState(false);
+}
 
+export default function MasonryGrid({ items, columns = 5 }: MasonryGridProps) {
+  const [mounted, setMounted] = useState(false);
   const [previewId, setPreviewId] = useState<number | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const photoId = searchParams.get('photoId');
 
+  // 初始化：检查 URL 中是否有 photoId 参数
   useEffect(() => {
     setMounted(true);
-    if (photoId === String(previewId)) return;
-    if (photoId && !previewId) {
-      const activeIndex = items.findIndex(item => item.id === Number(photoId));
-      if (activeIndex !== -1) {
-        setPreviewId(Number(photoId));
-        setIsOpen(true);
-      }
+  }, []);
+
+  useEffect(() => {
+    if (!photoId || photoId === String(previewId)) return;
+
+    const exists = items.some((item) => item.id === Number(photoId));
+    if (exists) {
+      setPreviewId(Number(photoId));
+      setIsOpen(true);
     }
   }, [photoId, previewId, items]);
 
-  // 点击图片时，设置预览图片id并打开预览弹窗
-  const onClickItem = useCallback(async (item: { data: PhotoItem }) => {
-    setPreviewId(item.data.id);
+  // 点击图片打开预览
+  const handleClickItem = useCallback(({ data }: { data: PhotoItem }) => {
+    setPreviewId(data.id);
     setIsOpen(true);
-    // 记录当前点击的图片id
-    replaceUrl(`${window.location.pathname}?photoId=${item.data.id}`);
+    replaceUrl(`${window.location.pathname}?photoId=${data.id}`);
   }, []);
 
-  const onClosePreview = () => {
+  // 关闭预览
+  const handleClosePreview = useCallback(() => {
     setPreviewId(undefined);
     setIsOpen(false);
     replaceUrl(window.location.pathname);
-  };
+  }, []);
 
+  // 渲染单个卡片
   const renderItem = useCallback(
     ({ data }: { data: PhotoItem }) => (
-      <PhotoCard key={data.id} data={data} onClickItem={onClickItem} />
+      <PhotoCard key={data.id} data={data} onClickItem={handleClickItem} />
     ),
-    [onClickItem]
+    [handleClickItem]
   );
 
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
+
   return (
     <>
       <PhotoPreview
         previewId={previewId}
         list={items}
         isOpen={isOpen}
-        onClose={onClosePreview}
+        onClose={handleClosePreview}
       />
       <Masonry
         items={items}
