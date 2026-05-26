@@ -2,7 +2,7 @@
 import { PhotoItem } from '@/types';
 import clsx from 'clsx';
 import Image from 'next/image';
-import { memo, useRef, useState } from 'react';
+import { memo, useRef, useState, useEffect } from 'react';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 import { formatFileSize } from '@/utils/format';
 import { motion } from 'framer-motion';
@@ -18,28 +18,57 @@ export const PhotoCard = memo(
     onClickItem: (item: { data: PhotoItem }) => void;
   }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [videoLoaded, setVideoLoaded] = useState(false);
+    const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+
     const videoRef = useRef<HTMLVideoElement>(null);
+
+    // 只在用户首次交互时加载视频
+    useEffect(() => {
+      if (shouldLoadVideo && data.videoUrl && !videoLoaded) {
+        setVideoLoaded(true);
+      }
+    }, [shouldLoadVideo, data.videoUrl, videoLoaded]);
+
+    // 视频加载完成后自动播放
+    useEffect(() => {
+      if (videoRef.current && videoLoaded && shouldLoadVideo) {
+        videoRef.current.load(); // 触发视频加载
+      }
+    }, [videoLoaded, shouldLoadVideo]);
+
     const playVideo = () => {
       if (data.videoUrl) {
-        if (videoRef.current) {
+        // 首次播放时触发加载
+        setShouldLoadVideo(true);
+
+        // 如果视频已加载，立即播放
+        if (videoRef.current && videoLoaded) {
           videoRef.current.currentTime = 0;
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {
+            // 视频可能还在加载中
+          });
+          setIsPlaying(true);
+        } else {
+          // 视频还在加载，设置一个标志，等加载完成后播放
           setIsPlaying(true);
         }
       }
     };
-    const [isPlaying, setIsPlaying] = useState(false);
-    const onVideoEnded = () => {
-      setTimeout(() => {
-        if (videoRef.current && isPlaying) {
-          videoRef.current.pause();
-          videoRef.current.currentTime = 0;
-        }
-        setIsPlaying(false);
-      });
+
+    const stopVideo = () => {
+      if (videoRef.current && isPlaying) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+      setIsPlaying(false);
     };
 
-    const [loading, setLoading] = useState(true);
+    const onVideoEnded = () => {
+      stopVideo();
+    };
 
     return (
       <motion.div
@@ -51,7 +80,10 @@ export const PhotoCard = memo(
           background: data.dominantColor || '#000'
         }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          stopVideo();
+        }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         layout
@@ -73,15 +105,30 @@ export const PhotoCard = memo(
             alt={data.filename}
             onLoad={() => setLoading(false)}
           />
-          {data.videoUrl && (
+          {/* 视频只在首次交互后才加载 */}
+          {data.videoUrl && videoLoaded && (
             <video
               className={clsx(
                 'absolute z-10 top-0 left-0 w-full h-full object-cover',
                 isPlaying ? 'block' : 'hidden'
               )}
-              onEnded={() => onVideoEnded()}
+              onEnded={onVideoEnded}
+              onLoadedData={() => {
+                // 视频加载完成后，如果用户已经触发了播放，则自动播放
+                if (isPlaying && videoRef.current) {
+                  videoRef.current.currentTime = 0;
+                  videoRef.current.play().catch(() => {
+                    setIsPlaying(false);
+                  });
+                }
+              }}
+              onCanPlay={() => {
+                // 视频可以播放时
+              }}
               ref={videoRef}
-              muted={true}
+              muted
+              playsInline
+              preload="none"
               src={data.videoUrl}
             />
           )}
@@ -89,11 +136,7 @@ export const PhotoCard = memo(
 
         {/* livephoto 图标 */}
         {data.videoUrl && (
-          <div
-            className="absolute top-2 left-2 z-40"
-            onMouseEnter={playVideo}
-            onMouseLeave={onVideoEnded}
-          >
+          <div className="absolute top-2 left-2 z-40" onMouseEnter={playVideo}>
             <LivePhotoIndicate isPlaying={isPlaying} />
           </div>
         )}
