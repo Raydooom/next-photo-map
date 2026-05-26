@@ -41,3 +41,8 @@ package-lock.json
 bun.lockb
 
 photos/*
+
+# env
+.env
+.env.prod
+.env.docker
