@@ -44,5 +44,6 @@ photos/*
 
 # env
 .env
+.env.local
 .env.prod
 .env.docker
