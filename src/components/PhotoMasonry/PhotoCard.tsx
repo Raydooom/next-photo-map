@@ -1,74 +1,66 @@
 'use client';
+
 import { PhotoItem } from '@/types';
 import clsx from 'clsx';
 import Image from 'next/image';
-import { memo, useRef, useState, useEffect } from 'react';
+import { memo, useRef, useState, useCallback } from 'react';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 import { formatFileSize } from '@/utils/format';
 import { motion } from 'framer-motion';
 
+interface PhotoCardProps {
+  data: PhotoItem;
+  className?: string;
+  onClickItem: (item: { data: PhotoItem }) => void;
+}
+
 export const PhotoCard = memo(
-  ({
-    data,
-    className,
-    onClickItem
-  }: {
-    data: PhotoItem;
-    className?: string;
-    onClickItem: (item: { data: PhotoItem }) => void;
-  }) => {
+  ({ data, className, onClickItem }: PhotoCardProps) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [videoLoaded, setVideoLoaded] = useState(false);
-    const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [videoReady, setVideoReady] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
+    const hasVideo = Boolean(data.videoUrl);
 
-    // 只在用户首次交互时加载视频
-    useEffect(() => {
-      if (shouldLoadVideo && data.videoUrl && !videoLoaded) {
-        setVideoLoaded(true);
+    // ============ Live Photo 控制 ============
+
+    const playVideo = useCallback(() => {
+      if (!hasVideo) return;
+
+      // 首次交互：渲染 video 元素
+      if (!videoReady) {
+        setVideoReady(true);
+        setIsPlaying(true);
+        return;
       }
-    }, [shouldLoadVideo, data.videoUrl, videoLoaded]);
 
-    // 视频加载完成后自动播放
-    useEffect(() => {
-      if (videoRef.current && videoLoaded && shouldLoadVideo) {
-        videoRef.current.load(); // 触发视频加载
+      // 已加载：直接播放
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => setIsPlaying(false));
+        setIsPlaying(true);
       }
-    }, [videoLoaded, shouldLoadVideo]);
+    }, [hasVideo, videoReady]);
 
-    const playVideo = () => {
-      if (data.videoUrl) {
-        // 首次播放时触发加载
-        setShouldLoadVideo(true);
-
-        // 如果视频已加载，立即播放
-        if (videoRef.current && videoLoaded) {
-          videoRef.current.currentTime = 0;
-          videoRef.current.play().catch(() => {
-            // 视频可能还在加载中
-          });
-          setIsPlaying(true);
-        } else {
-          // 视频还在加载，设置一个标志，等加载完成后播放
-          setIsPlaying(true);
-        }
-      }
-    };
-
-    const stopVideo = () => {
-      if (videoRef.current && isPlaying) {
+    const stopVideo = useCallback(() => {
+      if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
       }
       setIsPlaying(false);
-    };
+    }, []);
 
-    const onVideoEnded = () => {
-      stopVideo();
-    };
+    const handleVideoLoaded = useCallback(() => {
+      // 视频加载完成后，如果用户已触发播放则自动播放
+      if (isPlaying && videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => setIsPlaying(false));
+      }
+    }, [isPlaying]);
+
+    // ============ 渲染 ============
 
     return (
       <motion.div
@@ -76,9 +68,7 @@ export const PhotoCard = memo(
           'overflow-hidden relative cursor-pointer border-glass rounded',
           className
         )}
-        style={{
-          background: data.dominantColor || '#000'
-        }}
+        style={{ background: data.dominantColor || '#000' }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => {
           setIsHovered(false);
@@ -89,9 +79,10 @@ export const PhotoCard = memo(
         layout
         onClick={() => onClickItem({ data })}
       >
+        {/* 图片 + 视频层 */}
         <motion.div
           initial={{ filter: 'blur(20px)', opacity: 0 }}
-          animate={!loading ? { filter: 'blur(0px)', opacity: 1 } : {}}
+          animate={imageLoaded ? { filter: 'blur(0px)', opacity: 1 } : {}}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           <Image
@@ -103,62 +94,66 @@ export const PhotoCard = memo(
             height={data.height}
             src={data.thumbLargeUrl}
             alt={data.filename}
-            onLoad={() => setLoading(false)}
+            onLoad={() => setImageLoaded(true)}
           />
-          {/* 视频只在首次交互后才加载 */}
-          {data.videoUrl && videoLoaded && (
+
+          {/* Live Photo 视频（懒加载） */}
+          {hasVideo && videoReady && (
             <video
+              ref={videoRef}
               className={clsx(
                 'absolute z-10 top-0 left-0 w-full h-full object-cover',
                 isPlaying ? 'block' : 'hidden'
               )}
-              onEnded={onVideoEnded}
-              onLoadedData={() => {
-                // 视频加载完成后，如果用户已经触发了播放，则自动播放
-                if (isPlaying && videoRef.current) {
-                  videoRef.current.currentTime = 0;
-                  videoRef.current.play().catch(() => {
-                    setIsPlaying(false);
-                  });
-                }
-              }}
-              onCanPlay={() => {
-                // 视频可以播放时
-              }}
-              ref={videoRef}
+              onEnded={stopVideo}
+              onLoadedData={handleVideoLoaded}
               muted
               playsInline
-              preload="none"
+              preload="auto"
               src={data.videoUrl}
             />
           )}
         </motion.div>
 
-        {/* livephoto 图标 */}
-        {data.videoUrl && (
+        {/* Live Photo 图标 */}
+        {hasVideo && (
           <div className="absolute top-2 left-2 z-40" onMouseEnter={playVideo}>
             <LivePhotoIndicate isPlaying={isPlaying} />
           </div>
         )}
 
-        {/* 底部信息 */}
-        <div
-          className={clsx(
-            'flex flex-col gap-2 px-3 pb-2 pt-10 w-full absolute bottom-0 left-0 z-20 transition-all duration-300 bg-gradient-to-t from-black/70 to-transparent',
-            isHovered && !isPlaying ? 'opacity-100' : 'opacity-0'
-          )}
-        >
-          <h4 className="font-bold text-sm text-white text-ellipsis whitespace-nowrap overflow-hidden max-h-3/4">
-            {data.filename}
-          </h4>
-          <div className="text-xs font-medium text-white/90 ">
-            {data.filename.split('.').pop()?.toUpperCase()} · {data.width} x{' '}
-            {data.height} · {formatFileSize(data.size)}
-          </div>
-        </div>
+        {/* 底部悬浮信息 */}
+        <PhotoCardOverlay data={data} visible={isHovered && !isPlaying} />
       </motion.div>
     );
   }
 );
 
 PhotoCard.displayName = 'PhotoCard';
+
+// ============ 子组件 ============
+
+const PhotoCardOverlay = memo(
+  ({ data, visible }: { data: PhotoItem; visible: boolean }) => {
+    const ext = data.filename.split('.').pop()?.toUpperCase();
+
+    return (
+      <div
+        className={clsx(
+          'flex flex-col gap-2 px-3 pb-2 pt-10 w-full absolute bottom-0 left-0 z-20',
+          'transition-opacity duration-300 bg-gradient-to-t from-black/70 to-transparent',
+          visible ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        <h4 className="font-bold text-sm text-white text-ellipsis whitespace-nowrap overflow-hidden">
+          {data.filename}
+        </h4>
+        <div className="text-xs font-medium text-white/90">
+          {ext} · {data.width} x {data.height} · {formatFileSize(data.size)}
+        </div>
+      </div>
+    );
+  }
+);
+
+PhotoCardOverlay.displayName = 'PhotoCardOverlay';
