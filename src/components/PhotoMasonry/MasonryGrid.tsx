@@ -70,7 +70,7 @@ export default function MasonryGrid({ items, columns = 5 }: MasonryGridProps) {
       />
       <Masonry
         items={items}
-        columnGutter={12}
+        columnGutter={10}
         columnCount={columns}
         render={renderItem}
       />
