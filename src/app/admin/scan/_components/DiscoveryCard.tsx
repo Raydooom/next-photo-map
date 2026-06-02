@@ -49,7 +49,9 @@ export function DiscoveryCard({
               <div className="text-xl font-bold text-primary">
                 {discoveryInfo.totalGroups}
               </div>
-              <div className="text-[10px] text-default-500 mt-0.5">总照片</div>
+              <div className="text-[10px] text-default-500 mt-0.5">
+                目录照片
+              </div>
             </div>
 
             {/* 待扫描 */}
@@ -60,12 +62,12 @@ export function DiscoveryCard({
               <div className="text-[10px] text-default-500 mt-0.5">待扫描</div>
             </div>
 
-            {/* 已存在 */}
+            {/* 已入库 */}
             <div className="text-center p-2 rounded-lg bg-default/5 ring-1 ring-default/10">
               <div className="text-xl font-bold text-default-600">
                 {discoveryInfo.existingCount}
               </div>
-              <div className="text-[10px] text-default-500 mt-0.5">已存在</div>
+              <div className="text-[10px] text-default-500 mt-0.5">已入库</div>
             </div>
 
             {/* 发现文件 */}

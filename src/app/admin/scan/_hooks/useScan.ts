@@ -27,6 +27,9 @@ export function useScan() {
   const [isScanning, setIsScanning] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [forceScan, setForceScan] = useState(false);
+  const [currentScanMode, setCurrentScanMode] = useState<
+    'full' | 'incremental'
+  >('incremental');
   const [logs, setLogs] = useState<ScanProgress[]>([]);
   const [stats, setStats] = useState<ScanStats>({
     totalFiles: 0,
@@ -92,6 +95,8 @@ export function useScan() {
 
         if (data.type === 'start') {
           console.log('扫描开始:', data);
+          // 记录当前扫描模式
+          setCurrentScanMode(data.data?.mode || 'incremental');
         } else if (data.type === 'progress') {
           if (data.data?.totalFiles !== undefined) {
             setStats((prev) => ({ ...prev, totalFiles: data.data.totalFiles }));
@@ -168,6 +173,7 @@ export function useScan() {
     isScanning,
     isDiscovering,
     forceScan,
+    currentScanMode,
     setForceScan,
     logs,
     stats,

@@ -8,6 +8,7 @@ export default function ScanPage() {
     isScanning,
     isDiscovering,
     forceScan,
+    currentScanMode,
     setForceScan,
     logs,
     stats,
@@ -28,7 +29,11 @@ export default function ScanPage() {
           discoveryInfo={discoveryInfo}
           onRefresh={discoverPhotos}
         />
-        <ScanStats isScanning={isScanning} stats={stats} />
+        <ScanStats
+          isScanning={isScanning}
+          isForceScan={currentScanMode === 'full'}
+          stats={stats}
+        />
       </div>
 
       {/* 右侧：扫描日志（包含控制按钮） */}
