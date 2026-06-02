@@ -19,6 +19,7 @@ export default function PhotosManagementPage() {
     stats,
     loading,
     activeTab,
+    analyzingIds,
     setActiveTab,
     loadPhotos,
     deletePhoto,
@@ -84,6 +85,7 @@ export default function PhotosManagementPage() {
           <PhotosTable
             photos={filteredPhotos}
             loading={loading}
+            analyzingIds={analyzingIds}
             onMarkLocation={handleOpenMarkLocation}
             onDeleteLocation={handleOpenDeleteLocation}
             onToggleTop={toggleTop}
