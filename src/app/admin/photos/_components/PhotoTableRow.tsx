@@ -15,6 +15,9 @@ export interface PhotoRowActions {
   onAnalyze: (photo: Photo) => void;
 }
 
+// 行数据：在基础 Photo 上附加运行时状态
+type PhotoRowItem = Photo & { isAnalyzing?: boolean };
+
 const getThumbnailUrl = (photo: Photo) => {
   if (!photo.thumbLargeKey) return null;
   return `/api/image?key=${encodeURIComponent(photo.thumbLargeKey)}`;
@@ -27,9 +30,11 @@ const getThumbnailUrl = (photo: Photo) => {
  * HeroUI/React-Aria 的 Table 集合机制要求 TableBody 的子节点
  * 必须是真实的 TableRow 元素，不能包裹在自定义组件中。
  */
-export function renderPhotoRow(photo: Photo, actions: PhotoRowActions) {
+export function renderPhotoRow(photo: PhotoRowItem, actions: PhotoRowActions) {
   const { onMarkLocation, onDeleteLocation, onToggleTop, onDelete, onAnalyze } =
     actions;
+
+  const isAnalyzing = Boolean(photo.isAnalyzing);
 
   return (
     <TableRow key={photo.id}>
@@ -96,11 +101,13 @@ export function renderPhotoRow(photo: Photo, actions: PhotoRowActions) {
           </Button>
           <Button
             variant="flat"
-            color="danger"
+            color="secondary"
             size="sm"
+            isLoading={isAnalyzing}
+            isDisabled={isAnalyzing}
             onPress={() => onAnalyze(photo)}
           >
-            AI分析
+            {isAnalyzing ? '分析中' : 'AI分析'}
           </Button>
         </div>
       </TableCell>

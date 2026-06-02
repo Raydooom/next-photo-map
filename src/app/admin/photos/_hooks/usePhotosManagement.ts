@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { addToast } from '@heroui/toast';
 import * as Admin from '@/server/actions/admin';
 import * as AI from '@/server/actions/ai';
 import { Photo, PhotoStats, FilterTab } from '../_components/types';
@@ -7,6 +8,8 @@ export function usePhotosManagement() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  // 正在 AI 分析的照片 ID 集合
+  const [analyzingIds, setAnalyzingIds] = useState<Set<number>>(new Set());
 
   // 加载照片列表
   const loadPhotos = useCallback(async () => {
@@ -125,6 +128,7 @@ export function usePhotosManagement() {
   }, []);
 
   const analyzePhoto = useCallback(async (photo: Photo) => {
+    setAnalyzingIds((prev) => new Set(prev).add(photo.id));
     try {
       const { tags } = await AI.analysis(photo);
       if (tags?.length) {
@@ -132,8 +136,24 @@ export function usePhotosManagement() {
           prev.map((p) => (p.id === photo.id ? { ...p, tags } : p))
         );
       }
+      addToast({
+        title: 'AI 分析完成',
+        description: `已完成「${photo.filename}」的分析`,
+        color: 'success'
+      });
     } catch (error) {
       console.error('AI 分析失败:', error);
+      addToast({
+        title: 'AI 分析失败',
+        description: `「${photo.filename}」分析失败，请稍后重试`,
+        color: 'danger'
+      });
+    } finally {
+      setAnalyzingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(photo.id);
+        return next;
+      });
     }
   }, []);
 
@@ -144,6 +164,7 @@ export function usePhotosManagement() {
     stats,
     loading,
     activeTab,
+    analyzingIds,
     // 操作
     setActiveTab,
     loadPhotos,
