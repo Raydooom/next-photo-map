@@ -82,7 +82,8 @@ export class ScannerService {
 
     this.emitProgress('start', '开始扫描图片目录', {
       mode: force ? 'full' : 'incremental',
-      directory: PHOTO_BASE_DIR
+      directory: PHOTO_BASE_DIR,
+      force // 传递 force 标志到前端
     });
 
     const files = await glob('**.{jpg,jpeg,png,heic,webp,mp4,mov}', {
@@ -98,21 +99,42 @@ export class ScannerService {
     });
 
     const groups = this.groupFiles(files);
-    const totalGroups = Array.from(groups.values()).filter(
+    const allGroups = Array.from(groups.values()).filter(
       (g) => g.imageAbsolutePath
-    ).length;
+    );
 
-    this.logger.info(`图片文件组数: ${totalGroups}`);
+    // 如果是增量模式，先统计需要扫描的新照片数量
+    let groupsToScan = allGroups;
+    if (!force) {
+      const newGroups = [];
+      for (const group of allGroups) {
+        if (group.imageAbsolutePath) {
+          const existing = await this.photoService.checkPhotoExists(
+            group.imageAbsolutePath
+          );
+          if (!existing) {
+            newGroups.push(group);
+          }
+        }
+      }
+      groupsToScan = newGroups;
+      this.logger.info(`发现新照片: ${newGroups.length} 张`);
+      this.emitProgress('progress', `发现新照片: ${newGroups.length} 张`, {
+        totalGroups: newGroups.length
+      });
+    } else {
+      this.logger.info(`图片文件组数: ${allGroups.length}`);
+      this.emitProgress('progress', `图片文件组数: ${allGroups.length}`, {
+        totalGroups: allGroups.length
+      });
+    }
 
-    this.emitProgress('progress', `图片文件组数: ${totalGroups}`, {
-      totalGroups
-    });
-
+    const totalGroups = groupsToScan.length;
     let processedCount = 0;
     const currentPaths = new Set<string>();
     const dataMap = new Map<string, any>();
 
-    for (const group of groups.values()) {
+    for (const group of groupsToScan) {
       if (group.imageAbsolutePath) {
         const relativePath = path.relative(
           PHOTO_BASE_DIR,
@@ -150,15 +172,18 @@ export class ScannerService {
     this.logger.success(`========== 扫描完成 ==========`);
     this.logger.info(`扫描耗时: ${scanDuration} 秒`);
     this.logger.success(`成功处理: ${this.successCount} 个`);
-    this.logger.warning(`跳过: ${this.skippedCount} 个`);
+    if (force) {
+      this.logger.warning(`跳过: ${this.skippedCount} 个`);
+    }
     this.logger.error(`失败: ${this.failedCount} 个`);
 
     this.emitProgress('complete', '扫描完成', {
       duration: scanDuration,
       success: this.successCount,
-      skipped: this.skippedCount,
+      skipped: force ? this.skippedCount : 0, // 增量模式不显示跳过数
       failed: this.failedCount,
-      total: totalGroups
+      total: totalGroups,
+      force
     });
 
     return dataMap;
@@ -177,23 +202,17 @@ export class ScannerService {
 
     const relativePath = path.relative(PHOTO_BASE_DIR, group.imageAbsolutePath);
 
-    // 根据原始路径检查数据库是否存在
-    const existing = await this.photoService.checkPhotoExists(
-      group.imageAbsolutePath
-    );
-
-    // 如果是增量模式且记录已存在，则跳过
-    if (!force && existing) {
-      this.skippedCount++;
-      this.logger.warning(`跳过: ${relativePath} (已存在)`);
-      this.emitProgress('progress', `跳过(已存在)`, {
-        filename: relativePath
-      });
-      return;
+    // 如果是强制模式，检查是否存在以决定是更新还是创建
+    let existing = null;
+    if (force) {
+      existing = await this.photoService.checkPhotoExists(
+        group.imageAbsolutePath
+      );
     }
+    // 增量模式下不需要检查，因为已经预先过滤了
 
     try {
-      // 以下为 全量模式 或 增量模式下的新文件 处理逻辑
+      // 处理文件逻辑
       const fileBuffer = await fs.promises.readFile(group.imageAbsolutePath);
 
       const sharpImage = await this.getSharpInstance(fileBuffer, group.ext);

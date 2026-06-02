@@ -3,6 +3,7 @@ import { Progress } from '@heroui/progress';
 
 interface ScanStatsProps {
   isScanning: boolean;
+  isForceScan: boolean;
   stats: {
     totalFiles: number;
     totalGroups: number;
@@ -14,7 +15,7 @@ interface ScanStatsProps {
   };
 }
 
-export function ScanStats({ isScanning, stats }: ScanStatsProps) {
+export function ScanStats({ isScanning, isForceScan, stats }: ScanStatsProps) {
   const getProgressPercentage = () => {
     if (stats.totalGroups === 0) return 0;
     return Math.round((stats.current / stats.totalGroups) * 100);
@@ -26,19 +27,23 @@ export function ScanStats({ isScanning, stats }: ScanStatsProps) {
         <h4 className="text-sm font-semibold mb-3">扫描统计</h4>
 
         {/* 统计数字 */}
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div
+          className={`grid ${isForceScan ? 'grid-cols-3' : 'grid-cols-2'} gap-2 mb-3`}
+        >
           <div className="text-center p-2 rounded-lg bg-success/5">
             <div className="text-lg font-bold text-success">
               {stats.success}
             </div>
             <div className="text-[10px] text-default-500">成功</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-warning/5">
-            <div className="text-lg font-bold text-warning">
-              {stats.skipped}
+          {isForceScan && (
+            <div className="text-center p-2 rounded-lg bg-warning/5">
+              <div className="text-lg font-bold text-warning">
+                {stats.skipped}
+              </div>
+              <div className="text-[10px] text-default-500">跳过</div>
             </div>
-            <div className="text-[10px] text-default-500">跳过</div>
-          </div>
+          )}
           <div className="text-center p-2 rounded-lg bg-danger/5">
             <div className="text-lg font-bold text-danger">{stats.failed}</div>
             <div className="text-[10px] text-default-500">失败</div>
