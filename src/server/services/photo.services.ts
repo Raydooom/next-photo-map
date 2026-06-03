@@ -4,6 +4,9 @@ import {
   deleteFileFromMinio,
   checkObjectExists
 } from '@/server/lib/oss';
+import fs from 'fs';
+import path from 'path';
+import { VIDEO_EXTENSIONS } from '@/server/utils/photo-files';
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;
@@ -149,12 +152,68 @@ export class PhotoService {
       }
     }
 
+    // 删除 photos 目录中的源文件
+    await this.deleteSourceFiles(photo.originalPath, !!photo.videoKey);
+
     // 删除数据库记录（关联记录会级联删除）
     await prisma.photo.delete({
       where: { id }
     });
 
     return { success: true, message: '删除成功' };
+  }
+
+  /**
+   * 删除 photos 目录中的源文件（图片 + 可能的 Live Photo 视频）
+   * @param originalPath 源图片绝对路径
+   * @param hasVideo 是否存在配对视频
+   */
+  private async deleteSourceFiles(originalPath: string, hasVideo: boolean) {
+    // 删除源图片
+    try {
+      await fs.promises.unlink(originalPath);
+    } catch (error: any) {
+      // 文件不存在时忽略，其它错误打印警告
+      if (error?.code !== 'ENOENT') {
+        console.warn(`删除源图片失败 ${originalPath}:`, error);
+      }
+    }
+
+    if (!hasVideo) return;
+
+    // Live Photo：删除同名的配对视频（扩展名大小写不敏感）
+    const dir = path.dirname(originalPath);
+    const baseName = path.basename(originalPath, path.extname(originalPath));
+
+    let dirFiles: string[] = [];
+    try {
+      dirFiles = await fs.promises.readdir(dir);
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        console.warn(`读取目录失败 ${dir}:`, error);
+      }
+      return;
+    }
+
+    const videoFiles = dirFiles.filter((file) => {
+      const ext = path.extname(file).toLowerCase();
+      const name = path.basename(file, path.extname(file));
+      return (
+        name === baseName &&
+        (VIDEO_EXTENSIONS as readonly string[]).includes(ext)
+      );
+    });
+
+    for (const file of videoFiles) {
+      const videoPath = path.join(dir, file);
+      try {
+        await fs.promises.unlink(videoPath);
+      } catch (error: any) {
+        if (error?.code !== 'ENOENT') {
+          console.warn(`删除源视频失败 ${videoPath}:`, error);
+        }
+      }
+    }
   }
   /**
    * 创建照片照片
