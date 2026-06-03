@@ -30,6 +30,22 @@ export class PhotoService {
       where: { originalPath }
     });
   }
+
+  /**
+   * 批量查询已存在的照片路径
+   * @param originalPaths 照片原始路径列表
+   * @returns 已存在的路径集合
+   */
+  async findExistingPaths(originalPaths: string[]): Promise<Set<string>> {
+    if (originalPaths.length === 0) return new Set();
+
+    const existing = await prisma.photo.findMany({
+      where: { originalPath: { in: originalPaths } },
+      select: { originalPath: true }
+    });
+
+    return new Set(existing.map((p) => p.originalPath));
+  }
   /**
    * 获取所有照片数量
    */
@@ -90,7 +106,7 @@ export class PhotoService {
     }>[]
   ) {
     return Promise.all(
-      photos.map(async photo => {
+      photos.map(async (photo) => {
         const { exists, key } = await this.checkFileExists(photo);
         return {
           ...photo,
@@ -230,7 +246,7 @@ export class PhotoService {
 
     // 转换数据，生成完整 URL
     const transformedList = await Promise.all(
-      list.map(photo => this.transformPhoto(photo))
+      list.map((photo) => this.transformPhoto(photo))
     );
 
     return { total, list: transformedList };
@@ -289,7 +305,7 @@ export class PhotoService {
       return [];
     }
 
-    const photoIds = locations.map(l => l.photoId);
+    const photoIds = locations.map((l) => l.photoId);
 
     // 2. 查照片详情
     const photos = await prisma.photo.findMany({
@@ -297,7 +313,7 @@ export class PhotoService {
       orderBy: { takenAt: 'desc' }
     });
 
-    return photos.map(photo => this.transformPhoto(photo));
+    return photos.map((photo) => this.transformPhoto(photo));
   }
 
   /**
@@ -320,7 +336,7 @@ export class PhotoService {
 
     // 保持输入 ID 的顺序
     const result = await Promise.all(
-      photos.map(async p => {
+      photos.map(async (p) => {
         return await this.transformPhoto(p);
       })
     );
