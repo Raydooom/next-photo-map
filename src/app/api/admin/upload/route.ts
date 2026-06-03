@@ -4,90 +4,89 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { PHOTO_BASE_DIR } from '@/server/config';
 import { ScannerService } from '@/server/services/admin.services';
+import { groupFiles, isImageExt, isVideoExt } from '@/server/utils/photo-files';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * 上传图片 API
- * 直接保存原始文件到 photos 目录
- * 上传完成后自动扫描
+ * 支持手动上传 Live Photo（同名图片和视频）
+ * 上传完成后自动扫描入库并进行 AI 分析
  */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const imageFile = formData.get('image') as File;
-    const videoFile = formData.get('video') as File | null;
+    const files = formData.getAll('file') as File[];
 
-    if (!imageFile) {
-      return NextResponse.json({ error: '缺少图片文件' }, { status: 400 });
+    if (files.length === 0) {
+      return NextResponse.json({ error: '缺少文件' }, { status: 400 });
     }
-
-    // 验证文件类型
-    const allowedImageTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/heic',
-      'image/webp'
-    ];
-
-    if (
-      !allowedImageTypes.includes(imageFile.type) &&
-      !imageFile.name.toLowerCase().endsWith('.heic')
-    ) {
-      return NextResponse.json({ error: '不支持的图片格式' }, { status: 400 });
-    }
-
-    // 直接保存到 PHOTO_BASE_DIR（photos 目录）
-    const uploadDir = PHOTO_BASE_DIR;
 
     // 确保目录存在
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (!existsSync(PHOTO_BASE_DIR)) {
+      await mkdir(PHOTO_BASE_DIR, { recursive: true });
     }
 
-    // 保存原始图片文件（不转换格式）
-    const imageBuffer = await imageFile.arrayBuffer();
-    const imagePath = path.join(uploadDir, imageFile.name);
-    await writeFile(imagePath, new Uint8Array(imageBuffer));
+    // 保存所有媒体文件到 photos 目录
+    const savedPaths: string[] = [];
+    for (const file of files) {
+      const ext = path.extname(file.name).toLowerCase();
+      if (!isImageExt(ext) && !isVideoExt(ext)) continue;
 
-    // 如果有视频文件（Live Photo），也保存
-    let videoPath: string | null = null;
-    if (videoFile) {
-      const videoBuffer = await videoFile.arrayBuffer();
-      videoPath = path.join(uploadDir, videoFile.name);
-      await writeFile(videoPath, new Uint8Array(videoBuffer));
+      const buffer = await file.arrayBuffer();
+      const filePath = path.join(PHOTO_BASE_DIR, file.name);
+      await writeFile(filePath, new Uint8Array(buffer));
+      savedPaths.push(filePath);
     }
 
-    // 上传完成后自动扫描这张图片
-    let scanSuccess = false;
-    try {
-      const scannerService = new ScannerService();
-      await scannerService.startScanner(false); // 增量扫描，只处理新文件
-      scanSuccess = true;
-    } catch (scanError) {
-      console.error('自动扫描失败:', scanError);
-      // 扫描失败不影响上传成功
+    // 按文件名分组，自动配对 Live Photo（同名图片 + 视频）
+    const groups = Array.from(groupFiles(savedPaths).values()).filter(
+      (g) => g.imageAbsolutePath
+    );
+
+    if (groups.length === 0) {
+      return NextResponse.json({ error: '没有找到图片文件' }, { status: 400 });
     }
+
+    const scannerService = new ScannerService();
+    const results = [];
+
+    // 逐个处理图片入库（包含 AI 分析）
+    for (const group of groups) {
+      const result = await scannerService.processPhoto({
+        imagePath: group.imageAbsolutePath!,
+        videoPath: group.videoAbsolutePath || null,
+        force: false,
+        enableAI: true
+      });
+
+      results.push({
+        filename: group.fileName,
+        success: result.success,
+        photoId: result.photoId,
+        isLivePhoto: !!group.videoAbsolutePath,
+        aiAnalyzed: result.aiAnalyzed,
+        error: result.error
+      });
+    }
+
+    const successCount = results.filter((r) => r.success).length;
+    const failCount = results.length - successCount;
 
     return NextResponse.json({
-      success: true,
-      message: scanSuccess
-        ? '上传成功并已自动扫描'
-        : '上传成功（扫描失败，请手动扫描）',
+      success: successCount > 0,
+      message: `上传完成：成功 ${successCount} 张，失败 ${failCount} 张`,
       data: {
-        imagePath: imageFile.name,
-        videoPath: videoFile ? videoFile.name : null,
-        isLivePhoto: !!videoFile,
-        scanSuccess
+        total: results.length,
+        success: successCount,
+        failed: failCount,
+        results
       }
     });
   } catch (error) {
     console.error('上传文件失败:', error);
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : '上传失败'
-      },
+      { error: error instanceof Error ? error.message : '上传失败' },
       { status: 500 }
     );
   }
