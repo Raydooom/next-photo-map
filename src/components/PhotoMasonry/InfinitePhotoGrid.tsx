@@ -10,14 +10,15 @@ interface InfinitePhotoGridProps {
   initialItems: PhotoItem[];
   total: number;
   pageSize?: number;
-  columns?: number;
+  /** 等高瀑布流目标行高 */
+  targetRowHeight?: number;
 }
 
 export default function InfinitePhotoGrid({
   initialItems,
   total,
   pageSize = 20,
-  columns = 5
+  targetRowHeight = 280
 }: InfinitePhotoGridProps) {
   const [items, setItems] = useState<PhotoItem[]>(initialItems);
   const [page, setPage] = useState(1);
@@ -77,7 +78,7 @@ export default function InfinitePhotoGrid({
 
   return (
     <>
-      <MasonryGrid items={items} columns={columns} />
+      <MasonryGrid items={items} targetRowHeight={targetRowHeight} />
 
       {/* 底部加载状态 */}
       <div ref={sentinelRef} className="flex justify-center py-8">

@@ -18,7 +18,7 @@ export default async function DocsPage() {
           initialItems={list}
           total={total}
           pageSize={PAGE_SIZE}
-          columns={5}
+          targetRowHeight={300}
         />
       </Suspense>
     </div>

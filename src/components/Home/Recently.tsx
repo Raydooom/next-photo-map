@@ -31,7 +31,7 @@ export function Recently({ photos }: RecentlyProps) {
 
       {/* 瀑布流 */}
       <Suspense>
-        <MasonryGrid items={photos} columns={5} />
+        <MasonryGrid items={photos} targetRowHeight={240} />
       </Suspense>
     </section>
   );

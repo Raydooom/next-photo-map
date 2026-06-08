@@ -202,8 +202,8 @@ export class ScannerService {
       // 获取 Sharp 实例和元数据
       const sharpImage = await ScannerService.getSharpInstance(fileBuffer, ext);
       const metadata = await sharpImage.metadata();
-      const width = metadata.width || 0;
-      const height = metadata.height || 0;
+      const width = metadata.autoOrient.width || 0;
+      const height = metadata.autoOrient.height || 0;
       const size = metadata.size || 0;
 
       // 读取 EXIF
@@ -262,7 +262,7 @@ export class ScannerService {
       }
 
       const uploadRes = await Promise.all(uploadTasks);
-      const isSuccess = uploadRes.every((res) => res?.key && res?.success);
+      const isSuccess = uploadRes.every(res => res?.key && res?.success);
 
       if (!isSuccess) {
         return {
@@ -465,10 +465,10 @@ export class ScannerService {
     let groupsToScan = allGroups;
     if (!force) {
       const existingPaths = await this.photoService.findExistingPaths(
-        allGroups.map((g) => g.imageAbsolutePath!)
+        allGroups.map(g => g.imageAbsolutePath!)
       );
       groupsToScan = allGroups.filter(
-        (g) => !existingPaths.has(g.imageAbsolutePath!)
+        g => !existingPaths.has(g.imageAbsolutePath!)
       );
       this.logger.info(`发现新照片: ${groupsToScan.length} 张`);
       this.emitProgress('progress', `发现新照片: ${groupsToScan.length} 张`, {
