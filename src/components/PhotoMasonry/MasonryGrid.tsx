@@ -7,15 +7,13 @@ import {
   type Photo,
   type RenderImageContext
 } from 'react-photo-album';
+import InfiniteScroll from 'react-photo-album/scroll';
 import 'react-photo-album/rows.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Spinner } from '@heroui/spinner';
 import { PhotoPreview } from '../common/PhotoPreview';
 import { replaceUrl } from '@/utils/url';
-
-// 官方高性能无限滚动外壳
-import InfiniteScroll from 'react-photo-album/scroll';
 
 interface AlbumPhoto extends Photo {
   item: PhotoItem;
@@ -79,7 +77,7 @@ export default function MasonryGrid({
 
   useEffect(() => {
     if (!photoId || photoId === String(previewId)) return;
-    if (accumulated.some((item) => item.id === Number(photoId))) {
+    if (accumulated.some(item => item.id === Number(photoId))) {
       setPreviewId(Number(photoId));
       setIsOpen(true);
     }
@@ -127,9 +125,9 @@ export default function MasonryGrid({
         if (!list || list.length === 0) return null;
 
         // 同步累积列表（去重）供预览使用
-        setAccumulated((prev) => {
-          const ids = new Set(prev.map((p) => p.id));
-          const merged = list.filter((p) => !ids.has(p.id));
+        setAccumulated(prev => {
+          const ids = new Set(prev.map(p => p.id));
+          const merged = list.filter(p => !ids.has(p.id));
           return merged.length ? [...prev, ...merged] : prev;
         });
 
