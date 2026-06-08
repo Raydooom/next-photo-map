@@ -5,18 +5,24 @@ import { useSearchParams } from 'next/navigation';
 import { MapControls } from '@/components/Map/modules/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { PointDetail } from './PointDetail';
+import { MapModeSwitch, type FootprintMode } from './MapModeSwitch';
 import { replaceUrl } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
 import { ClusterMarker } from '@/components/Map/modules/ClusterMarker';
-import { useMapBase, useMapClusters } from '@/components/Map';
+import { useMapBase, useMapClusters, useRegionLayer } from '@/components/Map';
 import { bbox, featureCollection } from '@turf/turf';
 
 interface MapProps {
   markerGroup?: MapMarker[];
+  regionStats?: Record<string, { city: string; count: number }>;
   hideBackIcon?: boolean;
 }
 
-export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
+export default function Map({
+  markerGroup,
+  regionStats = {},
+  hideBackIcon = false
+}: MapProps) {
   // 使用 useMapLibre hook
   const { mapRef, mapInstance } = useMapBase({ config: { zoom: 6 } });
   const { clusters, updateMarkers } = useMapClusters(mapInstance!);
@@ -24,8 +30,17 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
   const searchParams = useSearchParams();
   const photoId = Number(searchParams.get('photoId')) || undefined;
 
+  const [mode, setMode] = useState<FootprintMode>('point');
   const [viewList, setViewList] = useState<MapMarker['list']>([]);
   const [canGoBack, setCanGoBack] = useState(false);
+
+  const isPointMode = mode === 'point';
+
+  // 区域足迹图层（区域模式时绘制并高亮，支持点击弹窗）
+  useRegionLayer(mapInstance, {
+    enabled: !isPointMode,
+    regionStats
+  });
 
   useEffect(() => {
     if (window.history.length > 1) {
@@ -33,11 +48,19 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
     }
   }, []);
 
-  // 根据url参数，居中显示地图
+  // 切换到区域模式时，关闭点位详情卡片
   useEffect(() => {
-    const viewPoint = markerGroup?.find(group => {
+    if (!isPointMode) {
+      setViewList([]);
+    }
+  }, [isPointMode]);
+
+  // 根据url参数，居中显示地图（仅点位模式）
+  useEffect(() => {
+    if (!isPointMode) return;
+    const viewPoint = markerGroup?.find((group) => {
       const viewPhoto = group.list.find(
-        location => location.photoId === photoId
+        (location) => location.photoId === photoId
       );
       return viewPhoto;
     });
@@ -48,14 +71,20 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       }
       setViewList(viewPoint.list);
     }
-  }, [mapInstance, markerGroup, photoId]);
+  }, [mapInstance, markerGroup, photoId, isPointMode]);
 
-  // 更新地图数据
+  // 更新地图聚合数据（仅点位模式渲染聚合点）
   useEffect(() => {
     if (!mapInstance || !markerGroup) return;
 
+    // 区域模式下清空聚合点
+    if (!isPointMode) {
+      updateMarkers([]);
+      return;
+    }
+
     // 转换数据为 GeoJSON 格式
-    const features = markerGroup.map(group => ({
+    const features = markerGroup.map((group) => ({
       type: 'Feature' as const,
       properties: {
         data: group,
@@ -82,7 +111,7 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
 
     // 更新数据源
     updateMarkers(features);
-  }, [mapInstance, markerGroup, updateMarkers, photoId]);
+  }, [mapInstance, markerGroup, updateMarkers, photoId, isPointMode]);
 
   // 添加点击事件监听
   const handleClusterClick = async (cluster: any) => {
@@ -117,6 +146,13 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
         <BackIcon className="absolute top-4 left-4 z-10" />
       )}
 
+      {/* 模式切换：点位足迹 / 区域足迹 */}
+      <MapModeSwitch
+        mode={mode}
+        onChange={setMode}
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
+      />
+
       <PointDetail
         onClose={() => {
           setViewList([]);
@@ -134,9 +170,10 @@ export default function Map({ markerGroup, hideBackIcon = false }: MapProps) {
       />
 
       <div ref={mapRef} className="w-full h-full relative overflow-hidden">
-        {/* 渲染 React 聚合组件层 */}
+        {/* 渲染 React 聚合组件层（仅点位模式） */}
         {mapInstance &&
-          clusters.map(cluster => (
+          isPointMode &&
+          clusters.map((cluster) => (
             <ClusterMarker
               key={cluster.renderKey}
               map={mapInstance}
