@@ -16,10 +16,14 @@ export const Navbar = ({ className }: { className?: string }) => {
   const pathname = usePathname();
 
   return (
-    <div className="h-19 mb-5">
+    <div className="h-19">
       <HeroUINavbar
+        maxWidth="full"
         className={clsx(
-          'fixed top-5 left-1/2 -translate-x-1/2 z-[50] w-6xl h-14 rounded-full backdrop-blur-xl border-glass shadow-2xl',
+          'fixed top-3 md:top-5 left-1/2 -translate-x-1/2 z-[50]',
+          'w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] max-w-5xl h-14',
+          'rounded-full backdrop-blur-xl border-glass shadow-2xl',
+          'px-3 sm:px-5',
           className
         )}
       >
@@ -28,14 +32,14 @@ export const Navbar = ({ className }: { className?: string }) => {
             className="flex justify-start items-center gap-2 hover:opacity-80 transition-opacity"
             href="/"
           >
-            <Logo className="w-8 h-8" />
-            <p className="font-bold tracking-tight text-lg uppercase">
+            <Logo className="w-7 h-7 sm:w-8 sm:h-8" />
+            <p className="font-bold tracking-tight text-base sm:text-lg uppercase">
               RAY·DOM
             </p>
           </NextLink>
         </NavbarBrand>
-        <NavbarContent className="gap-2" justify="center">
-          {siteConfig.navItems.map(item => {
+        <NavbarContent className="gap-1 sm:gap-2" justify="center">
+          {siteConfig.navItems.map((item) => {
             if (item.meta?.hidden) {
               return null;
             }
@@ -44,7 +48,7 @@ export const Navbar = ({ className }: { className?: string }) => {
               <NavbarItem key={item.href}>
                 <NextLink
                   className={clsx(
-                    'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm transition-all duration-200',
+                    'flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-sm transition-all duration-200',
                     isActive
                       ? 'bg-background/80 text-main font-medium'
                       : 'text-default-500 hover:text-main hover:bg-background/5'
@@ -54,12 +58,12 @@ export const Navbar = ({ className }: { className?: string }) => {
                   {item.meta?.icon && (
                     <item.meta.icon
                       className={clsx(
-                        'w-3.5 h-3.5',
+                        'w-3.5 h-3.5 shrink-0',
                         isActive ? 'text-main' : 'text-default-500'
                       )}
                     />
                   )}
-                  {item.label}
+                  <span>{item.label}</span>
                 </NextLink>
               </NavbarItem>
             );

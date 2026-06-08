@@ -11,18 +11,20 @@ interface RecentlyProps {
 
 export function Recently({ photos }: RecentlyProps) {
   return (
-    <section className="mt-12">
+    <section className="mt-8 md:mt-12">
       {/* 标题区域 */}
-      <div className="mb-8 flex items-end justify-between">
+      <div className="mb-5 md:mb-8 flex items-end justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-main">
+          <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-main">
             Recently Captured
           </h2>
-          <p className="mt-1.5 text-sm text-sub">最近拍摄的精彩瞬间</p>
+          <p className="mt-1.5 text-xs md:text-sm text-sub">
+            最近拍摄的精彩瞬间
+          </p>
         </div>
         <Link
           href="/photos"
-          className="group flex items-center gap-1.5 text-sm font-medium text-sub hover:text-main transition-colors"
+          className="group flex items-center gap-1.5 text-sm font-medium text-sub hover:text-main transition-colors shrink-0"
         >
           查看所有
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -31,7 +33,7 @@ export function Recently({ photos }: RecentlyProps) {
 
       {/* 瀑布流 */}
       <Suspense>
-        <MasonryGrid items={photos} targetRowHeight={240} />
+        <MasonryGrid items={photos} targetRowHeight={200} />
       </Suspense>
     </section>
   );
