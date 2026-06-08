@@ -16,9 +16,24 @@ export default async function FootprintPage() {
 
   // 合并坐标
   const markerGroup = Object.values(groupByLocation(markers, 4));
+
+  // 区域足迹：统计每个 adcode 的照片数量与所属城市
+  const regionStats = (list as PhotoLocation[]).reduce(
+    (acc: Record<string, { city: string; count: number }>, item) => {
+      if (item.adcode) {
+        if (!acc[item.adcode]) {
+          acc[item.adcode] = { city: item.city || '', count: 0 };
+        }
+        acc[item.adcode].count += 1;
+      }
+      return acc;
+    },
+    {}
+  );
+
   return (
     <Suspense>
-      <Map markerGroup={markerGroup} />
+      <Map markerGroup={markerGroup} regionStats={regionStats} />
     </Suspense>
   );
 }

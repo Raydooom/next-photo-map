@@ -64,3 +64,18 @@ html {
   background: rgba(255, 255, 255, 0.6);
   border-radius: 10px;
 }
+
+/* 区域足迹气泡弹窗：贴合应用玻璃/暗色主题 */
+.region-popup .maplibregl-popup-content {
+  padding: 0;
+  border-radius: 12px;
+  background: rgb(var(--background) / 0.85);
+  color: rgb(var(--text-main));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgb(var(--border-default) / 0.12);
+}
+.region-popup .maplibregl-popup-tip {
+  border-top-color: rgb(var(--background) / 0.85);
+  border-bottom-color: rgb(var(--background) / 0.85);
+}
