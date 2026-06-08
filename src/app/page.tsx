@@ -11,7 +11,7 @@ export default async function Home() {
   });
 
   return (
-    <section className="relative min-h-screen mx-auto max-w-7xl">
+    <section className="relative min-h-screen mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       {/* Hot map */}
       <HeroSection />
 
