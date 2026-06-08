@@ -10,12 +10,16 @@ import { motion } from 'framer-motion';
 
 interface PhotoCardProps {
   data: PhotoItem;
+  /** 由 react-photo-album 布局计算出的渲染宽度 */
+  width: number;
+  /** 由 react-photo-album 布局计算出的渲染高度 */
+  height: number;
   className?: string;
-  onClickItem: (item: { data: PhotoItem }) => void;
+  onClick: () => void;
 }
 
 export const PhotoCard = memo(
-  ({ data, className, onClickItem }: PhotoCardProps) => {
+  ({ data, width, height, className, onClick }: PhotoCardProps) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -62,13 +66,16 @@ export const PhotoCard = memo(
     return (
       <motion.div
         className={clsx(
-          'group relative cursor-pointer rounded-2xl overflow-hidden',
+          'group relative cursor-pointer rounded-2xl overflow-hidden w-full',
           'ring-1 ring-white/[0.08] dark:ring-white/[0.06]',
           'shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30',
           'transition-shadow duration-500 ease-out',
           className
         )}
-        style={{ background: data.dominantColor || 'rgb(var(--background))' }}
+        style={{
+          background: data.dominantColor || 'rgb(var(--background))',
+          aspectRatio: `${width} / ${height}`
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => {
           setIsHovered(false);
@@ -77,12 +84,11 @@ export const PhotoCard = memo(
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-        layout
-        onClick={() => onClickItem({ data })}
+        onClick={onClick}
       >
         {/* 图片 + 视频层 */}
         <motion.div
-          className="relative"
+          className="relative w-full h-full"
           initial={{ filter: 'blur(12px)', opacity: 0 }}
           animate={imageLoaded ? { filter: 'blur(0px)', opacity: 1 } : {}}
           transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -93,8 +99,8 @@ export const PhotoCard = memo(
               'transition-transform duration-500 ease-out',
               isHovered && !isPlaying ? 'scale-[1.03]' : 'scale-100'
             )}
-            width={data.width}
-            height={data.height}
+            width={width}
+            height={height}
             src={data.thumbLargeUrl}
             alt={data.filename}
             onLoad={() => setImageLoaded(true)}
@@ -105,7 +111,7 @@ export const PhotoCard = memo(
             <video
               ref={videoRef}
               className={clsx(
-                'absolute inset-0 w-full h-full object-cover z-10',
+                'absolute inset-0 w-full h-full object-contain z-10 transition-opacity duration-300',
                 isPlaying ? 'opacity-100' : 'opacity-0'
               )}
               onEnded={stopVideo}
