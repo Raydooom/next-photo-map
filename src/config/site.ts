@@ -1,4 +1,4 @@
-import { LayoutPanelTop, MapPinned } from 'lucide-react';
+import { LayoutPanelTop, MapPinned, Home } from 'lucide-react';
 
 export type SiteConfig = typeof siteConfig;
 
@@ -10,7 +10,7 @@ export const siteConfig = {
     {
       label: 'Home',
       href: '/',
-      meta: { showTopBar: true, needRefresh: true }
+      meta: { icon: Home, showTopBar: true, needRefresh: true }
     },
     {
       label: 'Photos',

@@ -128,7 +128,7 @@ export const PhotoCard = memo(
         {hasVideo && (
           <div
             className={clsx(
-              'absolute top-3 left-3 z-40',
+              'absolute top-3 left-3 z-10',
               'transition-opacity duration-300',
               isHovered ? 'opacity-100' : 'opacity-70'
             )}
