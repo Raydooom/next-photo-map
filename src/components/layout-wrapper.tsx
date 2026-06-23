@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { ReactNode } from 'react';
 import { siteConfig } from '@/config/site';
 
@@ -15,14 +16,13 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   // 获取当前路由配置
   const currentRoute = siteConfig.navItems.find(item => pathname === item.href);
   const isShowTopBar = currentRoute?.meta?.showTopBar;
+  const isShowFooter = currentRoute?.meta?.showFooter;
 
   return (
     <div className="relative min-h-screen">
       {isShowTopBar && <Navbar />}
       <main>{children}</main>
-      {/* {isShowTopBar && (
-        <footer className="w-full flex items-center justify-center py-3"></footer>
-      )} */}
+      {isShowFooter && <Footer />}
     </div>
   );
 }
