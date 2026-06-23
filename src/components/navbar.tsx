@@ -22,7 +22,7 @@ export const Navbar = ({ className }: { className?: string }) => {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const visibleItems = siteConfig.navItems.filter((item) => !item.meta?.hidden);
+  const visibleItems = siteConfig.navItems.filter(item => !item.meta?.hidden);
 
   return (
     <div className="h-19">
@@ -64,7 +64,7 @@ export const Navbar = ({ className }: { className?: string }) => {
           className="hidden sm:flex gap-1 sm:gap-2"
           justify="center"
         >
-          {visibleItems.map((item) => {
+          {visibleItems.map(item => {
             const isActive = pathname === item.href;
             return (
               <NavbarItem key={item.href}>
@@ -102,8 +102,8 @@ export const Navbar = ({ className }: { className?: string }) => {
         </NavbarContent>
 
         {/* 移动端下拉菜单 */}
-        <NavbarMenu>
-          {visibleItems.map((item) => {
+        <NavbarMenu className="top-17">
+          {visibleItems.map(item => {
             const isActive = pathname === item.href;
             return (
               <NavbarMenuItem key={item.href} isActive={isActive}>

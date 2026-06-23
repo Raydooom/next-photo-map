@@ -10,17 +10,21 @@ export const siteConfig = {
     {
       label: 'Home',
       href: '/',
-      meta: { icon: Home, showTopBar: true, needRefresh: true }
+      meta: {
+        icon: Home,
+        showTopBar: true,
+        showFooter: true
+      }
     },
     {
       label: 'Photos',
       href: '/photos',
-      meta: { icon: LayoutPanelTop, showTopBar: true, needRefresh: true }
+      meta: { icon: LayoutPanelTop, showTopBar: true }
     },
     {
       label: 'Map',
       href: '/footprint',
-      meta: { icon: MapPinned, needRefresh: true }
+      meta: { icon: MapPinned }
     },
     {
       label: 'AIChat',
