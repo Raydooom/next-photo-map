@@ -64,10 +64,17 @@ const config = {
           'border-color': 'rgb(var(--border-default) / 0.2)',
           'backdrop-filter': 'blur(10px)' // 顺便把玻璃拟态也带上
         },
-        '.border-paper': {
-          'border-width': '0.5px',
+        '.pm-rounded': {
+          'border-radius': 'var(--radius)'
+        },
+        // 通用卡片类
+        '.pm-card': {
+          'border-radius': 'var(--radius)',
+          'box-shadow': 'var(--shadow-card)',
+          'border-width': '1px',
           'border-style': 'solid',
-          'border-color': theme('colors.stone.200')
+          'border-color': 'rgb(var(--border-default) / 0.2)',
+          'backdrop-filter': 'blur(10px)' // 顺便把玻璃拟态也带上
         }
       });
     })
