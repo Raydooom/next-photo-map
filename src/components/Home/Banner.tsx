@@ -18,41 +18,37 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
 
   return (
     <section className="relative border-glass flex-auto bg-background/60 rounded overflow-hidden shadow-card h-[280px] sm:h-[360px] md:h-full">
-      {/* 全屏轮播图区域 */}
-      <div className="relative h-full overflow-hidden">
-        <Carousel
-          slides={photosWithLocation}
-          imageFit="cover"
-          className="h-full w-full"
-          disableLive={true}
-          showIndicators={true}
-          onSelect={setSelectedPhoto}
-        />
+      <Carousel
+        slides={photosWithLocation}
+        imageFit="cover"
+        className="h-full w-full"
+        disableLive={true}
+        showIndicators={true}
+        onSelect={setSelectedPhoto}
+      />
 
-        {/* 左下方地图小卡片（小屏隐藏，避免遮挡过多画面） */}
-        {selectedPhoto?.location?.latitude &&
-          selectedPhoto?.location?.longitude && (
-            <div className="hidden sm:block absolute left-4 bottom-4 w-64 md:w-80 p-3 bg-background/60 z-10 rounded shadow-card border-glass backdrop-blur">
-              <div className="flex items-center gap-1 text-xs my-1 pl-1">
-                <DateIcon className="w-3 h-3" />
+      {selectedPhoto?.location?.latitude &&
+        selectedPhoto?.location?.longitude && (
+          <div className="hidden sm:block absolute left-4 bottom-4 w-64 md:w-80 h-40 md:h-50 z-10 rounded shadow-card border-glass overflow-hidden">
+            <SingleMarker
+              point={[
+                selectedPhoto.location.longitude,
+                selectedPhoto.location.latitude
+              ]}
+              photoId={selectedPhoto?.id}
+            />
+            <div className="absolute bottom-2 left-2 px-3 py-2 rounded-full bg-background/50 backdrop-blur-md shadow-md">
+              <div className="flex items-center gap-1 text-xs text-main">
+                <DateIcon className="w-3 h-3 shrink-0" />
                 {formatTakenDate(selectedPhoto?.takenAt)}
-                <span className="px-1 text-lg line-height-1">·</span>
-                <LocationIcon className="w-3 h-3" />
+                <span className="text-sub">·</span>
+                <LocationIcon className="w-3 h-3 shrink-0" />
                 {selectedPhoto?.location?.city}{' '}
                 {selectedPhoto?.location?.district}
               </div>
-              <div className="w-full h-32 md:h-40 shadow-sm rounded overflow-hidden">
-                <SingleMarker
-                  point={[
-                    selectedPhoto.location?.longitude,
-                    selectedPhoto.location?.latitude
-                  ]}
-                  photoId={selectedPhoto?.id}
-                />
-              </div>
             </div>
-          )}
-      </div>
+          </div>
+        )}
     </section>
   );
 };
