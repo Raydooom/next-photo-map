@@ -17,7 +17,7 @@ export const Banner = ({ photos }: { photos: PhotoItem[] }) => {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   return (
-    <section className="relative border-glass flex-auto bg-background rounded overflow-hidden shadow-card h-[280px] sm:h-[360px] md:h-full">
+    <section className="relative border-glass flex-auto bg-background/60 rounded overflow-hidden shadow-card h-[280px] sm:h-[360px] md:h-full">
       {/* 全屏轮播图区域 */}
       <div className="relative h-full overflow-hidden">
         <Carousel
