@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { siteConfig } from '@/config/site';
 
 interface LayoutWrapperProps {
@@ -12,6 +12,11 @@ interface LayoutWrapperProps {
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
+
+  // 路由跳转后回到页面顶部
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   // 获取当前路由配置
   const currentRoute = siteConfig.navItems.find(item => pathname === item.href);
