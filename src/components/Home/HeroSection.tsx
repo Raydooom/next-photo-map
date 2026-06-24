@@ -4,6 +4,7 @@ import * as Actions from '@/server/actions';
 import { Divider } from '@heroui/divider';
 import { Banner } from './Banner';
 import { AreaMap } from './AreaMap';
+import { AiSearchBox } from './AiSearchBox';
 import { PhotoLocation } from '@/types';
 
 interface CountItem {
@@ -75,12 +76,15 @@ export async function HeroSection() {
       <Banner photos={bannerPhotos.list} />
 
       {/* 右侧地图区域：小屏隐藏，平板及以上显示 */}
-      <div className="hidden md:block md:w-72 lg:w-80 h-full rounded border-glass shadow-card overflow-hidden relative shrink-0">
-        <AreaMap data={locations} />
-        <StatsBar
-          countList={countList}
-          className="absolute z-10 bottom-4 left-4 right-4 h-20"
-        />
+      <div className="hidden md:flex md:flex-col md:w-72 lg:w-80 h-full shrink-0 gap-4">
+        <AiSearchBox />
+        <div className="flex-1 relative rounded border-glass shadow-card overflow-hidden ">
+          <AreaMap data={locations} />
+          <StatsBar
+            countList={countList}
+            className="absolute z-10 bottom-4 left-4 right-4 h-20"
+          />
+        </div>
       </div>
 
       {/* 小屏：地图隐藏时，单独展示统计条 */}
