@@ -19,7 +19,7 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="p-2 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <Tabs
         aria-label="Admin modules"
         selectedKey={getSelectedKey()}
