@@ -14,13 +14,12 @@
     --text-sub: 140 138 130; /* slate-500 */
     --text-muted: 188 186 174; /* slate-400 */
 
-    --radius: 24px;
-
     --primary: 94 100 84;
     --primary-light: 138 154 91;
 
     /* 通用 */
     --shadow-card: theme('shadow.2xl');
+    --radius: 24px;
   }
 
   .dark {
@@ -78,4 +77,38 @@ html {
 .region-popup .maplibregl-popup-tip {
   border-top-color: rgb(var(--background) / 0.85);
   border-bottom-color: rgb(var(--background) / 0.85);
+}
+
+/* =========== AI 搜索框动画 =========== */
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px rgb(var(--primary) / 0.3),
+      0 0 20px rgb(var(--primary) / 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgb(var(--primary) / 0.5),
+      0 0 30px rgb(var(--primary) / 0.2);
+  }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
 }
