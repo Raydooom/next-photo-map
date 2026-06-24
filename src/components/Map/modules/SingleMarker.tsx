@@ -41,7 +41,7 @@ export const SingleMarker = ({ point, photoId }: SingleMarkerProps) => {
   return (
     <section ref={mapRef} className="h-full relative">
       {photoId && (
-        <div className="group absolute z-10 right-2 bottom-2 bg-background/80 rounded transition-all duration-200 flex items-end justify-end">
+        <div className="group absolute z-10 right-2 top-2 bg-background/80 rounded transition-all duration-200 flex items-end justify-end">
           <OpenInNewWindowIcon onClick={() => JumpMap(photoId)} />
         </div>
       )}
