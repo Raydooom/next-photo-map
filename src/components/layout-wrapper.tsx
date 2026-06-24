@@ -19,9 +19,9 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isShowFooter = currentRoute?.meta?.showFooter;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="min-h-screen flex flex-col">
       {isShowTopBar && <Navbar />}
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
       {isShowFooter && <Footer />}
     </div>
   );

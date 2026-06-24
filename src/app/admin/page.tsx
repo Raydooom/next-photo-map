@@ -51,7 +51,7 @@ export default function AdminOverviewPage() {
               <h3 className="text-lg font-semibold">图片总数</h3>
             </CardHeader>
             <CardBody>
-              <p className="text-4xl font-bold text-blue-600">
+              <p className="text-4xl font-bold text-primary">
                 {loading ? '-' : stats.totalPhotos}
               </p>
             </CardBody>
@@ -62,7 +62,7 @@ export default function AdminOverviewPage() {
               <h3 className="text-lg font-semibold">无地理坐标图片</h3>
             </CardHeader>
             <CardBody>
-              <p className="text-4xl font-bold text-yellow-600">
+              <p className="text-4xl font-bold text-warning">
                 {loading ? '-' : stats.totalPhotos - stats.photosWithLocation}
               </p>
             </CardBody>
@@ -73,7 +73,7 @@ export default function AdminOverviewPage() {
               <h3 className="text-lg font-semibold">文件丢失</h3>
             </CardHeader>
             <CardBody>
-              <p className="text-4xl font-bold text-red-600">
+              <p className="text-4xl font-bold text-danger">
                 {loading ? '-' : stats.missingFiles}
               </p>
             </CardBody>
@@ -108,11 +108,11 @@ export default function AdminOverviewPage() {
             <CardBody>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">版本</span>
+                  <span className="text-default-500">版本</span>
                   <span>1.0.0</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">环境</span>
+                  <span className="text-default-500">环境</span>
                   <span>Production</span>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import * as Actions from '@/server/actions';
 import { Divider } from '@heroui/divider';
 import { Banner } from './Banner';
@@ -20,7 +21,10 @@ function StatsBar({
 }) {
   return (
     <section
-      className={`rounded border-glass backdrop-blur bg-background/40 flex items-center justify-around gap-2 px-4 ${className}`}
+      className={clsx(
+        'rounded border-glass backdrop-blur bg-background/40 flex items-center justify-around gap-2 px-4',
+        className
+      )}
     >
       {countList.map((item, index) => (
         <React.Fragment key={item.label}>

@@ -62,7 +62,7 @@ export const Footer = ({ className }: { className?: string }) => {
         </div>
 
         {/* 底部版权 */}
-        <div className="mt-8 pt-6 pb-2 text-center text-default-400 text-sm">
+        <div className="border-none border-t border-glass mt-8 pt-6 pb-4 text-center text-default-400 text-sm">
           <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
         </div>
       </div>

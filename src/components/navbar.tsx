@@ -32,7 +32,7 @@ export const Navbar = ({ className }: { className?: string }) => {
         onMenuOpenChange={setIsMenuOpen}
         className={clsx(
           'fixed top-3 md:top-5 left-1/2 -translate-x-1/2 z-[50]',
-          'w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] max-w-5xl h-14',
+          'w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] max-w-[1440px] h-14',
           'rounded-full backdrop-blur-xl border-glass shadow-2xl',
           'px-3 sm:px-5',
           className
@@ -40,7 +40,7 @@ export const Navbar = ({ className }: { className?: string }) => {
         classNames={{
           // 移动端菜单浮层样式：从导航栏下方展开
           menu: clsx(
-            'top-16 mx-3 w-[calc(100%-1.5rem)] max-w-5xl',
+            'top-16 mx-3 w-[calc(100%-1.5rem)] max-w-[1440px]',
             'rounded-2xl border-glass backdrop-blur-xl shadow-2xl',
             'pt-4 gap-1 bg-background/80'
           )
