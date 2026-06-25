@@ -12,24 +12,6 @@ import { useChat } from './_hooks';
 
 // Mock 数据，实际应从 API 获取
 const MOCK_CHAT_HISTORIES: ChatHistory[] = [
-  {
-    id: '1',
-    title: '故宫附近的雪景照片',
-    createdAt: new Date(),
-    preview: '找到了5张照片...'
-  },
-  {
-    id: '2',
-    title: '夕阳下的建筑构图',
-    createdAt: new Date(Date.now() - 86400000),
-    preview: '分析光影效果...'
-  },
-  {
-    id: '3',
-    title: '春季樱花拍摄技巧',
-    createdAt: new Date(Date.now() - 172800000),
-    preview: '推荐拍摄角度...'
-  }
 ];
 
 export default function ChatPage() {
