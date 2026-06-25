@@ -25,7 +25,7 @@ export function ChatSidebar({
             <Camera className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">摄影助手</h1>
+            <h1 className="font-bold text-lg">AI助手</h1>
             <p className="text-xs text-default-500">AI 智能分析</p>
           </div>
         </div>

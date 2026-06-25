@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           controller!.sendMessage({
             id: `${data.id}_photoCard`,
             status: 'done',
-            message: intention.reply,
+            message: '为您找到以下照片',
             type: 'photoCard',
             data: content
           });
