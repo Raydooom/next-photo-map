@@ -86,6 +86,7 @@
     "lightgallery": "2.9.0",
     "lucide-react": "0.562.0",
     "maplibre-gl": "5.22.0",
+    "motion": "13.1.0",
     "next": "15.3.1",
     "next-themes": "0.4.6",
     "ollama-ai-provider-v2": "3.5.0",

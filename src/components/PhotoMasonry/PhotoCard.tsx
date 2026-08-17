@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { memo, useRef, useState, useCallback } from 'react';
 import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 import { formatFileSize } from '@/utils/format';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 interface PhotoCardProps {
   data: PhotoItem;
@@ -66,10 +66,11 @@ export const PhotoCard = memo(
     return (
       <motion.div
         className={clsx(
-          'group relative cursor-pointer rounded-2xl overflow-hidden w-full',
-          'ring-1 ring-white/[0.08] dark:ring-white/[0.06]',
-          'shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30',
-          'transition-shadow duration-500 ease-out',
+          'group relative cursor-pointer overflow-hidden w-full',
+          // 描边走 outline 而非 border，避免占用布局算出的宽高
+          'outline outline-1 -outline-offset-1 outline-lab-line',
+          'hover:outline-lab-accent',
+          'transition-[outline-color] duration-300 ease-out',
           className
         )}
         style={{
@@ -163,10 +164,10 @@ const PhotoCardOverlay = memo(
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
         )}
       >
-        <h4 className="font-semibold text-sm text-white/95 truncate leading-tight">
+        <h4 className="truncate text-sm leading-tight text-lab-on-media [font-variation-settings:'wght'_600]">
           {data.filename}
         </h4>
-        <p className="text-xs text-white/70 mt-1 font-medium tracking-wide">
+        <p className="lab-mono mt-1.5 text-lab-on-media-muted">
           {ext} · {data.width}×{data.height} · {formatFileSize(data.size)}
         </p>
       </div>

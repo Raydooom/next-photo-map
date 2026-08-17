@@ -2,6 +2,64 @@
 
 @config "../../tailwind.config.js";
 
+/* ==========================================================================
+   字体：本地自托管
+   - TASA Orbiter：可变字重 400-800，正文/标题主字体（SIL OFL 1.1）
+   - Geist Mono：可变字重 400-700，编号/标签等宽字体（SIL OFL 1.1）
+   两者均只含拉丁字形，中文由 fallback 链中的系统字体承担。
+   ========================================================================== */
+@font-face {
+  font-family: 'TASA Orbiter';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  /* ss03 / cv05：启用该字体的替代字形，与 motion.dev 的观感一致 */
+  font-feature-settings:
+    'ss03' on,
+    'cv05' on;
+  src: url('/fonts/TASAOrbiter-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'TASA Orbiter';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  font-feature-settings:
+    'ss03' on,
+    'cv05' on;
+  src: url('/fonts/TASAOrbiter-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/GeistMono-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/GeistMono-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 @layer base {
   :root {
     --page-background: 251 251 249;
@@ -20,6 +78,56 @@
     /* 通用 */
     --shadow-card: theme('shadow.2xl');
     --radius: 24px;
+
+    /* ====================================================================
+       lab 令牌（亮色）
+       网格化直角视觉语言，与上方旧令牌并存，逐页迁移。
+       颜色以 oklch 的「L C H」三分量存储，便于 Tailwind 追加透明度修饰符。
+       ==================================================================== */
+
+    /* 中性阶：冷蓝灰，色相与强调色同源 */
+    --lab-ink: 0.975 0.003 250; /* 页面底色 */
+    --lab-raised: 1 0 0; /* 抬升面：卡片、瓦片标题条 */
+    --lab-sunken: 0.945 0.005 250; /* 下沉面：内嵌区、占位块 */
+
+    /* 文字阶：与所在容器背景的对比度 paper/muted ≥ 4.5:1 */
+    --lab-paper: 0.205 0.014 250; /* 主文字 */
+    --lab-muted: 0.455 0.014 250; /* 副文字 */
+    --lab-faint: 0.62 0.01 250; /* 装饰性文字，不承载信息 */
+
+    /* 描边：line 为装饰分隔线，line-strong 用于交互元素边框（≥ 3:1） */
+    --lab-line: 0.885 0.008 250;
+    --lab-line-strong: 0.58 0.012 250;
+
+    /* 强调色：蓝 */
+    --lab-accent: 0.48 0.19 258;
+    --lab-accent-hover: 0.42 0.19 258;
+    --lab-accent-ink: 0.99 0 0; /* 强调色实底之上的文字 */
+    --lab-accent-faint: 0.955 0.025 258; /* 强调色浅底 */
+
+    /* 语义色 */
+    --lab-success: 0.52 0.14 155;
+    --lab-warning: 0.6 0.15 75;
+    --lab-danger: 0.52 0.2 22;
+
+    /* 媒体之上：底层为照片或实底黑面板，故不随主题翻转 */
+    --lab-on-media: 1 0 0;
+    --lab-on-media-muted: 0.82 0.005 250;
+    --lab-accent-on-media: 0.7 0.17 255;
+
+    /* 字体族：拉丁字形由自托管字体承担，中文回退到系统字体 */
+    --font-sans:
+      'TASA Orbiter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-mono:
+      'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* 度量：与 motion.dev 的栅格一致 */
+    --lab-max-w: 1440px;
+    --lab-gutter: clamp(20px, 5vw, 76px);
+    --lab-grid-gap: clamp(16px, 2.1vw, 32px);
+    --lab-section-gap: clamp(44px, 6vw, 72px);
+    --lab-cell: 56px; /* 瓦片标题条高度 / 方形操作格边长 */
   }
 
   .dark {
@@ -40,19 +148,42 @@
     /* 功能色 (Functional) */
     --primary: 10 132 255;
     --primary-light: 138 154 91;
+
+    /* ====================================================================
+       lab 令牌（暗色）
+       令牌名与亮色完全一致，仅取值不同。
+       ==================================================================== */
+
+    --lab-ink: 0.145 0.012 250;
+    --lab-raised: 0.185 0.014 250;
+    --lab-sunken: 0.115 0.01 250;
+
+    --lab-paper: 0.955 0.004 250;
+    --lab-muted: 0.685 0.012 250;
+    --lab-faint: 0.48 0.014 250;
+
+    --lab-line: 0.3 0.014 250;
+    --lab-line-strong: 0.48 0.016 250;
+
+    --lab-accent: 0.7 0.17 255;
+    --lab-accent-hover: 0.78 0.15 255;
+    --lab-accent-ink: 0.145 0.012 250;
+    --lab-accent-faint: 0.23 0.045 255;
+
+    --lab-success: 0.76 0.15 155;
+    --lab-warning: 0.8 0.15 85;
+    --lab-danger: 0.67 0.2 26;
+
+    --lab-on-media: 1 0 0;
+    --lab-on-media-muted: 0.82 0.005 250;
+    --lab-accent-on-media: 0.7 0.17 255;
   }
 }
 
 /* 处理 hero Modal size=full 时，强制覆盖 JS 注入到 html 标签上的内联样式 */
 html {
   scrollbar-gutter: auto !important;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* 自定义滚动条样式 */
@@ -77,4 +208,37 @@ html {
 .region-popup .maplibregl-popup-tip {
   border-top-color: rgb(var(--background) / 0.85);
   border-bottom-color: rgb(var(--background) / 0.85);
+}
+
+/* ==========================================================================
+   导航栏遮罩
+   经过导航栏下方的内容先被模糊，再被斜向条纹切碎，使导航栏文字保持可读，
+   同时留住内容穿过的动势。纯 CSS 遮罩，不含动画。
+   条纹为 "/" 方向：渐变方向 115deg，条纹与之垂直，偏离竖直约 25 度。
+   ========================================================================== */
+/* 两层遮罩靠 absolute 叠在导航条上，导航内容由 wrapper 的 z-index 提到其上。
+   这里刻意不使用 isolation 与负 z-index：isolation 会新建 backdrop root，
+   使下一层的 backdrop-filter 取不到页面内容，模糊会失效。 */
+.nav-veil::before,
+.nav-veil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 第一层：模糊下方经过的内容 */
+.nav-veil::before {
+  backdrop-filter: blur(30px);
+}
+
+/* 第二层：与页面同色的实底，按斜向条纹镂空；
+   缝隙处透出第一层的模糊内容，无内容经过时与页面底色一致因而不可见 */
+.nav-veil::after {
+  background-color: oklch(var(--lab-ink));
+  mask-image: repeating-linear-gradient(
+    115deg,
+    #000 0 5px,
+    rgba(0, 0, 0, 0.3) 5px 9px
+  );
 }

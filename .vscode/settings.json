@@ -2,5 +2,16 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "cSpell.words": [
     "adcodes"
-  ]
+  ],
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#548b54",
+    "statusBar.debuggingBackground": "#548b54",
+    "statusBar.debuggingForeground": "#e7e7e7",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#6ca66c",
+    "statusBarItem.remoteBackground": "#484877",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "tab.activeBorder": "#6ca66c"
+  },
+  "peacock.color": "#548b54"
 }
