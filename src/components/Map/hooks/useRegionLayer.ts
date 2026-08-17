@@ -31,6 +31,29 @@ async function loadAreaGeoJson(): Promise<GeoJSON.FeatureCollection> {
   return geojsonCache!;
 }
 
+/**
+ * 取若干 adcode 对应行政区的合并边界框。
+ * 只计算范围、不添加任何图层，供「按整片行政区取景但不高亮区域」的场景使用。
+ * 复用与 drawRegions 相同的 geojson 缓存。
+ * @returns [minX, minY, maxX, maxY]；没有命中任何区域时返回 null
+ */
+export async function getRegionBounds(
+  adcodes: (string | number)[]
+): Promise<[number, number, number, number] | null> {
+  const codes = new Set(adcodes.map((c) => String(c)));
+  if (codes.size === 0) return null;
+
+  const processedGeoJson = await loadAreaGeoJson();
+  const matched = processedGeoJson.features.filter((f: any) =>
+    codes.has(f.properties.adcode)
+  );
+
+  if (matched.length === 0) return null;
+
+  const bounds = bbox(featureCollection(matched as any));
+  return [bounds[0], bounds[1], bounds[2], bounds[3]];
+}
+
 interface DrawRegionsOptions {
   /** 是否自动缩放到区域范围 */
   fitBounds?: boolean;

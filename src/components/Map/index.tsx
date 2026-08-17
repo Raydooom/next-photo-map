@@ -6,7 +6,8 @@ export {
   useRegionLayer,
   drawRegions,
   removeRegions,
-  setRegionsVisible
+  setRegionsVisible,
+  getRegionBounds
 } from './hooks/useRegionLayer';
 export { SingleMarker } from './modules/SingleMarker';
 export { ClusterMarker } from './modules/ClusterMarker';

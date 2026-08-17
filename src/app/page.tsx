@@ -26,7 +26,15 @@ export default async function Home() {
       // 兼作首屏兜底数据源，故同样带上 AI 标签
       withAiAnalysis: true
     }),
-    Actions.getLocations({ select: { adcode: true, city: true } }),
+    // 地图要按城市分组画点位，故经纬度必须一并取出
+    Actions.getLocations({
+      select: {
+        adcode: true,
+        city: true,
+        latitude: true,
+        longitude: true
+      }
+    }),
     Actions.countAllPhotos()
   ]);
 
@@ -55,7 +63,7 @@ export default async function Home() {
 
       <Recently photos={recently.list} />
 
-      <FootprintPanel locations={locations} cityCount={cityCount} />
+      <FootprintPanel locations={locations} />
 
       {/* 背景滚动照片复用最近拍摄的那批，不额外查询 */}
       <AiCallout photos={recently.list} />
