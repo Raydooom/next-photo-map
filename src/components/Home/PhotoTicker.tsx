@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { motion, useReducedMotion } from 'motion/react';
 
 import { PhotoItem } from '@/types';
+import { edgeFadeStyle } from '@/utils/mask';
 
 /** 默认列数。列多、单张小，才有照片量大的密度感 */
 const DEFAULT_COLUMNS = 6;
@@ -18,38 +19,6 @@ const PER_COLUMN = 6;
  * 以维持约 25-30px/s 的观感。
  */
 const COLUMN_DURATIONS = [58, 71, 52, 65, 61, 68];
-
-/**
- * 四周淡出遮罩。
- * 用多个色标分段逼近缓动曲线：两点线性渐变的 alpha 变化在感知上会留下
- * 明显的带状边界，分段后过渡柔和得多。
- * 垂直方向即滚动方向，过渡区拉得更长；水平方向保留较宽的完全显示区。
- */
-const MASK_VERTICAL = `linear-gradient(to bottom,
-  transparent 0%,
-  rgba(0, 0, 0, 0.1) 8%,
-  rgba(0, 0, 0, 0.35) 18%,
-  rgba(0, 0, 0, 0.7) 28%,
-  rgba(0, 0, 0, 0.92) 36%,
-  #000 42%,
-  #000 58%,
-  rgba(0, 0, 0, 0.92) 64%,
-  rgba(0, 0, 0, 0.7) 72%,
-  rgba(0, 0, 0, 0.35) 82%,
-  rgba(0, 0, 0, 0.1) 92%,
-  transparent 100%)`;
-
-const MASK_HORIZONTAL = `linear-gradient(to right,
-  transparent 0%,
-  rgba(0, 0, 0, 0.3) 6%,
-  rgba(0, 0, 0, 0.75) 12%,
-  #000 18%,
-  #000 82%,
-  rgba(0, 0, 0, 0.75) 88%,
-  rgba(0, 0, 0, 0.3) 94%,
-  transparent 100%)`;
-
-const EDGE_MASK = `${MASK_VERTICAL}, ${MASK_HORIZONTAL}`;
 
 /**
  * 透视纵深。
@@ -143,13 +112,7 @@ export function PhotoTicker({
         'opacity-[0.12] dark:opacity-[0.22]',
         className
       )}
-      style={{
-        maskImage: EDGE_MASK,
-        WebkitMaskImage: EDGE_MASK,
-        maskComposite: 'intersect',
-        WebkitMaskComposite: 'source-in',
-        perspective: PERSPECTIVE
-      }}
+      style={{ ...edgeFadeStyle, perspective: PERSPECTIVE }}
     >
       <div
         className="grid h-full gap-2"

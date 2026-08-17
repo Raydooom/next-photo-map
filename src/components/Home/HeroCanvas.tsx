@@ -91,7 +91,9 @@ export function HeroCanvas({
           {/* key 随照片变化，使轮播切换时读数跟着淡入，而不是硬跳 */}
           <motion.div
             key={current?.id ?? 'empty'}
-            className="lab-shell flex flex-wrap items-center justify-between gap-x-8 gap-y-3 py-4"
+            // 固定最小高度：读数在缺少地点/标签/EXIF 时会整块不渲染，
+            // 不给下限的话条会塌成细带，轮播切换时高度还会来回跳
+            className="lab-shell flex h-12 flex-wrap items-center justify-between gap-x-8 gap-y-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: shouldReduce ? 0 : 0.4 }}

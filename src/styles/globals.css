@@ -177,6 +177,11 @@
     --lab-on-media: 1 0 0;
     --lab-on-media-muted: 0.82 0.005 250;
     --lab-accent-on-media: 0.7 0.17 255;
+
+    /* 导航栏斜纹（暗色）。深底上透出的模糊亮部呈发光感，可以更明显 */
+    --nav-veil-stripe: 5px;
+    --nav-veil-pitch: 9px;
+    --nav-veil-gap-alpha: 0.3;
   }
 }
 
@@ -227,18 +232,33 @@ html {
   pointer-events: none;
 }
 
-/* 第一层：模糊下方经过的内容 */
+/* 第一层：模糊下方经过的内容。
+   亮色主题下同时承担底色，与模糊一起构成常规的玻璃质感 */
 .nav-veil::before {
   backdrop-filter: blur(30px);
+  background-color: oklch(var(--lab-ink) / 0.72);
 }
 
-/* 第二层：与页面同色的实底，按斜向条纹镂空；
-   缝隙处透出第一层的模糊内容，无内容经过时与页面底色一致因而不可见 */
+/* 暗色主题的底色由下面的条纹层提供，此层只负责模糊 */
+.dark .nav-veil::before {
+  background-color: transparent;
+}
+
+/* 第二层：与页面同色的实底，按斜向条纹镂空，缝隙处透出第一层的模糊内容。
+   仅暗色主题启用：浅色底上透出的是模糊后的深色文字，会形成明显的灰色纹理，
+   观感偏脏，故亮色主题只保留上面那层玻璃。 */
 .nav-veil::after {
+  display: none;
+}
+
+.dark .nav-veil::after {
+  display: block;
   background-color: oklch(var(--lab-ink));
+  /* 条纹的疏密与缝隙透光度见 .dark 中的 --nav-veil-* */
   mask-image: repeating-linear-gradient(
     115deg,
-    #000 0 5px,
-    rgba(0, 0, 0, 0.3) 5px 9px
+    #000 0 var(--nav-veil-stripe),
+    rgba(0, 0, 0, var(--nav-veil-gap-alpha)) var(--nav-veil-stripe)
+      var(--nav-veil-pitch)
   );
 }

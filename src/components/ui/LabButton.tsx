@@ -2,6 +2,8 @@ import clsx from 'clsx';
 import NextLink from 'next/link';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
+import { RollingText } from './RollingText';
+
 type LabButtonVariant = 'primary' | 'secondary' | 'ghost';
 
 const VARIANT_CLASS: Record<LabButtonVariant, string> = {
@@ -59,7 +61,7 @@ export function LabButton({
   const disabled = isDisabled || isLoading;
 
   const classes = clsx(
-    'group/btn inline-flex h-11 items-center justify-center gap-2',
+    'group/btn inline-flex h-11 cursor-pointer items-center justify-center gap-2',
     'px-5 lab-action whitespace-nowrap',
     'transition-colors duration-200',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-accent',
@@ -76,7 +78,7 @@ export function LabButton({
           className="h-3 w-3 animate-spin border border-current border-t-transparent"
         />
       )}
-      <span>{children}</span>
+      <RollingText>{children}</RollingText>
       {endContent}
     </>
   );

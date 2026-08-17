@@ -2,7 +2,7 @@
 
 import clsx from 'clsx';
 
-import { CountUp } from '@/components/ui';
+import { NumberRoll } from '@/components/ui';
 
 interface HeroStatsProps {
   totalPhotos: number;
@@ -38,7 +38,7 @@ export function HeroStats({
               "[font-variation-settings:'wght'_680]"
             )}
           >
-            <CountUp value={item.value} delay={delay + index * 0.12} />
+            <NumberRoll value={item.value} delay={delay + index * 0.12} />
           </dd>
           <dt className="lab-mono mt-2.5 text-lab-on-media-muted">
             {item.label}
