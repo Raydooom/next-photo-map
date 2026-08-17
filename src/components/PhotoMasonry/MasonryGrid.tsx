@@ -45,7 +45,7 @@ const toAlbumPhoto = (item: PhotoItem): AlbumPhoto => ({
 });
 
 // 图片间距（行间距 / 列间距 / 分页之间的间距保持一致）
-const SPACING = 10;
+const SPACING = 14;
 
 export default function MasonryGrid({
   items,
@@ -77,7 +77,7 @@ export default function MasonryGrid({
 
   useEffect(() => {
     if (!photoId || photoId === String(previewId)) return;
-    if (accumulated.some(item => item.id === Number(photoId))) {
+    if (accumulated.some((item) => item.id === Number(photoId))) {
       setPreviewId(Number(photoId));
       setIsOpen(true);
     }
@@ -125,9 +125,9 @@ export default function MasonryGrid({
         if (!list || list.length === 0) return null;
 
         // 同步累积列表（去重）供预览使用
-        setAccumulated(prev => {
-          const ids = new Set(prev.map(p => p.id));
-          const merged = list.filter(p => !ids.has(p.id));
+        setAccumulated((prev) => {
+          const ids = new Set(prev.map((p) => p.id));
+          const merged = list.filter((p) => !ids.has(p.id));
           return merged.length ? [...prev, ...merged] : prev;
         });
 

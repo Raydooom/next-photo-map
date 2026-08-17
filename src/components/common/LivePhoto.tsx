@@ -1,34 +1,12 @@
 import type { PhotoItem } from '@/types';
 import { Image } from '@heroui/image';
-import { Chip } from '@heroui/chip';
 import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
-import { LivePhotoIcon } from '../Icons/icon';
+import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
 
-export function LivePhotoIndicate({
-  isPlaying = false
-}: {
-  isPlaying?: boolean;
-}) {
-  return (
-    <Chip
-      size="sm"
-      classNames={{
-        base: 'bg-background/50 backdrop-blur-md'
-      }}
-      variant="flat"
-      startContent={
-        <LivePhotoIcon
-          className={clsx(isPlaying ? 'animate-spin-2s' : '')}
-          size={16}
-        />
-      }
-    >
-      &nbsp;实况
-    </Chip>
-  );
-}
+// 与照片墙卡片共用同一个实况标记，避免两处样式各自漂移
+export { LivePhotoIndicate };
 
 export const LivePhoto = ({
   photoInfo,

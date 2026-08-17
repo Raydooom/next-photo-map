@@ -67,8 +67,9 @@ export const PhotoCard = memo(
       <motion.div
         className={clsx(
           'group relative cursor-pointer overflow-hidden w-full',
-          // 描边走 outline 而非 border，避免占用布局算出的宽高
-          'outline outline-1 -outline-offset-1 outline-lab-line',
+          // 描边走 outline 而非 border，避免占用布局算出的宽高。
+          // 常态压到很淡：照片自带边界，描边只需在深色照片上给一点轮廓暗示
+          'outline-1 -outline-offset-1 outline-lab-line/40',
           'hover:outline-lab-accent',
           'transition-[outline-color] duration-300 ease-out',
           className

@@ -20,7 +20,7 @@ export default async function Home() {
       top: true
     }),
     Actions.getPhotoList({
-      pageSize: 20,
+      pageSize: 10,
       withLocation: true,
       withExif: true,
       // 兼作首屏兜底数据源，故同样带上 AI 标签
@@ -57,7 +57,8 @@ export default async function Home() {
 
       <FootprintPanel locations={locations} cityCount={cityCount} />
 
-      <AiCallout />
+      {/* 背景滚动照片复用最近拍摄的那批，不额外查询 */}
+      <AiCallout photos={recently.list} />
     </div>
   );
 }
