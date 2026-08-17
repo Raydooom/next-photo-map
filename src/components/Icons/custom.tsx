@@ -1,24 +1,35 @@
 'use client';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
-import { useIsSSR } from '@react-aria/ssr';
+import clsx from 'clsx';
 import { LeftIcon } from './button';
 
+/**
+ * 站点标识。
+ * 深浅两版靠 dark: 变体切换，不依赖 JS 读取主题：
+ * 既避免了首帧渲染错版本再跳变，也修正了主题为「跟随系统」时取错图的问题。
+ * alt 置空是因为相邻处已有文字品牌名，避免屏幕阅读器重复播报。
+ */
 export const Logo: React.FC<{ size?: number; className?: string }> = ({
   size = 32,
   className
 }) => {
-  const { theme } = useTheme();
-  const isSSR = useIsSSR();
-  const isDarkMode = theme === 'dark' && !isSSR;
   return (
-    <Image
-      className={className}
-      src={isDarkMode ? '/logo_white.png' : '/logo_black.png'}
-      width={size}
-      height={size}
-      alt="logo"
-    />
+    <>
+      <Image
+        className={clsx(className, 'dark:hidden')}
+        src="/logo_black.png"
+        width={size}
+        height={size}
+        alt=""
+      />
+      <Image
+        className={clsx(className, 'hidden dark:block')}
+        src="/logo_white.png"
+        width={size}
+        height={size}
+        alt=""
+      />
+    </>
   );
 };
 

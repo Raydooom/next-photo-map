@@ -1,8 +1,9 @@
-import { PhotoItem } from '@/types';
-import Link from 'next/link';
-import MasonryGrid from '../PhotoMasonry/MasonryGrid';
 import { Suspense } from 'react';
 import { ArrowRight } from 'lucide-react';
+
+import { PhotoItem } from '@/types';
+import MasonryGrid from '../PhotoMasonry/MasonryGrid';
+import { LabButton, SectionHeading } from '@/components/ui';
 
 interface RecentlyProps {
   className?: string;
@@ -11,28 +12,29 @@ interface RecentlyProps {
 
 export function Recently({ photos }: RecentlyProps) {
   return (
-    <section className="mt-8 md:mt-12">
-      {/* 标题区域 */}
-      <div className="mb-5 md:mb-8">
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-main">
-          Recently Captured
-        </h2>
-        <p className="mt-1.5 text-xs md:text-sm text-sub">最近拍摄的精彩瞬间</p>
-      </div>
+    <section className="lab-shell py-[var(--lab-section-gap)]">
+      <SectionHeading
+        index="02"
+        eyebrow="Recently captured"
+        title="Latest frames."
+        description="最近拍摄的影像，按时间倒序排列。"
+        action={
+          <LabButton
+            href="/photos"
+            variant="ghost"
+            className="px-0"
+            endContent={
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+            }
+          >
+            查看全部
+          </LabButton>
+        }
+      />
 
-      {/* 瀑布流 */}
       <Suspense>
         <MasonryGrid items={photos} targetRowHeight={300} />
       </Suspense>
-      <div className="mt-6 flex justify-center">
-        <Link
-          href="/photos"
-          className="group flex items-center gap-1.5 text-sm font-medium text-sub hover:text-main transition-colors shrink-0"
-        >
-          查看更多
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </div>
     </section>
   );
 }

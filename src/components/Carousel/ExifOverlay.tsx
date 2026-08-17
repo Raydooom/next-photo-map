@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import clsx from 'clsx';
 import { ExtendInfo } from '../modules/ExifInfo';
 import { PhotoItem } from '@/types';
@@ -10,7 +10,11 @@ interface ExifOverlayProps {
   onClose: () => void;
 }
 
-export const ExifOverlay: React.FC<ExifOverlayProps> = ({ isVisible, photo, onClose }) => {
+export const ExifOverlay: React.FC<ExifOverlayProps> = ({
+  isVisible,
+  photo,
+  onClose
+}) => {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -24,10 +28,7 @@ export const ExifOverlay: React.FC<ExifOverlayProps> = ({ isVisible, photo, onCl
           }}
           className={clsx('absolute top-17 right-5 z-10')}
         >
-          <ExtendInfo
-            setIsOpen={onClose}
-            photo={photo}
-          />
+          <ExtendInfo setIsOpen={onClose} photo={photo} />
         </motion.div>
       )}
     </AnimatePresence>

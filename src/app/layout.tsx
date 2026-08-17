@@ -32,8 +32,24 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning lang="zh-CN">
-      <head />
-      <body className="min-h-screen text-main bg-page-background font-sans antialiased">
+      <head>
+        {/* 自托管字体的拉丁子集：预加载以避免首屏字体闪烁 */}
+        <link
+          rel="preload"
+          href="/fonts/TASAOrbiter-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/GeistMono-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body className="min-h-screen bg-lab-ink font-sans text-lab-paper antialiased">
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

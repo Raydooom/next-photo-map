@@ -12,7 +12,7 @@ import {
 } from '@/components/Icons/button';
 import { ExifTagList } from '@/components/modules/ExifTag';
 import { Skeleton } from '@heroui/skeleton';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 const JumpPhoto = (photoId: number) => {
   window.open(`/photos?photoId=${photoId}`, '_blank');
@@ -34,8 +34,8 @@ export const PointDetail = ({
   useEffect(() => {
     if (viewList.length === 0) return;
     setIsLoading(true);
-    const photoIds = viewList.map(item => item.photoId);
-    Action.getPhotoDetailBatch(photoIds).then(data => {
+    const photoIds = viewList.map((item) => item.photoId);
+    Action.getPhotoDetailBatch(photoIds).then((data) => {
       setPhotoList(data);
       setIsLoading(false);
     });
@@ -121,7 +121,7 @@ const SingleImageSkeleton = () => (
     <Skeleton className="h-50 bg-default-300" />
     <div className="p-3 flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2">
-        {[1, 2, 3, 4].map(item => (
+        {[1, 2, 3, 4].map((item) => (
           <Skeleton key={item} className="rounded-lg h-6 bg-default-400" />
         ))}
       </div>
