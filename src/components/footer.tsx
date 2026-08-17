@@ -40,21 +40,17 @@ export const Footer = ({ className }: { className?: string }) => {
             </ul>
           </div>
 
-          {/* 关于 */}
+          {/* 关于：备案号与版权归在一处 */}
           <div className="col-span-full md:col-span-3 md:col-start-10">
             <Eyebrow className="block">About</Eyebrow>
             <p className="lab-mono mt-5 text-lab-muted">Power by Next.js</p>
-            {/* 含中文，不套 lab-mono 的大写与宽字距 */}
+            {/* 以下含中文与全角符号，不套 lab-mono 的大写与宽字距 */}
             <p className="mt-2 text-xs text-lab-faint">豫ICP备16008805号-1</p>
+            <p className="mt-2 text-xs text-lab-faint">
+              © {new Date().getFullYear()} {siteConfig.name} · All rights
+              reserved
+            </p>
           </div>
-        </div>
-
-        {/* 版权 */}
-        <div className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-lab-line pt-6">
-          <span className="lab-mono text-lab-faint">
-            © {new Date().getFullYear()} {siteConfig.name}
-          </span>
-          <span className="lab-mono text-lab-faint">All rights reserved</span>
         </div>
       </div>
     </footer>

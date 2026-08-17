@@ -33,7 +33,9 @@ export function Recently({ photos }: RecentlyProps) {
       />
 
       <Suspense>
-        <MasonryGrid items={photos} targetRowHeight={300} />
+        {/* 行高 280 在桌面 1288px 容器下约合一行 3 张，
+            12 张约 4 行、1.3 屏，首页作为预览的合适密度 */}
+        <MasonryGrid items={photos} targetRowHeight={280} />
       </Suspense>
     </section>
   );
