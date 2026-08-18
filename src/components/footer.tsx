@@ -19,7 +19,7 @@ export const Footer = ({ className }: { className?: string }) => {
               {siteConfig.name}
             </p>
             <p className="lab-body mt-3 max-w-[32ch] text-lab-muted">
-              探索世界各地的精彩瞬间
+              探索各地的精彩瞬间
             </p>
           </div>
 
@@ -45,11 +45,11 @@ export const Footer = ({ className }: { className?: string }) => {
             <Eyebrow className="block">About</Eyebrow>
             <p className="lab-mono mt-5 text-lab-muted">Power by Next.js</p>
             {/* 以下含中文与全角符号，不套 lab-mono 的大写与宽字距 */}
-            <p className="mt-2 text-xs text-lab-faint">豫ICP备16008805号-1</p>
             <p className="mt-2 text-xs text-lab-faint">
-              © {new Date().getFullYear()} {siteConfig.name} · All rights
+              © {new Date().getFullYear()} {siteConfig.address} · All rights
               reserved
             </p>
+            <p className="mt-2 text-xs text-lab-faint">豫ICP备16008805号-1</p>
           </div>
         </div>
       </div>

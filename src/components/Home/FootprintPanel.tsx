@@ -72,8 +72,8 @@ export function FootprintPanel({ locations }: FootprintPanelProps) {
       <SectionHeading
         index="03"
         eyebrow="Footprints"
-        title="Mapped by GPS."
-        description="点位来自照片自带的定位信息，没有手工标注。选择城市可查看该地的全部坐标。"
+        title="Traces of light."
+        description="照片记得自己在哪里被拍下。点开一座城市，看看在那里停留过多少地方。"
         action={
           <LabButton
             href="/footprint"

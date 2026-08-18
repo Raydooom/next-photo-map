@@ -45,3 +45,23 @@ export const edgeFadeStyle: CSSProperties = {
   maskComposite: 'intersect',
   WebkitMaskComposite: 'source-in'
 };
+
+/** 尾部淡出的过渡宽度。约两个 mono 字符，够看出"后面还有"但不吃掉可读内容 */
+const TRAILING_FADE = '16px';
+
+const MASK_TRAILING = `linear-gradient(to right,
+  #000 0,
+  #000 calc(100% - ${TRAILING_FADE}),
+  transparent 100%)`;
+
+/**
+ * 单行内容的右端淡出。
+ *
+ * 用于横向排布且可能溢出的读数行：比 text-overflow 的省略号更安静，
+ * 也避免 flex 布局下无法使用 truncate 的问题。
+ * 内容未溢出时淡出区落在空白上，因此可以常态挂载。
+ */
+export const trailingFadeStyle: CSSProperties = {
+  maskImage: MASK_TRAILING,
+  WebkitMaskImage: MASK_TRAILING
+};

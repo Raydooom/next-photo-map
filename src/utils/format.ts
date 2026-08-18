@@ -110,13 +110,25 @@ export const formatDateCN = (datetime?: string | null) => {
   });
 };
 
-export const formatTakenDate = (date?: string | null) => {
+/**
+ * 拍摄日期。本年只给月日，跨年才补上年份 —— 同批照片多在同年，年份没有区分度。
+ *
+ * @param separator 省略时用中文单位（2025年10月03日）；
+ *   传入则以它连接各段（'/' → 2025/10/03），供等宽读数一类场景使用，
+ *   中文的「年/月/日」在宽字距下会被拉散。
+ */
+export const formatTakenDate = (date?: string | null, separator?: string) => {
   if (!date) {
     return '';
   }
-  const year = dayjs(date).year();
-  if (year === dayjs().year()) {
-    return dayjs(date).format('MM月DD日');
+  const target = dayjs(date);
+  const needYear = target.year() !== dayjs().year();
+
+  if (separator === undefined) {
+    return target.format(needYear ? 'YYYY年MM月DD日' : 'MM月DD日');
   }
-  return dayjs(date).format('YYYY年MM月DD日');
+
+  // 逐段取值再 join，而非拼进 format 模板：分隔符含字母时会被当成格式 token
+  const segments = needYear ? ['YYYY', 'MM', 'DD'] : ['MM', 'DD'];
+  return segments.map((token) => target.format(token)).join(separator);
 };

@@ -8,7 +8,10 @@ const PAGE_SIZE = 20;
 export default async function DocsPage() {
   const { list, total } = await PhotoAction.getPhotoList({
     page: 1,
-    pageSize: PAGE_SIZE
+    pageSize: PAGE_SIZE,
+    // 卡片悬浮信息要展示拍摄地点与参数
+    withLocation: true,
+    withExif: true
   });
 
   return (

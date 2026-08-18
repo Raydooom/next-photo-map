@@ -1,11 +1,20 @@
 import { PhotoItem } from '@/types';
-import { EmblaOptionsType, EmblaPluginType } from 'embla-carousel';
+import {
+  EmblaCarouselType,
+  EmblaOptionsType,
+  EmblaPluginType
+} from 'embla-carousel';
 
 export type CarouselProps = {
   slides: PhotoItem[];
   options?: EmblaOptionsType;
   plugins?: EmblaPluginType[];
   currentId?: number;
+  /**
+   * 交出 embla 实例，供外部自建控件驱动切换。
+   * 会作为 effect 依赖，故须传入稳定引用（如 useState 的 setter）
+   */
+  onApi?: (api: EmblaCarouselType | undefined) => void;
   onSelect?: (item: PhotoItem) => void;
   onClose?: () => void;
   showThumbnails?: boolean;
