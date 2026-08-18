@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Autoplay from 'embla-carousel-autoplay';
+import { useCallback, useMemo, useState } from 'react';
+import Autoplay, { type AutoplayType } from 'embla-carousel-autoplay';
 import Fade from 'embla-carousel-fade';
+import type { EmblaCarouselType } from 'embla-carousel';
 import { motion, useReducedMotion } from 'motion/react';
 
 import Carousel from '@/components/Carousel';
@@ -16,10 +17,6 @@ interface HeroCanvasProps {
   photos: PhotoItem[];
   /** 照片总数 */
   totalPhotos: number;
-  /** 城市数 */
-  cityCount: number;
-  /** 定位足迹点数 */
-  spotCount: number;
 }
 
 /**
@@ -27,15 +24,31 @@ interface HeroCanvasProps {
  * 照片铺满背景，文案压在左侧的半透明黑面板内；面板叠加模糊，
  * 与底层的浅色遮罩一起把背景压到足以保证文字对比度的程度。
  */
-export function HeroCanvas({
-  photos,
-  totalPhotos,
-  cityCount,
-  spotCount
-}: HeroCanvasProps) {
+export function HeroCanvas({ photos, totalPhotos }: HeroCanvasProps) {
   // 以首张为初始值，使服务端渲染即有读数内容，避免首屏跳动
   const [current, setCurrent] = useState<PhotoItem | null>(photos[0] ?? null);
+  const [api, setApi] = useState<EmblaCarouselType>();
   const shouldReduce = useReducedMotion();
+
+  /**
+   * 手动翻页。
+   * 一旦手动切换就停掉自动轮播：用户已经表达了自己看的意图，
+   * 再过几秒自动跳走会把他正在看的那张抢掉。
+   */
+  const scroll = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (!api) return;
+
+      (api.plugins().autoplay as AutoplayType | undefined)?.stop();
+
+      if (direction === 'prev') {
+        api.scrollPrev();
+      } else {
+        api.scrollNext();
+      }
+    },
+    [api]
+  );
 
   // 降低动效偏好下不自动轮播
   const plugins = useMemo(
@@ -62,6 +75,7 @@ export function HeroCanvas({
           imageFit="cover"
           disableLive
           className="h-full w-full"
+          onApi={setApi}
           onSelect={setCurrent}
         />
       </div>
@@ -76,8 +90,8 @@ export function HeroCanvas({
             currentIndex={currentIndex}
             totalSlides={photos.length}
             totalPhotos={totalPhotos}
-            cityCount={cityCount}
-            spotCount={spotCount}
+            onPrev={() => scroll('prev')}
+            onNext={() => scroll('next')}
           />
         </div>
 

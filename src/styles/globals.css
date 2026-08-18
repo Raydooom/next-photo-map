@@ -127,6 +127,8 @@
     --lab-gutter: clamp(20px, 5vw, 76px);
     --lab-grid-gap: clamp(16px, 2.1vw, 32px);
     --lab-section-gap: clamp(44px, 6vw, 72px);
+    /* 标题到本分区内容的距离。标题与内容同属一组，比分区之间明显更近 */
+    --lab-heading-gap: clamp(22px, 2.6vw, 32px);
     --lab-cell: 56px; /* 瓦片标题条高度 / 方形操作格边长 */
   }
 

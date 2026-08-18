@@ -47,12 +47,8 @@ export default async function Home() {
 
   return (
     <div>
-      <HeroCanvas
-        photos={heroPhotos}
-        totalPhotos={totalPhotos}
-        cityCount={cityCount}
-        spotCount={locations.length}
-      />
+      {/* 首屏只报照片总数，城市与足迹点交给下一屏的读数网格，避免两屏重复 */}
+      <HeroCanvas photos={heroPhotos} totalPhotos={totalPhotos} />
 
       <StatsGrid
         totalPhotos={totalPhotos}

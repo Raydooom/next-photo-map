@@ -17,7 +17,7 @@ export function Recently({ photos }: RecentlyProps) {
         index="02"
         eyebrow="Recently captured"
         title="Latest frames."
-        description="最近拍摄的影像，按时间倒序排列。"
+        description="最近拍摄的照片"
         action={
           <LabButton
             href="/photos"

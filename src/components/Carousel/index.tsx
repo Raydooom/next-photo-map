@@ -16,6 +16,7 @@ const Carousel: React.FC<CarouselProps> = ({
   options,
   plugins = [],
   currentId,
+  onApi,
   onSelect,
   onClose,
   showThumbnails = false,
@@ -69,10 +70,15 @@ const Carousel: React.FC<CarouselProps> = ({
     [emblaMainApi, selectedIndex]
   );
 
+  // 实例在挂载后才有，故交给外部时机与 embla 初始化对齐
+  useEffect(() => {
+    onApi?.(emblaMainApi);
+  }, [emblaMainApi, onApi]);
+
   useEffect(() => {
     if (!emblaMainApi) return;
     if (currentId !== undefined) {
-      const activeIndex = slides.findIndex(item => item.id === currentId);
+      const activeIndex = slides.findIndex((item) => item.id === currentId);
       if (
         activeIndex !== -1 &&
         emblaMainApi.selectedScrollSnap() !== activeIndex
