@@ -31,26 +31,35 @@ const MAX_FIT_ZOOM = 13;
 const DOT_STAGGER = 0.03;
 /** 城市标记逐个进场的间隔（秒） */
 const CITY_STAGGER = 0.07;
-/** 视为窄屏的容器宽度阈值 */
+/** 视为窄屏的视口宽度阈值，取 Tailwind 的 md 断点 —— 城市面板正是在此出现 */
 const NARROW_WIDTH = 768;
-/** 桌面端右侧为城市面板预留的宽度（面板宽 260 + 外边距 + 余量） */
-const PANEL_RESERVE = 300;
+/**
+ * 宽屏右侧为城市面板预留的宽度。
+ * 面板宽 260、离右边缘 16，再留出城市标记的半径与余量，
+ * 否则边界框虽落在留白内，标记仍会有一角探进面板。
+ */
+const PANEL_RESERVE = 320;
 /** 换装遮罩的兜底放行时长（毫秒），防止 idle 未触发导致遮罩长留 */
 const RESTYLE_TIMEOUT = 3000;
 
 /**
  * 取景留白。
- * 右侧预留城市面板的宽度，使地图内容整体偏向左侧、不被面板压住；
- * 窄屏下面板占屏过大，额外预留反而会把内容压得过小，故只留少量。
+ * 宽屏右侧预留城市面板的宽度，使地图内容整体偏向左侧、不被面板压住；
+ * 窄屏的城市选择已移到地图下方，无需预留，两侧对称即可。
+ *
+ * 依据视口宽度而非地图容器宽度：面板的显隐由 CSS 的 md 断点控制，
+ * 而容器两侧还有页面留白、宽度总小于视口，按容器判断会在临界区间错判成窄屏，
+ * 于是面板已经显示、地图却没给它让位。
  */
-function getFitPadding(map: maplibreGl.Map): maplibreGl.PaddingOptions {
-  const isNarrow = map.getContainer().clientWidth < NARROW_WIDTH;
+function getFitPadding(): maplibreGl.PaddingOptions {
+  const isNarrow =
+    typeof window !== 'undefined' && window.innerWidth < NARROW_WIDTH;
 
   return {
     top: 32,
     bottom: 32,
     left: isNarrow ? 24 : 48,
-    right: isNarrow ? 32 : PANEL_RESERVE
+    right: isNarrow ? 24 : PANEL_RESERVE
   };
 }
 
@@ -63,7 +72,7 @@ function fitToPoints(map: maplibreGl.Map, points: [number, number][]) {
       center: points[0],
       zoom: SINGLE_POINT_ZOOM,
       duration: FLY_DURATION,
-      padding: getFitPadding(map)
+      padding: getFitPadding()
     });
     return;
   }
@@ -75,7 +84,7 @@ function fitToPoints(map: maplibreGl.Map, points: [number, number][]) {
       [bounds[2], bounds[3]]
     ],
     {
-      padding: getFitPadding(map),
+      padding: getFitPadding(),
       duration: FLY_DURATION,
       maxZoom: MAX_FIT_ZOOM
     }
@@ -176,7 +185,7 @@ export function FootprintMap({
           [bounds[2], bounds[3]]
         ],
         {
-          padding: getFitPadding(mapInstance),
+          padding: getFitPadding(),
           duration: FLY_DURATION,
           maxZoom: MAX_FIT_ZOOM
         }
