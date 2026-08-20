@@ -73,7 +73,7 @@ export function FootprintPanel({ locations }: FootprintPanelProps) {
         index="03"
         eyebrow="Footprints"
         title="Traces of light."
-        description="照片记得自己在哪里被拍下。点开一座城市，看看在那里停留过多少地方。"
+        description="照片记得自己在哪里被拍下。"
         action={
           <LabButton
             href="/footprint"
@@ -81,7 +81,7 @@ export function FootprintPanel({ locations }: FootprintPanelProps) {
             className="px-0"
             endContent={<ArrowUpRight className="h-3.5 w-3.5" />}
           >
-            打开完整地图
+            足迹地图
           </LabButton>
         }
       />

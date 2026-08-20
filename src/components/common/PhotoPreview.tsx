@@ -1,6 +1,6 @@
 import { Modal, ModalContent } from '@heroui/modal';
 import { PhotoItem } from '@/types';
-import Carousel from '../Carousel';
+import { PhotoLightbox } from './PhotoLightbox';
 import { useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { replaceUrl } from '@/utils/url';
@@ -36,21 +36,20 @@ export function PhotoPreview({
       isOpen={isOpen}
       size="full"
       onClose={onClickClose}
+      // 关闭按钮由查看器顶栏自己提供，用 Modal 自带的会在右上角多出一个
+      hideCloseButton
       classNames={{
         wrapper: 'scrollbar-gutter-none',
-        base: 'w-screen h-screen m-0 max-w-none'
+        // 满屏铺开：去掉 Modal 默认的圆角与浅色底，否则四角会露出容器色
+        base: 'w-screen h-screen m-0 max-w-none rounded-none bg-lab-ink'
       }}
     >
       <ModalContent>
-        <Carousel
-          slides={list}
+        <PhotoLightbox
+          photos={list}
           currentId={previewId}
           onClose={onClickClose}
           onSelect={handleSelect}
-          showThumbnails
-          showControls
-          showExif
-          isFullScreen
         />
       </ModalContent>
     </Modal>

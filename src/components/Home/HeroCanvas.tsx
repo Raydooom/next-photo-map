@@ -5,6 +5,7 @@ import Autoplay, { type AutoplayType } from 'embla-carousel-autoplay';
 import Fade from 'embla-carousel-fade';
 import type { EmblaCarouselType } from 'embla-carousel';
 import { motion, useReducedMotion } from 'motion/react';
+import clsx from 'clsx';
 
 import Carousel from '@/components/Carousel';
 import { PhotoItem } from '@/types';
@@ -105,9 +106,13 @@ export function HeroCanvas({ photos, totalPhotos }: HeroCanvasProps) {
           {/* key 随照片变化，使轮播切换时读数跟着淡入，而不是硬跳 */}
           <motion.div
             key={current?.id ?? 'empty'}
-            // 固定最小高度：读数在缺少地点/标签/EXIF 时会整块不渲染，
-            // 不给下限的话条会塌成细带，轮播切换时高度还会来回跳
-            className="lab-shell flex h-12 flex-wrap items-center justify-between gap-x-8 gap-y-3"
+            // 给下限而非固定高度：读数在缺少地点/标签/EXIF 时会整块不渲染，
+            // 没有下限条会塌成细带、轮播切换时高度来回跳；
+            // 而写成固定高度，窄屏换行后内容又会撑出去贴住上下边，故配一层纵向内边距
+            className={clsx(
+              'lab-shell flex min-h-12 flex-wrap items-center justify-between',
+              'gap-x-8 gap-y-2 py-2.5'
+            )}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: shouldReduce ? 0 : 0.4 }}
