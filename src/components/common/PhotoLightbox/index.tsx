@@ -189,7 +189,8 @@ export function PhotoLightbox({
 
   const current = photos[selectedIndex];
 
-  const onCarouselSelect = useCallback(() => {
+  /** 把轮播的当前位置同步到组件状态与缩略图条，不涉及外部副作用 */
+  const syncFromCarousel = useCallback(() => {
     if (!embla) return;
 
     const index = embla.selectedScrollSnap();
@@ -197,21 +198,39 @@ export function PhotoLightbox({
     setCanPrev(embla.canScrollPrev());
     setCanNext(embla.canScrollNext());
     thumbs?.scrollTo(index);
+  }, [embla, thumbs]);
 
-    const item = photos[index];
+  /** 用户切到了另一张：除同步状态外，还要把当前照片报给外部（用于写地址栏） */
+  const handleCarouselSelect = useCallback(() => {
+    if (!embla) return;
+
+    syncFromCarousel();
+
+    const item = photos[embla.selectedScrollSnap()];
     if (item) onSelect?.(item);
-  }, [embla, thumbs, photos, onSelect]);
+  }, [embla, syncFromCarousel, photos, onSelect]);
 
   useEffect(() => {
     if (!embla) return;
 
-    embla.on('select', onCarouselSelect).on('reInit', onCarouselSelect);
-    onCarouselSelect();
+    /**
+     * select 与 reInit 必须分开处理。
+     *
+     * reInit 由容器尺寸变化触发（embla 内部有 ResizeObserver），照片并没有换，
+     * 所以只同步状态、不能回调 onSelect —— 否则关闭查看器时，外层对话框的
+     * 退场动画会缩放容器，引发 reInit，刚被清掉的 photoId 又被写回地址栏，
+     * 表现就是"点了关闭但参数还在"。退场期间组件仍挂载，拦不住这次回调。
+     *
+     * 挂载时也只做一次状态同步：打开时的 photoId 已由调用方写好，
+     * 这里再报一次是多余的。
+     */
+    embla.on('select', handleCarouselSelect).on('reInit', syncFromCarousel);
+    syncFromCarousel();
 
     return () => {
-      embla.off('select', onCarouselSelect).off('reInit', onCarouselSelect);
+      embla.off('select', handleCarouselSelect).off('reInit', syncFromCarousel);
     };
-  }, [embla, onCarouselSelect]);
+  }, [embla, handleCarouselSelect, syncFromCarousel]);
 
   // 兜底：查看器打开期间 currentId 若发生变化（如外部改了地址栏的 photoId），
   // 跟着跳转，不带动画。首次定位已由 embla 的 startIndex 处理，不走这里

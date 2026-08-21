@@ -6,7 +6,7 @@ import { MapControls } from '@/components/Map/modules/MapControls';
 import { BackIcon } from '@/components/Icons/custom';
 import { PointDetail } from './PointDetail';
 import { MapModeSwitch, type FootprintMode } from './MapModeSwitch';
-import { replaceUrl } from '@/utils/url';
+import { removeUrlParam, setUrlParam } from '@/utils/url';
 import { MapMarker } from '@/types/mapMarker';
 import { ClusterMarker } from '@/components/Map/modules/ClusterMarker';
 import { useMapBase, useMapClusters, useRegionLayer } from '@/components/Map';
@@ -132,7 +132,7 @@ export default function Map({
       // 点击单点
       const data = JSON.parse(properties.data) as MapMarker;
       setViewList(data.list);
-      replaceUrl(`${window.location.pathname}?photoId=${data.list[0].photoId}`);
+      setUrlParam('photoId', String(data.list[0].photoId));
 
       mapInstance.flyTo({
         center: data.point,
@@ -156,7 +156,8 @@ export default function Map({
       <PointDetail
         onClose={() => {
           setViewList([]);
-          replaceUrl(window.location.pathname);
+          // 只摘掉 photoId，保留地址栏上其他参数
+          removeUrlParam('photoId');
         }}
         onBackLocation={(location: any) => {
           if (location) {

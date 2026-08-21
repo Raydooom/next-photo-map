@@ -9,11 +9,11 @@ import {
 } from 'react-photo-album';
 import InfiniteScroll from 'react-photo-album/scroll';
 import 'react-photo-album/rows.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Spinner } from '@heroui/spinner';
 import { PhotoPreview } from './common/PhotoPreview';
-import { replaceUrl } from '@/utils/url';
+import { removeUrlParam, setUrlParam } from '@/utils/url';
 
 interface AlbumPhoto extends Photo {
   item: PhotoItem;
@@ -75,26 +75,47 @@ export default function MasonryGrid({
     if (!isInfinite) setAccumulated(items);
   }, [items, isInfinite]);
 
+  /**
+   * 地址栏带 photoId 时自动打开查看器，只在首次生效。
+   *
+   * 不能让它持续跟随 photoId：关闭时是用 history.replaceState 清理地址栏的，
+   * 而 useSearchParams 不会响应那类改动，读到的仍是旧的 photoId。
+   * 若这个 effect 一直生效，关闭动作把 previewId 置空反而会触发它重新打开，
+   * 弹窗就永远关不掉 —— 之前正是如此。
+   *
+   * 目标照片可能还在后面的分页里，故 accumulated 增长时继续尝试，
+   * 命中之后才置上标记。
+   */
+  const hasAppliedUrlPhotoId = useRef(false);
+
   useEffect(() => {
-    if (!photoId || photoId === String(previewId)) return;
+    if (hasAppliedUrlPhotoId.current) return;
+
+    if (!photoId) {
+      hasAppliedUrlPhotoId.current = true;
+      return;
+    }
+
     if (accumulated.some((item) => item.id === Number(photoId))) {
       setPreviewId(Number(photoId));
       setIsOpen(true);
+      hasAppliedUrlPhotoId.current = true;
     }
-  }, [photoId, previewId, accumulated]);
+  }, [photoId, accumulated]);
 
   const initialAlbumPhotos = useMemo(() => items.map(toAlbumPhoto), [items]);
 
   const openPreview = useCallback((id: number) => {
     setPreviewId(id);
     setIsOpen(true);
-    replaceUrl(`${window.location.pathname}?photoId=${id}`);
+    setUrlParam('photoId', String(id));
   }, []);
 
   const handleClosePreview = useCallback(() => {
     setPreviewId(undefined);
     setIsOpen(false);
-    replaceUrl(window.location.pathname);
+    // 只摘掉 photoId，保留地址栏上其他参数
+    removeUrlParam('photoId');
   }, []);
 
   const renderImage = useCallback(
