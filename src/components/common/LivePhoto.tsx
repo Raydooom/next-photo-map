@@ -12,7 +12,8 @@ export const LivePhoto = ({
   photoInfo,
   imageFit = 'contain',
   disableLive = false,
-  sizeClassName
+  sizeClassName,
+  frameClassName
 }: {
   photoInfo: PhotoItem;
   imageFit?: 'contain' | 'cover';
@@ -25,6 +26,15 @@ export const LivePhoto = ({
    * 此时百分比上限无从解析会被浏览器忽略，大图便会溢出。
    */
   sizeClassName?: string;
+  /**
+   * 画面框的附加样式，用于描边与投影这类作用在照片轮廓上的效果。
+   *
+   * 之所以不并进 sizeClassName 挂到图片上：那里是 heroui 的 Image，
+   * 内部会用 tailwind-variants 合并类名，shadow 之类容易被它自己的
+   * 规则消掉；而画面框是本组件的原生 div，尺寸又恰好等于照片，
+   * 效果落在它身上更可靠。
+   */
+  frameClassName?: string;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -61,7 +71,13 @@ export const LivePhoto = ({
           因此框的尺寸就是照片的实际显示尺寸，不依赖数据库里的宽高 ——
           那份数据可能与图片方向不一致（历史记录未按 EXIF 方向校正）。
           叠加层用 inset-0 拉伸到框的四边，与照片严格对齐。 */}
-      <div className={clsx('relative', isCover ? 'h-full w-full' : 'w-fit')}>
+      <div
+        className={clsx(
+          'relative',
+          isCover ? 'h-full w-full' : 'w-fit',
+          frameClassName
+        )}
+      >
         <Image
           removeWrapper
           radius="none"

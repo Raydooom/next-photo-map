@@ -3,7 +3,7 @@
 import { PhotoItem } from '@/types';
 import { useCallback } from 'react';
 import { getPhotoList } from '@/server/actions';
-import MasonryGrid from './MasonryGrid';
+import MasonryGrid from '../MasonryGrid';
 
 interface InfinitePhotoGridProps {
   initialItems: PhotoItem[];
@@ -21,12 +21,14 @@ export default function InfinitePhotoGrid({
   // 分页获取下一页照片（第 1 页为 initialItems，从第 2 页开始请求）
   const fetchPage = useCallback(
     async (page: number): Promise<PhotoItem[]> => {
-      // 与首屏保持一致：卡片悬浮信息依赖地点与 EXIF
+      // 与首屏保持一致：卡片悬浮信息依赖地点与 EXIF，
+      // 查看器的信息面板还要标签，三者齐备后面板不必再请求详情
       const { list } = await getPhotoList({
         page,
         pageSize,
         withLocation: true,
-        withExif: true
+        withExif: true,
+        withAiAnalysis: true
       });
       return list as PhotoItem[];
     },

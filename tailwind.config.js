@@ -44,7 +44,9 @@ const config = {
           danger: 'oklch(var(--lab-danger) / <alpha-value>)',
           'on-media': 'oklch(var(--lab-on-media) / <alpha-value>)',
           'on-media-muted': 'oklch(var(--lab-on-media-muted) / <alpha-value>)',
-          'accent-on-media': 'oklch(var(--lab-accent-on-media) / <alpha-value>)'
+          'accent-on-media':
+            'oklch(var(--lab-accent-on-media) / <alpha-value>)',
+          'viewer-ink': 'oklch(var(--lab-viewer-ink) / <alpha-value>)'
         }
       },
       borderRadius: {

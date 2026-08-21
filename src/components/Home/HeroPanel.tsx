@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { Eyebrow, LabButton, Typewriter } from '@/components/ui';
+import { Eyebrow, LabButton, TextFocus } from '@/components/ui';
 import { HeroCount } from './HeroCount';
 
 /**
@@ -138,19 +138,17 @@ export function HeroPanel({
         </div>
       </FadeUp>
 
-      {/* min-h 预留两行高度，避免逐字打出时容器高度跳动 */}
+      {/* min-h 预留两行高度，避免词逐个落定时容器高度跳动 */}
       <h1 className="lab-title mt-7 min-h-[2.1em] text-lab-on-media">
-        <Typewriter
+        <TextFocus
           text="Chasing light,"
           className="block"
           delay={T.titleLine1}
-          cursor
         />
-        <Typewriter
+        <TextFocus
           text="keeping time."
           className="block text-lab-accent-on-media"
           delay={T.titleLine2}
-          cursor
         />
       </h1>
 
@@ -179,7 +177,7 @@ export function HeroPanel({
         </LabButton>
         <LabButton
           href="/footprint"
-          className="border-lab-on-media/40 text-lab-on-media hover:border-lab-on-media hover:text-lab-on-media"
+          variant="media"
           endContent={<ArrowUpRight className="h-3.5 w-3.5" />}
         >
           足迹地图
