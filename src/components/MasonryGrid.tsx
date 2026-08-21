@@ -1,7 +1,7 @@
 'use client';
 
 import { PhotoItem } from '@/types';
-import { PhotoCard } from './PhotoCard';
+import { PhotoCard } from './PhotoMasonry/PhotoCard';
 import {
   RowsPhotoAlbum,
   type Photo,
@@ -12,7 +12,7 @@ import 'react-photo-album/rows.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Spinner } from '@heroui/spinner';
-import { PhotoPreview } from '../common/PhotoPreview';
+import { PhotoPreview } from './common/PhotoPreview';
 import { replaceUrl } from '@/utils/url';
 
 interface AlbumPhoto extends Photo {

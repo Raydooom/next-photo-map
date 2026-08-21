@@ -92,7 +92,7 @@ export const formatAltitude = (altitude?: number | null) => {
   if (altitude === undefined || altitude === null) {
     return '';
   }
-  return `约 ${altitude.toFixed(2)} 米`;
+  return `海拔约 ${altitude.toFixed(2)} 米`;
 };
 
 export const formatDateCN = (datetime?: string | null) => {

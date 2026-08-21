@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 import { PhotoItem } from '@/types';
-import MasonryGrid from '../PhotoMasonry/MasonryGrid';
+import MasonryGrid from '../MasonryGrid';
 import { LabButton, SectionHeading } from '@/components/ui';
 
 interface RecentlyProps {

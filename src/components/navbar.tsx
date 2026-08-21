@@ -33,12 +33,16 @@ export const Navbar = ({ className }: { className?: string }) => {
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
       className={clsx(
-        // 贴顶通栏：直角、仅靠 1px 底边与内容分隔
-        'border-b border-lab-line',
-        // 背景交由 .nav-veil 的两层伪元素承担，故自身透明；
-        // 同时关掉 HeroUI 自带的模糊，避免与遮罩层叠加
-        'nav-veil bg-black/30',
-        'backdrop-blur-xs',
+        // 贴顶通栏，直角。
+        // 亮色靠投影交代层级，不再画底边 —— 白底之上边线与投影并存会显得双重分隔；
+        // 暗色的投影落在深底上几乎不可见，仍用 1px 底边分隔
+        'dark:border-b dark:border-lab-line',
+        'shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-10px_rgba(0,0,0,0.10)]',
+        'dark:shadow-none',
+        // 底色与模糊交由 .nav-veil 的两层伪元素承担。
+        // 那层黑罩只在暗色需要：它用来压暗条纹缝隙里透出的内容，
+        // 亮色下会把白底染成灰的（原先整条导航发灰就是这个原因）
+        'nav-veil dark:bg-black/30',
         className
       )}
       classNames={{
