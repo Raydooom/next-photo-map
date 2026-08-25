@@ -44,6 +44,10 @@ const config = {
           danger: 'oklch(var(--lab-danger) / <alpha-value>)',
           'on-media': 'oklch(var(--lab-on-media) / <alpha-value>)',
           'on-media-muted': 'oklch(var(--lab-on-media-muted) / <alpha-value>)',
+          // 压在媒体之上的深底，与 on-media（白前景）配成底/字一组
+          'ink-on-media': 'oklch(var(--lab-ink-on-media) / <alpha-value>)',
+          // 强调色实底，两个主题同值，承载白色前景
+          'accent-solid': 'oklch(var(--lab-accent-solid) / <alpha-value>)',
           'accent-on-media':
             'oklch(var(--lab-accent-on-media) / <alpha-value>)',
           'viewer-ink': 'oklch(var(--lab-viewer-ink) / <alpha-value>)'

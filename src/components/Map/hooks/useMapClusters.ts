@@ -26,7 +26,7 @@ export const useMapClusters = (
 
     const uniqueMap = new Map();
 
-    features.forEach(f => {
+    features.forEach((f) => {
       const data = JSON.parse(f.properties?.data || '{}');
 
       // 为聚合点和单点生成不同的前缀，防止 ID 碰撞
@@ -61,7 +61,15 @@ export const useMapClusters = (
           },
           cluster: true,
           clusterMaxZoom: config?.clusterMaxZoom || 17,
-          clusterRadius: config?.clusterRadius || 50
+          clusterRadius: config?.clusterRadius || 50,
+          clusterProperties: {
+            /**
+             * 聚类内累加各坐标组的照片数。
+             * point_count 数的是"坐标组"，而单点标记显示的是该组的照片数，
+             * 两者语义不一致；累加出 photoCount 后，标记上的数字统一表示照片数。
+             */
+            photoCount: ['+', ['get', 'count']]
+          }
         });
       }
 

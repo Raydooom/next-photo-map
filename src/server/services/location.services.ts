@@ -42,14 +42,36 @@ export const locationService = {
 
   /**
    * 获取所有位置记录
+   *
+   * @param withThumb 一并取出所属照片的缩略图键与尺寸。
+   *   地图标记要显示照片本身，而位置表只有坐标与行政区。
+   *   与 select 互斥：给了 select 即为精确取字段，不再附加关联。
    */
-  getAllLocations: async (
-    { select = {} } = { select: {} }
-  ): Promise<Location[] | any> => {
+  getAllLocations: async ({
+    select = {},
+    withThumb = false
+  }: {
+    select?: Record<string, unknown>;
+    withThumb?: boolean;
+  } = {}): Promise<Location[] | any> => {
     // 判断对象是否为空
     const hasSelect = Object.keys(select).length > 0;
     return await prisma.location.findMany({
-      ...(hasSelect ? { select } : {})
+      ...(hasSelect ? { select } : {}),
+      ...(!hasSelect && withThumb
+        ? {
+            include: {
+              photo: {
+                select: {
+                  id: true,
+                  thumbSmallKey: true,
+                  width: true,
+                  height: true
+                }
+              }
+            }
+          }
+        : {})
     });
   },
 

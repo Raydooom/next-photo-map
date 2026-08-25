@@ -23,9 +23,10 @@ export const siteConfig = {
       meta: { icon: LayoutPanelTop, showTopBar: true }
     },
     {
-      label: 'Map',
+      label: 'Footprints',
       href: '/footprint',
-      meta: { icon: MapPinned }
+      // 挂上导航栏：它本身就是一个一级入口，有了站内导航就不必再浮一个返回按钮
+      meta: { icon: MapPinned, showTopBar: true }
     },
     {
       label: 'AIChat',
