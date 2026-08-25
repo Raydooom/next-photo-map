@@ -72,6 +72,8 @@ export default function Map({
   const [viewerPhotos, setViewerPhotos] = useState<PhotoItem[]>([]);
   const [viewerId, setViewerId] = useState<number | undefined>(undefined);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  /** 详情仍在路上：面板已就位，内部走取景动画 */
+  const [isViewerLoading, setIsViewerLoading] = useState(false);
 
   /**
    * 停留本页期间锁住文档滚动。
@@ -218,36 +220,63 @@ export default function Map({
    */
   const detailCacheRef = useRef<Record<string, PhotoItem[]>>({});
 
-  /** 取该点位的照片详情，打开全屏查看器 */
+  /**
+   * 取该点位的照片详情，打开全屏查看器。
+   *
+   * 面板在请求之前就立起来：点标记到照片出现之间有一次网络往返，
+   * 若等数据到齐才开，那段时间屏幕上毫无动静，点击像是没生效。
+   * 命中缓存时则一步到位，不闪那一下载入动画。
+   */
   const openViewer = useCallback(
     async (group: MapMarker, preferredId?: number) => {
       const photoIds = group.list.map((item) => item.photoId);
       if (photoIds.length === 0) return;
 
       const cacheKey = photoIds.join(',');
-      let detail = detailCacheRef.current[cacheKey];
+      const cached = detailCacheRef.current[cacheKey];
 
-      if (!detail) {
-        const fetched = (await Actions.getPhotoDetailBatch(
-          photoIds
-        )) as PhotoItem[];
-        // 失败或空结果不写缓存，留给下次点击重试
-        if (!fetched || fetched.length === 0) return;
-        detail = fetched;
-        detailCacheRef.current[cacheKey] = fetched;
+      const settle = (detail: PhotoItem[]) => {
+        const targetId = preferredId ?? detail[0].id;
+        setViewerPhotos(detail);
+        setViewerId(targetId);
+        setUrlParam('photoId', String(targetId));
+      };
+
+      if (cached) {
+        setIsViewerLoading(false);
+        settle(cached);
+        setIsViewerOpen(true);
+        return;
       }
 
-      const targetId = preferredId ?? detail[0].id;
-      setViewerPhotos(detail);
-      setViewerId(targetId);
+      // 先开空壳走载入动画，再去取数据
+      setViewerPhotos([]);
+      setViewerId(preferredId);
+      setIsViewerLoading(true);
       setIsViewerOpen(true);
-      setUrlParam('photoId', String(targetId));
+
+      const fetched = (await Actions.getPhotoDetailBatch(
+        photoIds
+      )) as PhotoItem[];
+
+      setIsViewerLoading(false);
+
+      // 失败或空结果不写缓存，也不留一个空面板在那儿
+      if (!fetched || fetched.length === 0) {
+        setIsViewerOpen(false);
+        return;
+      }
+
+      detailCacheRef.current[cacheKey] = fetched;
+      settle(fetched);
     },
     []
   );
 
   const closeViewer = useCallback(() => {
     setIsViewerOpen(false);
+    // 一并清掉载入态，否则下次开壳会先闪一下上次残留的动画
+    setIsViewerLoading(false);
     setViewerId(undefined);
     removeUrlParam('photoId');
   }, []);
@@ -353,34 +382,38 @@ export default function Map({
             ))}
         </div>
 
+        {/* 紧凑布局下抽屉的把手贴在底部，控件要抬到它上面去 */}
         <ViewSwitch
           value={view}
           onChange={setView}
-          className="absolute bottom-5 left-5 z-10"
+          className="absolute bottom-[68px] left-4 z-10 wide:bottom-5 wide:left-5"
         />
 
         <MapControls
           mapInstance={mapInstance}
-          className="absolute bottom-5 right-5 z-10"
+          className="absolute bottom-[68px] right-4 z-10 wide:bottom-5 wide:right-5"
         />
       </div>
 
-      {/* 侧栏：宽屏靠右竖排，紧凑布局下退到地图下方横铺 */}
-      <div className="h-[42dvh] shrink-0 wide:h-full wide:w-[300px]">
-        <TraceSidebar
-          stats={stats}
-          cityIndex={cityIndex}
-          activeCity={activeCity}
-          onSelectCity={selectCity}
-          layerVisibility={layerVisibility}
-          onToggleLayer={toggleLayer}
-        />
-      </div>
+      {/**
+       * 侧栏。宽屏靠右竖排，占住布局的一列；
+       * 紧凑布局下改成贴底的抽屉，脱离文档流浮在地图上 ——
+       * 地图因此能占满整个高度，而不必与侧栏对半分。
+       */}
+      <TraceSidebar
+        stats={stats}
+        cityIndex={cityIndex}
+        activeCity={activeCity}
+        onSelectCity={selectCity}
+        layerVisibility={layerVisibility}
+        onToggleLayer={toggleLayer}
+      />
 
       <TraceViewer
         photos={viewerPhotos}
         currentId={viewerId}
         isOpen={isViewerOpen}
+        isLoading={isViewerLoading}
         onClose={closeViewer}
         onSelect={handleViewerSelect}
       />

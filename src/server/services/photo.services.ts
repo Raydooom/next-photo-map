@@ -389,7 +389,9 @@ export class PhotoService {
       },
       include: {
         photoExif: true,
-        location: true
+        location: true,
+        // 与 getPhotoById 取齐：查看器要显示标签，缺了这个关联标签一直是空的
+        photoAiAnalysis: true
       }
     });
 
@@ -411,6 +413,7 @@ export class PhotoService {
       include?: {
         photoExif?: boolean;
         location?: boolean;
+        photoAiAnalysis?: boolean;
       };
     }>
   ) {
