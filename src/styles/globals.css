@@ -128,6 +128,18 @@
     --lab-on-media: 1 0 0;
     --lab-on-media-muted: 0.82 0.005 250;
     --lab-accent-on-media: 0.7 0.17 255;
+    /* 压在媒体之上的深底，承载 on-media 的白色前景（地图标记、角标） */
+    --lab-ink-on-media: 0.145 0.012 250;
+    /**
+     * 强调色实底，两个主题同值，专门承载白色前景。
+     *
+     * --lab-accent 是为各自主题的页面底色调过的：亮色 0.48（深蓝）、
+     * 暗色 0.7（亮蓝）。落到地图上这两个值都不合用 —— 暗色那支太亮，
+     * 配白字只有 3:1；而地图底色与页面底色也不是一回事。
+     * 取中间的 0.5：配白字约 5.5:1，同时与亮色地图（0.975）和
+     * 暗色地图（0.145）都拉开足够明度差，一个值管两种模式。
+     */
+    --lab-accent-solid: 0.5 0.19 258;
 
     /* 字体族：拉丁字形由自托管字体承担，中文回退到系统字体 */
     --font-sans:
@@ -199,6 +211,8 @@
     --lab-on-media: 1 0 0;
     --lab-on-media-muted: 0.82 0.005 250;
     --lab-accent-on-media: 0.7 0.17 255;
+    --lab-ink-on-media: 0.145 0.012 250;
+    --lab-accent-solid: 0.5 0.19 258;
 
     /* 导航栏斜纹（暗色）。深底上透出的模糊亮部呈发光感，可以更明显 */
     --nav-veil-stripe: 5px;
@@ -220,6 +234,21 @@ html {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.6);
   border-radius: 10px;
+}
+
+/*
+ * 隐去滚动条，但保留滚动能力。
+ * 用于内容本就该滚动、可滚动性由布局自身交代的区域（列表贴边裁切即是暗示），
+ * 不必再让一条轨道占据视觉。
+ * 写成 CSS 类而非 Tailwind 任意值：::-webkit-scrollbar 是伪元素，工具类写不了。
+ */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 旧版 Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 /* 区域足迹气泡弹窗：贴合应用玻璃/暗色主题 */
