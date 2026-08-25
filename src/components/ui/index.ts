@@ -6,3 +6,4 @@ export { FullscreenDialog } from './FullscreenDialog';
 export { SectionHeading } from './SectionHeading';
 export { StatCell } from './StatCell';
 export { Reveal, RevealGroup, RevealItem } from './Reveal';
+export { FocusLoader } from './FocusLoader';
