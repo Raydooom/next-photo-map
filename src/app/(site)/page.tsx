@@ -69,8 +69,7 @@ export default async function Home() {
       {/* 背景滚动照片复用最近拍摄的那批，不额外查询 */}
       <AiCallout photos={recently.list} />
 
-      {/* 页脚只出现在首页 —— 原先靠 siteConfig 里的 showFooter 标记控制，
-          现在由使用方直接引入，不必再让导航配置兼管布局 */}
+      {/* 页脚只出现在首页，故由页面自己引入，不放进 (site) 布局 */}
       <Footer />
     </div>
   );

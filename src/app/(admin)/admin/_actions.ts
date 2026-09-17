@@ -3,13 +3,10 @@
 import 'server-only';
 
 /**
- * 管理端的服务端操作入口，供 admin 下的客户端组件调用。
+ * 管理端操作入口。**每个导出都必须先 requireAdmin()。**
  *
- * 每个导出都必须先 requireAdmin()。
- *
- * 原因：`'use server'` 会把这里每个函数编译成一个可公开 POST 调用的端点，
- * 而 middleware 的 matcher 只覆盖页面路径 `/admin/:path*`，拦不住对 action
- * 端点的直接调用。少写一次校验，就等于把一个删除接口暴露在公网上。
+ * 'use server' 会把每个函数编译成可公开 POST 的端点，而 middleware 只覆盖
+ * 页面路径，拦不住直接调用 action。少写一次校验就等于把删除接口挂到公网上。
  */
 
 import { requireAdmin } from '@/server/auth';

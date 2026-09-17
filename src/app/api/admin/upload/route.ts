@@ -34,9 +34,8 @@ export async function POST(request: NextRequest) {
     // 保存所有媒体文件到 photos 目录
     const savedPaths: string[] = [];
     for (const file of files) {
-      // 正常上传的 File.name 只是文件名。一旦出现路径分隔符或 ..，
-      // 说明是构造过的请求，直接拒绝而不是静默改名 —— 后者会让上传结果
-      // 与用户预期不一致，也掩盖了攻击痕迹。
+      // File.name 正常只是文件名，出现路径成分即为构造过的请求。
+      // 直接拒绝而不静默改名，免得掩盖痕迹
       if (
         file.name !== path.basename(file.name) ||
         file.name.includes('..') ||

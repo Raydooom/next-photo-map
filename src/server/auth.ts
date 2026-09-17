@@ -6,14 +6,10 @@ import { cookies } from 'next/headers';
 export const ADMIN_COOKIE = 'admin_auth';
 
 /**
- * 校验当前请求是否具备管理端身份。
+ * 校验管理端身份。供 middleware 覆盖不到的入口使用（Server Action、API Route）。
  *
- * 注意：目前沿用 middleware 里的方案 —— cookie 值直接与 ADMIN_PASSWORD 比对。
- * 这个方案本身有缺陷（cookie 泄露等同密码泄露、无过期、无法单独吊销），
- * 但改成签名 token 需要配套的登录入口，属于独立改动。见 REFACTOR.md 0.3。
- *
- * 本模块的作用是让 middleware 之外的入口（Server Action、API Route）
- * 也能做同样的校验 —— middleware 的 matcher 覆盖不到它们。
+ * cookie 值直接与 ADMIN_PASSWORD 比对，有缺陷：泄露等同密码泄露、无过期、
+ * 无法单独吊销。改签名 token 需配套登录页，见 REFACTOR.md 0.3。
  */
 export async function isAdmin(): Promise<boolean> {
   // 开发环境放行，与 middleware 的行为保持一致

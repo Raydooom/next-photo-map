@@ -309,8 +309,7 @@ export class ScannerService {
       let aiAnalyzed = false;
       if (enableAI) {
         try {
-          // 直接使用刚创建的 photo 记录（包含 thumbLargeKey）
-          // 注意：不能用 getPhotoById，它会通过 transformPhoto 删除 key 字段
+          // 用刚创建的 photo 而非 getPhotoById —— 后者经 transformPhoto 会删掉 key 字段
           await this.aiService.createAiInfo(photo);
           aiAnalyzed = true;
           console.log(`AI 分析完成: ${fileName} (ID: ${photo.id})`);

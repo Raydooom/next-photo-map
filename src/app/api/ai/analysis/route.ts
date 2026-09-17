@@ -8,7 +8,6 @@ const aiService = new AIService();
 const photoService = new PhotoService();
 
 export async function GET(request: NextRequest) {
-  // middleware 的 matcher 覆盖不到 /api，必须在此自行校验
   const denied = await requireAdminResponse();
   if (denied) return denied;
 
