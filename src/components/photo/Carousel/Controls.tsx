@@ -1,5 +1,5 @@
 import React from 'react';
-import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '../Icons/button';
+import { CloseIcon, InfoIcon, LeftIcon, RightIcon } from '@/components/Icons/button';
 import { ControlsProps } from './types';
 
 export const Controls: React.FC<ControlsProps> = ({

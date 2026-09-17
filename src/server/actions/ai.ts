@@ -1,6 +1,6 @@
 'use server';
 
-import { AIService } from '../services/ai.services';
+import { AIService } from '@/server/ai/analysis.service';
 
 const aiService = new AIService();
 

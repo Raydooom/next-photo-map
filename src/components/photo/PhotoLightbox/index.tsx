@@ -8,14 +8,14 @@ import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import Image from 'next/image';
 import clsx from 'clsx';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import {
   formatExposureTime,
   formatFNumber,
   formatFocalLength,
   formatIso,
   formatTakenDate
-} from '@/utils/format';
+} from '@/lib/format';
 import { LivePhoto } from '../LivePhoto';
 import { Filmstrip } from './Filmstrip';
 import { IconButton } from './IconButton';

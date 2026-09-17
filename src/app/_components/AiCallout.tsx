@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { Eyebrow, LabButton, Reveal } from "@/components/ui";
-import { PhotoItem } from "@/types";
+import { PhotoItem } from "@/lib/types";
 import { PhotoTicker } from "./PhotoTicker";
 
 /** 提示的停留时长（毫秒），够读完一句话 */

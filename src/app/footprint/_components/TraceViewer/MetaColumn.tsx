@@ -3,9 +3,9 @@
 import { ReactNode } from 'react';
 import clsx from 'clsx';
 
-import { PhotoItem } from '@/types';
-import { formatTakenDate } from '@/utils/format';
-import { extractPhotoMeta, type ExposureKey } from '@/utils/photoMeta';
+import { PhotoItem } from '@/lib/types';
+import { formatTakenDate } from '@/lib/format';
+import { extractPhotoMeta, type ExposureKey } from '@/lib/photoMeta';
 import {
   ApertureIcon,
   ExposureTimeIcon,

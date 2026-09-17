@@ -56,12 +56,6 @@ export interface PhotoItem {
   updatedAt: string;
   tags?: string[] | null;
 }
-export interface PhotoDetail extends PhotoItem {
-  photoExif?: PhotoExif;
-  location?: PhotoLocation;
-  photoAiAnalysis?: PhotoAiAnalysis;
-}
-
 export interface PhotoLocation {
   id: number;
   photoId: number;

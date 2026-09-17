@@ -7,8 +7,8 @@ import type { EmblaCarouselType } from 'embla-carousel';
 import { motion, useReducedMotion } from 'motion/react';
 import clsx from 'clsx';
 
-import Carousel from '@/components/Carousel';
-import { PhotoItem } from '@/types';
+import Carousel from '@/components/photo/Carousel';
+import { PhotoItem } from '@/lib/types';
 import { HeroPanel } from './HeroPanel';
 import { HeroReadout } from './HeroReadout';
 import { HeroExif } from './HeroExif';

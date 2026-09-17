@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { ArrowRight } from 'lucide-react';
 
-import { PhotoItem } from '@/types';
-import MasonryGrid from '../../components/MasonryGrid';
+import { PhotoItem } from '@/lib/types';
+import MasonryGrid from '@/components/photo/MasonryGrid';
 import { LabButton, SectionHeading } from '@/components/ui';
 
 interface RecentlyProps {

@@ -1,8 +1,8 @@
 import Map from './_components/Map';
 import * as Actions from '@/server/actions/index';
-import { groupByLocation } from '@/components/Map/helper';
+import { groupByLocation } from '@/components/map/helper';
 import { Suspense } from 'react';
-import { MarkerPoint, PhotoLocation } from '@/types';
+import { MarkerPoint, PhotoLocation } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 /** 按城市聚合后的一条索引，供侧栏列表与飞行定位使用 */

@@ -9,12 +9,12 @@ import {
   formatLatLng,
   formatAltitude,
   formatTakenDate
-} from '@/utils/format';
+} from '@/lib/format';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import * as Actions from '@/server/actions/index';
 import { ExifTagList } from './ExifTag';
-import { SingleMarker } from '../Map';
+import { SingleMarker } from '@/components/map';
 import { Chip } from '@heroui/chip';
 
 const InfoRow = ({

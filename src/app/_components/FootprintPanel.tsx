@@ -1,7 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 
 import { LabButton, SectionHeading } from '@/components/ui';
-import { PhotoLocation } from '@/types';
+import { PhotoLocation } from '@/lib/types';
 import { FootprintExplorer } from './FootprintExplorer';
 import type { CityGroup } from './FootprintMap';
 

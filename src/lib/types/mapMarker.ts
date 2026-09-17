@@ -1,4 +1,4 @@
-import { PhotoLocation } from '@/types';
+import type { PhotoLocation } from './photo';
 
 type Longitude = number;
 type Latitude = number;

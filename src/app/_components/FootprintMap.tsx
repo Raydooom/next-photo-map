@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import { bbox, featureCollection, point as turfPoint } from '@turf/turf';
 
-import { useMapBase, getRegionBounds } from '@/components/Map';
+import { useMapBase, getRegionBounds } from '@/components/map';
 import { FootprintDot } from './FootprintDot';
 import { CityMarker } from './CityMarker';
 

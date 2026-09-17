@@ -4,7 +4,7 @@ import { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 
 import { siteConfig } from '@/config/site';
-import { LayoutWrapper } from '@/components/layout-wrapper';
+import { LayoutWrapper } from '@/components/layout/LayoutWrapper';
 import Script from 'next/script';
 
 export const metadata: Metadata = {

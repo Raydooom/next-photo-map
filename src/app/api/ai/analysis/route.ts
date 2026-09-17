@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AIService } from '@/server/services/ai.services';
-import { PhotoService } from '@/server/services/photo.services';
-import { createSSE } from '@/utils/request';
+import { AIService } from '@/server/ai/analysis.service';
+import { PhotoService } from '@/server/photo/photo.service';
+import { createSSE } from '@/server/sse';
 
 const aiService = new AIService();
 const photoService = new PhotoService();

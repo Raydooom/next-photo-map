@@ -1,4 +1,4 @@
-import { PhotoExif } from '@/types';
+import { PhotoExif } from '@/lib/types';
 import {
   ExposureTimeIcon,
   FocalLengthIcon,
@@ -10,7 +10,7 @@ import {
   formatFNumber,
   formatIso,
   formatFocalLength
-} from '@/utils/format';
+} from '@/lib/format';
 
 export const ExifTag = ({
   value,

@@ -1,4 +1,4 @@
-import { Prisma, prisma } from '../lib/db';
+import { Prisma, prisma } from '@/server/db';
 import type { Location } from '@prisma/client';
 
 /**

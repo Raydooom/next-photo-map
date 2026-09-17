@@ -1,9 +1,9 @@
 'use client';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import { useCallback } from 'react';
 import { getPhotoList } from '@/server/actions';
-import MasonryGrid from '../MasonryGrid';
+import MasonryGrid from '@/components/photo/MasonryGrid';
 
 interface InfinitePhotoGridProps {
   initialItems: PhotoItem[];

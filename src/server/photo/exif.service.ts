@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '../lib/db';
+import { prisma, Prisma } from '@/server/db';
 import type { PhotoExif } from '@prisma/client';
 
 /**

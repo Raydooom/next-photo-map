@@ -1,10 +1,10 @@
 'use server';
 
-import { ScannerService } from '../services/admin.services';
-import { PhotoService } from '../services/photo.services';
-import { photoExifService } from '../services/photoExif.services';
-import { locationService } from '../services/location.services';
-import { GeocodingService } from '../utils/geocoding';
+import { ScannerService } from '@/server/ingestion/scanner.service';
+import { PhotoService } from '@/server/photo/photo.service';
+import { photoExifService } from '@/server/photo/exif.service';
+import { locationService } from '@/server/photo/location.service';
+import { GeocodingService } from '@/server/ingestion/geocoding.service';
 
 const scannerService = new ScannerService();
 const photoService = new PhotoService();

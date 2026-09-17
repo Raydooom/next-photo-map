@@ -1,9 +1,9 @@
-import type { PhotoItem } from '@/types';
+import type { PhotoItem } from '@/lib/types';
 import { Image } from '@heroui/image';
 import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
-import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
+import LivePhotoIndicate from '@/components/photo/LivePhotoIndicate';
 
 // 与照片墙卡片共用同一个实况标记，避免两处样式各自漂移
 export { LivePhotoIndicate };

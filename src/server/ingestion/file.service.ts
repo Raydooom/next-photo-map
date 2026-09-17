@@ -2,7 +2,7 @@ import {
   uploadFileToMinio,
   deleteFileFromMinio,
   generateMinioKey
-} from '../lib/oss';
+} from '@/server/storage';
 
 export class FileManageService {
   private STORAGE_TYPE = 'minio';

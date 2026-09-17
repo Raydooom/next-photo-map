@@ -1,10 +1,10 @@
 'use client';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { memo, useRef, useState, useCallback } from 'react';
-import LivePhotoIndicate from '@/components/modules/LivePhotoIndicate';
+import LivePhotoIndicate from '@/components/photo/LivePhotoIndicate';
 import dayjs from 'dayjs';
 import {
   formatExposureTime,
@@ -12,9 +12,9 @@ import {
   formatFocalLength,
   formatIso,
   formatTakenDate
-} from '@/utils/format';
+} from '@/lib/format';
 import { motion } from 'motion/react';
-import { trailingFadeStyle } from '@/utils/mask';
+import { trailingFadeStyle } from '@/lib/mask';
 
 interface PhotoCardProps {
   data: PhotoItem;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import clsx from 'clsx';
-import { ExtendInfo } from '../modules/ExifInfo';
-import { PhotoItem } from '@/types';
+import { ExtendInfo } from '../ExifInfo';
+import { PhotoItem } from '@/lib/types';
 
 interface ExifOverlayProps {
   isVisible: boolean;

@@ -1,5 +1,5 @@
 import * as PhotoAction from '@/server/actions/index';
-import InfinitePhotoGrid from '@/components/PhotoMasonry/InfinitePhotoGrid';
+import InfinitePhotoGrid from './_components/InfinitePhotoGrid';
 import { Suspense } from 'react';
 export const dynamic = 'force-dynamic';
 

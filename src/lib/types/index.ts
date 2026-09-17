@@ -1,5 +1,4 @@
 export * from './photo';
-export * from './common';
 export * from './mapMarker';
 
 import { SVGProps } from 'react';

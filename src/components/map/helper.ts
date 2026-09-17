@@ -1,4 +1,4 @@
-import { PhotoLocation, MarkerPoint } from '@/types';
+import { PhotoLocation, MarkerPoint } from '@/lib/types';
 export interface GroupedLocation {
   point: MarkerPoint;
   list: PhotoLocation[];

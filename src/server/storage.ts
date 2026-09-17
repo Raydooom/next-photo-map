@@ -6,32 +6,18 @@ import {
   DeleteObjectCommand,
   HeadObjectCommand
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
-import { generateImageToken } from './image-token';
+import { generateImageToken } from '@/server/image-token';
 
 // ============ MinIO 客户端配置 ============
 
-// 内网地址（服务端上传使用）
+// 内网地址（服务端读写使用）。图片对外通过 /api/image 代理 + HMAC token 暴露，
+// 不再生成 presigned URL，因此不需要外网客户端。
 const INTERNAL_ENDPOINT =
   process.env.MINIO_INTERNAL_ENDPOINT || 'http://photo-map-minio:9000';
-// 外网地址（生成签名 URL 给前端使用）
-const EXTERNAL_ENDPOINT = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
 
-// 上传客户端（走内网）
 export const internalClient = new S3Client({
   endpoint: INTERNAL_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY || '',
-    secretAccessKey: process.env.MINIO_SECRET_KEY || ''
-  },
-  region: process.env.MINIO_REGION || '',
-  forcePathStyle: true
-});
-
-// 外网客户端（生成访问链接）
-const externalClient = new S3Client({
-  endpoint: EXTERNAL_ENDPOINT,
   credentials: {
     accessKeyId: process.env.MINIO_ACCESS_KEY || '',
     secretAccessKey: process.env.MINIO_SECRET_KEY || ''

@@ -1,7 +1,7 @@
 'use client';
 
-import { PhotoItem } from '@/types';
-import { PhotoCard } from './PhotoMasonry/PhotoCard';
+import { PhotoItem } from '@/lib/types';
+import { PhotoCard } from './PhotoCard';
 import {
   RowsPhotoAlbum,
   type Photo,
@@ -12,8 +12,8 @@ import 'react-photo-album/rows.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Spinner } from '@heroui/spinner';
-import { PhotoPreview } from './common/PhotoPreview';
-import { removeUrlParam, setUrlParam } from '@/utils/url';
+import { PhotoPreview } from './PhotoPreview';
+import { removeUrlParam, setUrlParam } from '@/lib/url';
 
 interface AlbumPhoto extends Photo {
   item: PhotoItem;

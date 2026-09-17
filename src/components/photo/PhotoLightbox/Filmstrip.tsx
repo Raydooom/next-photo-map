@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import clsx from 'clsx';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 
 /**
  * 缩略图高度固定，宽度由照片自身的宽高比推出。

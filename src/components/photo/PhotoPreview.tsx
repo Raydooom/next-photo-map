@@ -1,8 +1,8 @@
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import { FullscreenDialog } from '@/components/ui';
 import { PhotoLightbox } from './PhotoLightbox';
 import { useCallback } from 'react';
-import { readUrlParam, setUrlParam } from '@/utils/url';
+import { readUrlParam, setUrlParam } from '@/lib/url';
 
 export function PhotoPreview({
   list,
