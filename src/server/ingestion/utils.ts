@@ -20,9 +20,7 @@ export function getMimeType(filePath: string): string {
   }
 }
 
-/**
- * 将方位角转换为中文朝向 (16方位)
- */
+/** 方位角转中文朝向（16 方位） */
 export function getDirectionFromBearing(bearing: number): string {
   const normalized = ((bearing % 360) + 360) % 360;
   const directions = [

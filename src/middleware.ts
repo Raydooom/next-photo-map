@@ -2,13 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * 管理端访问控制。
+ * 管理端访问控制，覆盖页面与 /api 下的管理接口。
  *
- * 覆盖范围除页面外还包括 /api/admin 与 /api/ai —— 之前 matcher 只写了
- * '/admin/:path*'，而真正执行操作的接口在 /api 下，完全没有经过校验。
- *
- * 注意 middleware 只是第一道防线：Server Action 不走 middleware，
- * 因此 app/admin/_actions.ts 里每个导出都还要自行调 requireAdmin()。
+ * 只是第一道防线：Server Action 不走 middleware，
+ * 故 (admin)/admin/_actions.ts 里每个导出仍需自行 requireAdmin()。
  */
 export function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== 'production') {

@@ -11,10 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { generateImageToken } from '@/server/infra/image-token';
 
-// ============ MinIO 客户端配置 ============
-
-// 内网地址（服务端读写使用）。图片对外通过 /api/image 代理 + HMAC token 暴露，
-// 不再生成 presigned URL，因此不需要外网客户端。
+// 只需内网客户端：图片对外走 /api/image 代理 + HMAC token，不生成 presigned URL
 const INTERNAL_ENDPOINT =
   process.env.MINIO_INTERNAL_ENDPOINT || 'http://photo-map-minio:9000';
 

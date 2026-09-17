@@ -90,11 +90,8 @@ export const locationService = {
   },
 
   /**
-   * 获取所有位置记录，并把缩略图的存储键换成带签名的可访问地址。
-   *
-   * 签名在服务端完成，存储键不外泄。原先这段转换写在 Server Action 里，
-   * 导致 Server Component 想直接取数据就必须绕经 action —— 转换属于数据
-   * 组装的一部分，应该由 service 负责。
+   * 获取所有位置记录，并把缩略图存储键换成带签名的可访问地址。
+   * 签名在服务端完成，存储键不外泄。
    */
   listLocations: async ({
     select = {},

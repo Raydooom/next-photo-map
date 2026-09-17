@@ -2,11 +2,9 @@ import { Navbar } from '@/components/layout/Navbar';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 
 /**
- * 带导航栏的公开页面布局。
- * 直接用根 layout 即可，不需要导航栏。
+ * 带导航栏的公开页面布局。/chat 自带 ChatHeader，用根 layout，不在这组。
  *
- * min-h-screen + flex flex-col 与原 LayoutWrapper 保持一致 ——
- * footprint 页针对 100vh 与 100dvh 的差异做了滚动锁，依赖这个结构。
+ * min-h-screen 不能去掉：footprint 页针对 100vh 与 100dvh 的差异做了滚动锁。
  */
 export default function SiteLayout({
   children

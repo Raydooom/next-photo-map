@@ -3,20 +3,12 @@
 import 'server-only';
 
 /**
- * 公开数据的读取入口，供**客户端组件**调用。
+ * 公开数据的读取入口，只供客户端组件调用 —— 它们跑在浏览器里，没有别的
+ * 途径访问数据库。Server Component 与 service 同进程，应直接调 service：
+ * 每个 'use server' 导出都会变成一个可公开 POST 的端点，白经过这里只是
+ * 多暴露一个端点、多一层序列化。
  *
- * 为什么只放这些：`'use server'` 导出的每个函数都会被编译成一个可公开
- * POST 调用的端点。Server Component 与 service 同进程，直接调 service 即可，
- * 经过这里只是多暴露一个端点、多一层序列化。所以这里只保留客户端组件
- * 确实需要的查询 —— 它们运行在浏览器里，没有别的途径访问数据库。
- *
- * 调用方：
- * - app/photos/_components/InfinitePhotoGrid.tsx  滚动加载下一页
- * - components/photo/ExifInfo.tsx                 点开照片后拉取 EXIF
- * - app/footprint/_components/Map.tsx             点击地图点位取照片
- *
- * 这里全部是公开数据，不需要鉴权。管理端的写操作在
- * app/admin/photos/_actions.ts，那边每个都必须校验身份。
+ * 全是公开数据，无需鉴权。管理端写操作在 (admin)/admin/_actions.ts。
  */
 
 import { PhotoService } from '@/server/photo/photo.service';
