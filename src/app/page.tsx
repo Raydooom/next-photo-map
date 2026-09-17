@@ -1,9 +1,9 @@
 import * as Actions from '@/server/actions';
-import { HeroCanvas } from '@/components/Home/HeroCanvas';
-import { StatsGrid } from '@/components/Home/StatsGrid';
-import { Recently } from '@/components/Home/Recently';
-import { FootprintPanel } from '@/components/Home/FootprintPanel';
-import { AiCallout } from '@/components/Home/AiCallout';
+import { HeroCanvas } from '@/app/_components/HeroCanvas';
+import { StatsGrid } from '@/app/_components/StatsGrid';
+import { Recently } from '@/app/_components/Recently';
+import { FootprintPanel } from '@/app/_components/FootprintPanel';
+import { AiCallout } from '@/app/_components/AiCallout';
 import { PhotoLocation } from '@/types';
 
 export const dynamic = 'force-dynamic';
