@@ -17,9 +17,6 @@ import { createLogger } from '@/server/infra/logger';
 import { FileGroup, scanImageGroups } from '@/server/ingestion/photo-files';
 import { AIService } from '@/server/ai/analysis.service';
 
-/**
- * 照片处理结果
- */
 export interface PhotoProcessResult {
   success: boolean;
   photoId?: number;
@@ -28,9 +25,6 @@ export interface PhotoProcessResult {
   error?: string;
 }
 
-/**
- * 照片处理选项
- */
 export interface PhotoProcessOptions {
   imagePath: string;
   videoPath?: string | null;
@@ -73,9 +67,7 @@ export class ScannerService {
     this.progressCallback?.({ type, message, data });
   }
 
-  /**
-   * 获取 Sharp 实例，对于 HEIC 文件会先进行转换
-   */
+  /** HEIC 需先转 JPEG —— heic-convert 是纯 JS 实现，会阻塞事件循环 */
   static async getSharpInstance(
     buffer: Buffer,
     ext: string
@@ -96,9 +88,6 @@ export class ScannerService {
     return sharp(buffer);
   }
 
-  /**
-   * 生成缩略图
-   */
   static async generateThumbnails(
     fileBuffer: Buffer,
     ext: string
@@ -134,9 +123,6 @@ export class ScannerService {
     };
   }
 
-  /**
-   * 获取文件主色调
-   */
   static async getDominantColor(fileBuffer: Buffer): Promise<string | null> {
     try {
       const { data } = await sharp(fileBuffer)
@@ -154,9 +140,6 @@ export class ScannerService {
     }
   }
 
-  /**
-   * 读取 EXIF 元数据
-   */
   static async readExifData(fileBuffer: Buffer, imagePath: string) {
     const stats = fs.statSync(imagePath);
     let takenAt = stats.birthtime;
@@ -182,10 +165,7 @@ export class ScannerService {
     return { exifData, takenAt };
   }
 
-  /**
-   * 处理单张照片（入库 + 可选 AI 分析）
-   * 这是核心的照片处理方法，可被扫描和上传功能复用
-   */
+  /** 单张照片的处理流水线，扫描与上传共用 */
   async processPhoto(
     options: PhotoProcessOptions
   ): Promise<PhotoProcessResult> {
@@ -333,9 +313,6 @@ export class ScannerService {
     }
   }
 
-  /**
-   * 保存 EXIF 数据到数据库
-   */
   private async saveExifData(photoId: number, exifData: any) {
     let exposureTimeStr = null;
     if (exifData.ExposureTime) {
@@ -436,10 +413,7 @@ export class ScannerService {
     }
   }
 
-  /**
-   * 开始扫描目录
-   * @param force 是否强制重新扫描
-   */
+  /** force 为真时全量重扫，否则跳过已入库的 */
   async startScanner(force: boolean = false) {
     this.scanStartTime = Date.now();
     this.successCount = 0;
@@ -532,9 +506,6 @@ export class ScannerService {
     };
   }
 
-  /**
-   * 处理单个文件组（用于扫描流程）
-   */
   private async processGroup(
     group: FileGroup,
     force: boolean,

@@ -7,9 +7,6 @@ import type { PhotoExif } from '@prisma/client';
  * 照片EXIF服务 - 提供 photoExif 数据表的增删改查操作
  */
 export const photoExifService = {
-  /**
-   * 创建EXIF记录
-   */
   savePhotoExif: async (photoId: number, exifData: any) => {
     return await prisma.photoExif.upsert({
       where: { photoId },
@@ -25,9 +22,6 @@ export const photoExifService = {
     });
   },
 
-  /**
-   * 根据 ID 获取EXIF记录
-   */
   getPhotoExifById: async (id: number): Promise<PhotoExif | null> => {
     return await prisma.photoExif.findUnique({
       where: { id }
@@ -55,9 +49,6 @@ export const photoExifService = {
     return null;
   },
 
-  /**
-   * 获取所有EXIF记录
-   */
   getAllPhotoExif: async (): Promise<PhotoExif[]> => {
     return await prisma.photoExif.findMany();
   },

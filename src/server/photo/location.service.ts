@@ -19,9 +19,6 @@ interface LocationWithThumb {
  * 位置服务 - 提供 location 数据表的增删改查操作
  */
 export const locationService = {
-  /**
-   * 创建位置记录
-   */
   saveLocation: async (photoId: number, location: any) => {
     return await prisma.location.upsert({
       where: { photoId },
@@ -36,9 +33,6 @@ export const locationService = {
       }
     });
   },
-  /**
-   * 根据 ID 获取位置记录
-   */
   getLocationById: async (id: number): Promise<Location | null> => {
     return await prisma.location.findUnique({
       where: { id }
@@ -119,9 +113,6 @@ export const locationService = {
     );
   },
 
-  /**
-   * 根据地理范围查询位置
-   */
   getLocationsByGeoRange: async (
     minLat: number,
     maxLat: number,
@@ -142,9 +133,6 @@ export const locationService = {
     });
   },
 
-  /**
-   * 删除位置记录
-   */
   deleteLocation: async (id: number): Promise<Location> => {
     return await prisma.location.delete({
       where: { id }
@@ -160,9 +148,6 @@ export const locationService = {
     });
   },
 
-  /**
-   * 统计位置数量
-   */
   countLocations: async (): Promise<number> => {
     return await prisma.location.count();
   }

@@ -26,21 +26,14 @@ export class PhotoService {
   constructor(appUrl?: string) {
     this.appUrl = appUrl || process.env.APP_URL || '';
   }
-  /**
-   * 查询照片是否存在
-   * @param originalPath 照片原始路径
-   */
+
   async checkPhotoExists(originalPath: string) {
     return prisma.photo.findUnique({
       where: { originalPath }
     });
   }
 
-  /**
-   * 批量查询已存在的照片路径
-   * @param originalPaths 照片原始路径列表
-   * @returns 已存在的路径集合
-   */
+  /** 批量查询，返回已存在的路径集合 */
   async findExistingPaths(originalPaths: string[]): Promise<Set<string>> {
     if (originalPaths.length === 0) return new Set();
 
@@ -51,16 +44,11 @@ export class PhotoService {
 
     return new Set(existing.map((p) => p.originalPath));
   }
-  /**
-   * 获取所有照片数量
-   */
   async countAllPhotos() {
     return prisma.photo.count();
   }
 
-  /**
-   * 获取所有照片列表（用于管理后台）
-   */
+  /** 全量查询，仅供管理后台使用 */
   async getAllPhotos() {
     return prisma.photo.findMany({
       orderBy: { takenAt: 'desc' },
@@ -82,9 +70,7 @@ export class PhotoService {
     });
   }
 
-  /**
-   * 检查照片文件是否存在于 MinIO
-   */
+  /** 检查文件是否存在于 MinIO */
   async checkFileExists(
     photo: Prisma.PhotoGetPayload<{
       include: { photoExif?: boolean; location?: boolean };
@@ -98,9 +84,7 @@ export class PhotoService {
     return { exists, key };
   }
 
-  /**
-   * 批量检查文件是否存在于 MinIO
-   */
+  /** 批量检查。注意未限制并发，照片多时会同时打出大量 HeadObject 请求 */
   async batchCheckFileExists(
     photos: Prisma.PhotoGetPayload<{
       include: {
@@ -122,9 +106,7 @@ export class PhotoService {
     );
   }
 
-  /**
-   * 清理源文件已丢失的照片记录
-   */
+  /** 清理源文件已丢失的照片记录 */
   async deleteMissingPhotos() {
     const photos = await this.getAllPhotos();
     const photosWithStatus = await this.batchCheckFileExists(photos);
@@ -149,9 +131,7 @@ export class PhotoService {
     };
   }
 
-  /**
-   * 删除照片（包括数据库记录和存储文件）
-   */
+  /** 删除照片，连带 MinIO 对象与 photos 目录下的源文件，不可恢复 */
   async deletePhoto(id: number) {
     const photo = await prisma.photo.findUnique({
       where: { id },
@@ -244,21 +224,13 @@ export class PhotoService {
       }
     }
   }
-  /**
-   * 创建照片照片
-   * @param photos 照片数据
-   */
+
   async createPhoto(photo: Prisma.PhotoCreateManyInput) {
     return prisma.photo.create({
       data: photo
     });
   }
 
-  /**
-   * 更新照片置顶状态
-   * @param id 照片ID
-   * @param top 是否置顶
-   */
   async updatePhotoTop(id: number, top: boolean) {
     return prisma.photo.update({
       where: { id },
@@ -266,24 +238,13 @@ export class PhotoService {
     });
   }
 
-  /**
-   * 更新照片照片
-   * @param photo 照片数据
-   */
   async updatePhoto(photo: Prisma.PhotoUpdateInput, id: number) {
     return prisma.photo.update({
       where: { id },
       data: photo
     });
   }
-  /**
-   * 获取照片列表
-   * @param page 页码
-   * @param pageSize 每页数量
-   * @param keyword 搜索关键词
-   * @param select 可选的字段选择
-   * @param ids 照片ID列表
-   */
+  /** 分页查询。关联表按需 include，避免默认带出两个 rawData 大字段 */
 
   async listPhotos({
     page = 1,
@@ -340,10 +301,6 @@ export class PhotoService {
     return { total, list: transformedList };
   }
 
-  /**
-   * 获取单张照片详情
-   * @param id 照片ID
-   */
   async getPhotoById(id: number) {
     const photo = await prisma.photo.findUnique({
       where: { id },
@@ -359,19 +316,12 @@ export class PhotoService {
     return await this.transformPhoto(photo);
   }
 
-  /**
-   * 获取照片的 EXIF 信息
-   * @param photoId 照片ID
-   */
   async getExifByPhotoId(photoId: number) {
     return prisma.photoExif.findUnique({
       where: { photoId }
     });
   }
 
-  /**
-   * 获取指定地理范围内的照片
-   */
   async getPhotosInBounds(
     minLat: number,
     maxLat: number,
@@ -404,9 +354,6 @@ export class PhotoService {
     return photos.map((photo) => this.transformPhoto(photo));
   }
 
-  /**
-   * 批量获取照片详情
-   */
   async getPhotosByIds(ids: number[]) {
     if (ids.length === 0) {
       return [];
