@@ -9,9 +9,6 @@ import {
 export class FileManageService {
   private STORAGE_TYPE = 'minio';
   constructor() {}
-  /**
-   * 上传文件
-   */
   async uploadFile({
     date,
     fileName,
@@ -37,9 +34,6 @@ export class FileManageService {
       };
     }
   }
-  /**
-   * 删除文件
-   */
   async deleteFile(key: string) {
     return await deleteFileFromMinio(key);
   }

@@ -14,9 +14,8 @@ import {
 } from './layerGroups';
 
 /**
- * 抽屉把手的高度。
- * 与收起时的位移量 calc(100%-48px) 以及地图控件的避让距离 bottom-[68px]
- * 是同一个数，改动时三处要一起。
+ * 抽屉把手的高度。与收起时的位移量 calc(100%-48px)、地图控件的避让距离
+ * bottom-[68px] 是同一个数，改动时三处要一起。
  */
 const HANDLE_H = 48;
 
@@ -57,14 +56,9 @@ function CityRow({ item, isActive, onSelect }: CityRowProps) {
       aria-pressed={isActive}
       className={clsx(
         'flex w-full cursor-pointer items-center justify-between gap-3 px-2',
-        /**
-         * 行高分两档：紧凑布局（手机、竖屏平板）留足 44px 的触摸目标，
-         * 宽屏用鼠标，压到 32px。城市会越来越多，桌面上多挤进一行
-         * 就少一次滚动。
-         */
+        // 行高分两档：紧凑布局留足 44px 触摸目标，宽屏用鼠标压到 32px
         'min-h-11 wide:min-h-8',
-        // 不再逐行画分隔线：行本身已按基线成列，一行一条线只是多出来的墨，
-        // 十几个城市叠起来会读成一张表格。区分靠悬停与选中态即可。
+        // 不画逐行分隔线：十几个城市叠起来会读成一张表格，区分靠悬停与选中态
         'text-left transition-colors',
         'hover:bg-lab-paper/5',
         'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-lab-accent',
@@ -92,16 +86,13 @@ function CityRow({ item, isActive, onSelect }: CityRowProps) {
 }
 
 /**
- * 一项图层开关。
+ * 一项图层开关。仍用原生 checkbox（键盘与读屏行为白拿）但收进 sr-only，
+ * 外观交给紧随其后的方框自己画。
  *
- * 仍是原生 checkbox（键盘与读屏的行为白拿），但把它收进 sr-only，
- * 外观交给紧跟其后的方框自己画。不用系统外观是因为本站没有声明
- * color-scheme，暗色主题下系统按亮色渲染，未选中态会是个白底灰边的实块，
- * 与周围格格不入；也没有去加全局的 color-scheme，那会一并改掉全站
- * 所有原生控件，为一个开关牵动的面太大。
+ * 不用系统外观：本站未声明 color-scheme，暗色下系统按亮色渲染，未选中态
+ * 会是个白底灰边的实块。也不加全局 color-scheme —— 那会改掉全站原生控件。
  *
- * 选中态画对勾而非填满整格：纯色块认不出是勾选框，只像一枚色标。
- * 框放到 16px 才容得下这一笔。
+ * 选中态画对勾而非填满：纯色块只像一枚色标。框放到 16px 才容得下这一笔。
  */
 function LayerToggle({
   label,
@@ -122,11 +113,8 @@ function LayerToggle({
       />
 
       {/**
-       * 视觉方框。
-       *
-       * 对勾的显隐由这一层的文字色控制，而不是给 svg 自己挂 peer-checked ——
-       * peer-* 走的是兄弟选择器，svg 在框内部并非 input 的兄弟，挂上去不生效。
-       * 让框继承状态、勾取 currentColor，一处状态两处受用。
+       * 视觉方框。对勾的显隐由这一层的文字色控制，而非给 svg 挂 peer-checked ——
+       * peer-* 是兄弟选择器，svg 在框内部并非 input 的兄弟，挂上去不生效。
        */}
       <span
         className={clsx(
@@ -167,14 +155,10 @@ interface TraceSidebarProps {
 }
 
 /**
- * 足迹侧栏：概览、城市索引与图层开关。
+ * 足迹侧栏：概览、城市索引与图层开关。放右侧与首页的足迹面板保持一致。
  *
- * 放在右侧而非左侧：地图是内容载体，视线从左上进入应先落在地图上，
- * 索引与筛选属于工具，退居右侧；首页的足迹面板也是浮在地图右侧，
- * 两处的空间关系保持一致。
- *
- * 这里的图层开关只调底图内容的疏密（地名、路网、街道标注）。
- * 点位与区县是两种互斥的读图方式，切换控件在地图上，不在这份工具栏里。
+ * 这里的开关只调底图内容的疏密（地名、路网、街道标注）。点位与区县是两种
+ * 互斥的读图方式，切换控件在地图上，不在这份工具栏里。
  */
 export function TraceSidebar({
   stats,
@@ -184,10 +168,7 @@ export function TraceSidebar({
   layerVisibility,
   onToggleLayer
 }: TraceSidebarProps) {
-  /**
-   * 抽屉的展开状态，只在紧凑布局下起作用。
-   * 宽屏侧栏是常驻的一列，这个值对它没有影响（样式里被 wide: 覆盖掉）。
-   */
+  /** 抽屉展开状态，只在紧凑布局起作用（宽屏被 wide: 覆盖成常驻） */
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -195,31 +176,23 @@ export function TraceSidebar({
       className={clsx(
         'flex flex-col overflow-hidden',
         /**
-         * 两种形态。
+         * 两种形态：宽屏占住布局的一列、静态定位满高；紧凑是贴底抽屉，
+         * 绝对定位铺满地图区，收起时下移到只露出把手。
          *
-         * 宽屏：占住布局的一列，静态定位、满高。
-         * 紧凑：贴底的抽屉，绝对定位铺满地图区，收起时整体下移到只露出把手。
-         *
-         * 收起用 translate 而不是改 top/height —— 那两者无法过渡，
-         * 而位移走的是合成层，动画顺滑且不触发重排。
-         * 位移量 100% 减去把手高度，正好把把手留在视口内。
+         * 收起用 translate 而非改 top/height —— 后两者无法过渡，
+         * 位移走合成层，动画顺滑也不触发重排。
          */
         'absolute inset-0 z-20 transition-transform duration-300 ease-out',
-        // 位移量写成完整字面量，不与 HANDLE_H 拼接：
-        // Tailwind 靠静态扫描源码收类名，模板字符串拼出来的它读不到
+        // 写成完整字面量、不与 HANDLE_H 拼接：Tailwind 靠静态扫描收类名
         isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]',
         'wide:static wide:z-auto wide:h-full wide:w-[300px] wide:translate-y-0',
         /**
-         * 底色取 raised 而非 ink：ink 是页面底色，两个主题下都与地图底色
-         * 太近（亮色 0.975 对浅底图、暗色 0.145 对暗底图几乎同色），
-         * 侧栏于是只靠一条线与地图分家，读不出是压在上面的一块面板。
-         * raised 抬升一档，再配投影，层级才立得住。
+         * 底色取 raised 而非 ink：ink 是页面底色，两个主题下都与地图底色太近
+         * （亮色 0.975 对浅底图、暗色 0.145 对暗底图几乎同色），侧栏会读不出
+         * 是压在上面的一块面板。raised 抬升一档再配投影，层级才立得住。
          */
         'bg-lab-raised',
-        /**
-         * 分界线的方向随布局走：宽屏侧栏在地图右侧，界在左边；
-         * 紧凑布局下它贴在底部，界该在上边。
-         */
+        // 分界线随布局换向：宽屏在右侧故界在左，紧凑贴底故界在上
         'border-t border-lab-line wide:border-l wide:border-t-0',
         // 投影同理换向：向上托 / 向左托，暗色下投影近乎不可见，交由描边与底色差交代
         'shadow-[0_-2px_10px_rgba(0,0,0,0.05)]',
@@ -227,11 +200,8 @@ export function TraceSidebar({
       )}
     >
       {/**
-       * 把手，只在紧凑布局出现。
-       *
-       * 收起时它是抽屉唯一露出来的部分，所以要自己交代抽屉里装着什么 ——
-       * 只画一个箭头的话，观者不知道拉开会得到城市索引还是图层开关。
-       * 故左侧摆一句摘要，右侧才是方向箭头。
+       * 把手，只在紧凑布局出现。收起时它是唯一露出的部分，故左侧摆一句摘要
+       * 交代抽屉里装着什么 —— 只画箭头的话不知道拉开会得到什么。
        */}
       <button
         type="button"
@@ -276,13 +246,9 @@ export function TraceSidebar({
       </div>
 
       {/**
-       * 城市区。
-       *
-       * 这一段是唯一的弹性区（flex-1），高度由剩余空间决定，超出即在内部滚动 ——
-       * 城市只会越来越多，而下方的图层开关不该被它挤出视野。
-       * min-h-0 是让 flex 子项能收缩到内容以下的前提，缺了它 overflow 不生效。
-       *
-       * 标题不随列表滚走：滚到一半时还得知道自己在看什么。
+       * 城市区。唯一的弹性区（flex-1），超出即在内部滚动，好让下方的图层开关
+       * 不被越来越多的城市挤出视野。min-h-0 是 flex 子项能收缩到内容以下的
+       * 前提，缺了它 overflow 不生效。标题不随列表滚走。
        */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0 px-5 pt-4">
@@ -290,13 +256,10 @@ export function TraceSidebar({
         </div>
 
         {/**
-         * 列表容器。
-         *
-         * 除了 flex-1，还压一道 max-height：只靠 flex-1 的话，高度是"剩余空间"
-         * 的结果 —— 城市不多时它被撑满，永远达不到溢出条件，也就永远滚不动；
-         * 城市多时又要与相邻两区抢空间。给出明确上限，超过即在内部滚，
-         * 与其他区多高无关。
-         * 宽屏侧栏是一整列，纵向宽裕，仍交给 flex-1 把图层区顶到底部。
+         * 列表容器。除 flex-1 外还压一道 max-height：只靠 flex-1 的话高度是
+         * "剩余空间"的结果，城市不多时被撑满、永远达不到溢出条件也就滚不动，
+         * 城市多时又要与相邻两区抢空间。给出明确上限则与其他区多高无关。
+         * 宽屏纵向宽裕，仍交给 flex-1 把图层区顶到底部。
          */}
         <div className="no-scrollbar min-h-0 max-h-[38dvh] flex-1 overflow-y-auto px-5 pb-4 wide:max-h-none">
           {/*

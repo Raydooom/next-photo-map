@@ -47,10 +47,7 @@ export default function Map({
   const { mapRef, mapInstance } = useMapBase({ config: { zoom: 6 } });
   const { clusters, updateMarkers } = useMapClusters(mapInstance!);
 
-  /**
-   * 当前视图。两者互斥：点位看"具体在哪拍的"，区县看"走遍了哪些地方"。
-   * 默认点位 —— 照片是这一页的主体，区县是它的概览。
-   */
+  /** 当前视图，两者互斥。默认点位 —— 照片是主体，区县是概览 */
   const [view, setView] = useState<FootprintView>('points');
   const isRegionView = view === 'regions';
 
@@ -76,13 +73,10 @@ export default function Map({
   const [isViewerLoading, setIsViewerLoading] = useState(false);
 
   /**
-   * 停留本页期间锁住文档滚动。
+   * 停留本页期间锁住文档滚动。本页按视口取景本不该有页面级滚动，但 (site)
+   * 布局用 min-h-screen（100vh）撑最小高度，而本页按 100dvh 算 —— 移动端
+   * 地址栏可见时 100dvh 小于 100vh，多出的一截成了可滚动区域。
    *
-   * 本页按视口取景，本不该有页面级滚动，但 (site) 布局用
-   * min-h-screen（100vh）撑最小高度，而本页高度按 100dvh 计算 ——
-   * 移动端地址栏可见时 100dvh 小于 100vh，多出的一截就成了可滚动区域。
-   *
-   * 只在本页生效、离开时原样还原，不去改全局布局，免得波及其他页面。
    * 只碰 documentElement：查看器的滚动锁操作 body，两边不交叠。
    */
   useEffect(() => {
@@ -103,14 +97,11 @@ export default function Map({
   });
 
   /**
-   * 按侧栏开关施加底图内容的可见性。
+   * 按侧栏开关施加底图内容的可见性。只动归入分组的图层，建筑、绿地、水面、
+   * 行政边界保持原样 —— 那些是地图的基本面貌。
    *
-   * 只动归入分组的图层，其余（建筑、绿地、水面、行政边界）保持底图原样 ——
-   * 那些是地图的基本面貌，不该被开关波及。
-   *
-   * 两个方向都显式写 visible/none：样式重载后默认可见，
-   * 只设 none 会让状态随重载次数漂移。
-   * 主题切换会重建样式，故 style.load 后需重新施加。
+   * 两个方向都显式写 visible/none：样式重载后默认可见，只设 none 会让状态
+   * 随重载次数漂移。主题切换会重建样式，故 style.load 后需重新施加。
    */
   useEffect(() => {
     if (!mapInstance) return;
@@ -209,23 +200,17 @@ export default function Map({
   );
 
   /**
-   * 已取过的点位详情，按点位的照片 id 组合缓存。
+   * 已取过的点位详情，按点位的照片 id 组合缓存。点位数据来自首屏、生命周期内
+   * 不变，故取回的详情可以一直用。
    *
-   * 首屏的位置数据只带了缩略图与尺寸，曝光参数、器材、拍摄时间都得点开时再取，
-   * 这一次往返省不掉；但同一个点位被反复点开时没必要重复请求 —— 点位数据来自
-   * 首屏，在页面生命周期内不会变，取回的详情可以一直用。
-   *
-   * 放在 ref 里而不是 state：它只是请求的旁路记录，写入不该触发渲染。
-   * 容器用普通对象而非 Map —— 本模块的默认导出名为 Map，会遮蔽全局构造器。
+   * 放 ref 而非 state：只是请求的旁路记录，写入不该触发渲染。
+   * 容器用普通对象而非 Map —— 本模块默认导出名为 Map，会遮蔽全局构造器。
    */
   const detailCacheRef = useRef<Record<string, PhotoItem[]>>({});
 
   /**
-   * 取该点位的照片详情，打开全屏查看器。
-   *
-   * 面板在请求之前就立起来：点标记到照片出现之间有一次网络往返，
-   * 若等数据到齐才开，那段时间屏幕上毫无动静，点击像是没生效。
-   * 命中缓存时则一步到位，不闪那一下载入动画。
+   * 取该点位的照片详情并打开查看器。面板在请求前就立起来 —— 等数据到齐才开
+   * 会让点击像没生效。命中缓存时一步到位，不闪那下载入动画。
    */
   const openViewer = useCallback(
     async (group: MapMarker, preferredId?: number) => {
@@ -282,13 +267,11 @@ export default function Map({
   }, []);
 
   /**
-   * 查看器翻页时同步地址栏。
+   * 查看器翻页时同步地址栏。isOpen 为假时跳过 —— 退场动画期间组件仍挂载，
+   * 迟到的回调不该把刚清掉的 photoId 写回去。
    *
-   * isOpen 为假时直接跳过：查看器有退场动画，那期间组件仍然挂载，
-   * 任何迟到的回调都不该把刚清掉的 photoId 写回去。
-   *
-   * 比对的是浏览器真实 URL 而非 useSearchParams —— 地址栏由
-   * history.replaceState 改写，useSearchParams 不会跟着重新求值。
+   * 比对浏览器真实 URL 而非 useSearchParams：地址栏由 history.replaceState
+   * 改写，useSearchParams 不会跟着重新求值。
    */
   const handleViewerSelect = useCallback(
     (item: PhotoItem) => {

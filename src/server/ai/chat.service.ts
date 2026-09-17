@@ -38,9 +38,6 @@ interface PhotoMatch {
 const photoService = new PhotoService();
 
 export class AiChatService {
-  /**
-   * 解析用户意图
-   */
   async queryIntention(input: string): Promise<Intention> {
     const intention = await intentionAnalysis({
       input,
@@ -50,9 +47,6 @@ export class AiChatService {
     return intention as Intention;
   }
 
-  /**
-   * 根据向量描述搜索照片
-   */
   async queryPhotosByEmbedding(
     embeddingDesc: string,
     _params?: IntentionParams,
@@ -81,9 +75,6 @@ export class AiChatService {
     });
   }
 
-  /**
-   * 分析指定照片
-   */
   async analyzePhoto(photoId: number) {
     const photo = await photoService.getPhotoById(photoId);
     if (!photo) {

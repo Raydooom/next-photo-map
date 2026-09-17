@@ -40,9 +40,6 @@ export function generateImageToken(key: string): string {
   return Buffer.from(JSON.stringify(tokenData)).toString('base64url');
 }
 
-/**
- * 验证图片访问 Token
- */
 export function verifyImageToken(token: string): {
   valid: boolean;
   key?: string;

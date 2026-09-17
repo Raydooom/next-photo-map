@@ -62,9 +62,6 @@ const ollama = createOllama({
 
 // ============ 导出函数 ============
 
-/**
- * 生成图片分析描述
- */
 export async function generateAnalysis({
   messages,
   temperature = 0
@@ -88,9 +85,6 @@ export async function generateAnalysis({
   }
 }
 
-/**
- * 生成向量嵌入
- */
 export async function generateEmbedding(value: string): Promise<string> {
   if (!value?.trim()) {
     throw new Error('向量化的文本不能为空');
@@ -109,9 +103,6 @@ export async function generateEmbedding(value: string): Promise<string> {
   }
 }
 
-/**
- * 意图分析
- */
 export async function intentionAnalysis({
   input,
   intentions,
