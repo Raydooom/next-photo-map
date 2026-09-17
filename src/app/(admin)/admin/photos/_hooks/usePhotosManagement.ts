@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { addToast } from '@heroui/toast';
-import * as Admin from '@/server/actions/admin';
-import * as AI from '@/server/actions/ai';
+import * as Admin from '../../_actions';
+import * as AI from '../../_actions';
 import { Photo, PhotoStats, FilterTab } from '../_components/types';
 
 export function usePhotosManagement() {

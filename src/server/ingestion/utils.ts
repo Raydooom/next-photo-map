@@ -1,3 +1,5 @@
+import 'server-only';
+
 import path from 'path';
 
 // 获取文件MIME类型

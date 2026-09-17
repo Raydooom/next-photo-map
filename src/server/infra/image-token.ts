@@ -1,3 +1,5 @@
+import 'server-only';
+
 import crypto from 'crypto';
 
 // Token 有效期：7 天（单位：秒）

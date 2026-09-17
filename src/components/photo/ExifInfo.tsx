@@ -12,7 +12,7 @@ import {
 } from '@/lib/format';
 
 import { PhotoItem } from '@/lib/types';
-import * as Actions from '@/server/actions/index';
+import * as Actions from '@/server/actions';
 import { ExifTagList } from './ExifTag';
 import { SingleMarker } from '@/components/map';
 import { Chip } from '@heroui/chip';

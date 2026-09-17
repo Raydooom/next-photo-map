@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { createOllama } from 'ollama-ai-provider-v2';
 import { generateText, embed } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';

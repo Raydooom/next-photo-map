@@ -4,7 +4,7 @@ import { Tabs, Tab } from '@heroui/tabs';
 import { Button } from '@heroui/button';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import * as Admin from '@/server/actions/admin';
+import * as Admin from './_actions';
 
 export default function AdminOverviewPage() {
   const [activeTab, setActiveTab] = useState('overview');

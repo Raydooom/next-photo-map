@@ -1,17 +1,22 @@
-import * as Actions from '@/server/actions';
-import { HeroCanvas } from '@/app/_components/HeroCanvas';
-import { StatsGrid } from '@/app/_components/StatsGrid';
-import { Recently } from '@/app/_components/Recently';
-import { FootprintPanel } from '@/app/_components/FootprintPanel';
-import { AiCallout } from '@/app/_components/AiCallout';
+import { PhotoService } from '@/server/photo/photo.service';
+import { locationService } from '@/server/photo/location.service';
+import { HeroCanvas } from './_components/HeroCanvas';
+import { StatsGrid } from './_components/StatsGrid';
+import { Recently } from './_components/Recently';
+import { FootprintPanel } from './_components/FootprintPanel';
+import { AiCallout } from './_components/AiCallout';
 import { PhotoLocation } from '@/lib/types';
+import { Footer } from '@/components/layout/Footer';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
+  // Server Component 与 service 同进程，直接调用即可，无需绕经 Server Action
+  const photoService = new PhotoService();
+
   // 四个查询互不依赖，并行发起
   const [featured, recently, locations, totalPhotos] = await Promise.all([
-    Actions.getPhotoList({
+    photoService.listPhotos({
       pageSize: 5,
       withLocation: true,
       withExif: true,
@@ -19,7 +24,7 @@ export default async function Home() {
       withAiAnalysis: true,
       top: true
     }),
-    Actions.getPhotoList({
+    photoService.listPhotos({
       pageSize: 10,
       withLocation: true,
       withExif: true,
@@ -27,7 +32,7 @@ export default async function Home() {
       withAiAnalysis: true
     }),
     // 地图要按城市分组画点位，故经纬度必须一并取出
-    Actions.getLocations({
+    locationService.listLocations({
       select: {
         adcode: true,
         city: true,
@@ -35,7 +40,7 @@ export default async function Home() {
         longitude: true
       }
     }),
-    Actions.countAllPhotos()
+    photoService.countAllPhotos()
   ]);
 
   const cityCount = new Set(locations.map((item: PhotoLocation) => item.city))
@@ -63,6 +68,10 @@ export default async function Home() {
 
       {/* 背景滚动照片复用最近拍摄的那批，不额外查询 */}
       <AiCallout photos={recently.list} />
+
+      {/* 页脚只出现在首页 —— 原先靠 siteConfig 里的 showFooter 标记控制，
+          现在由使用方直接引入，不必再让导航配置兼管布局 */}
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import 'server-only';
+
 import { PhotoService } from '@/server/photo/photo.service';
-import { prisma } from '@/server/db';
-import { generateEmbedding, intentionAnalysis } from '@/server/ai-client';
+import { prisma } from '@/server/infra/db';
+import { generateEmbedding, intentionAnalysis } from '@/server/infra/ai-client';
 
 // 意图类型枚举
 export enum ChatIntent {

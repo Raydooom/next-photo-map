@@ -1,9 +1,11 @@
-import { prisma, Prisma } from '@/server/db';
+import 'server-only';
+
+import { prisma, Prisma } from '@/server/infra/db';
 import {
   getImageUrl,
   deleteFileFromMinio,
   checkObjectExists
-} from '@/server/storage';
+} from '@/server/infra/storage';
 import fs from 'fs';
 import path from 'path';
 import { VIDEO_EXTENSIONS } from '@/server/ingestion/photo-files';
@@ -118,6 +120,33 @@ export class PhotoService {
         };
       })
     );
+  }
+
+  /**
+   * 清理源文件已丢失的照片记录
+   */
+  async deleteMissingPhotos() {
+    const photos = await this.getAllPhotos();
+    const photosWithStatus = await this.batchCheckFileExists(photos);
+    const missingPhotos = photosWithStatus.filter((p) => !p.fileExists);
+
+    const result = { success: 0, failed: 0 };
+
+    for (const photo of missingPhotos) {
+      try {
+        await this.deletePhoto(photo.id);
+        result.success++;
+      } catch (error) {
+        result.failed++;
+        console.warn(`Failed to delete missing photo ${photo.id}:`, error);
+      }
+    }
+
+    return {
+      ...result,
+      totalChecked: photos.length,
+      missingCount: missingPhotos.length
+    };
   }
 
   /**

@@ -1,5 +1,19 @@
-import { Prisma, prisma } from '@/server/db';
+import 'server-only';
+
+import { Prisma, prisma } from '@/server/infra/db';
+import { getImageUrl } from '@/server/infra/storage';
 import type { Location } from '@prisma/client';
+
+/** listLocations 带 withThumb 时的返回形状 */
+interface LocationWithThumb {
+  photo?: {
+    id: number;
+    thumbSmallKey: string | null;
+    width: number | null;
+    height: number | null;
+  } | null;
+  [key: string]: unknown;
+}
 
 /**
  * 位置服务 - 提供 location 数据表的增删改查操作
@@ -73,6 +87,39 @@ export const locationService = {
           }
         : {})
     });
+  },
+
+  /**
+   * 获取所有位置记录，并把缩略图的存储键换成带签名的可访问地址。
+   *
+   * 签名在服务端完成，存储键不外泄。原先这段转换写在 Server Action 里，
+   * 导致 Server Component 想直接取数据就必须绕经 action —— 转换属于数据
+   * 组装的一部分，应该由 service 负责。
+   */
+  listLocations: async ({
+    select = {},
+    withThumb = false
+  }: {
+    select?: Record<string, unknown>;
+    withThumb?: boolean;
+  } = {}) => {
+    const list = await locationService.getAllLocations({ select, withThumb });
+
+    if (!withThumb) return list;
+
+    return await Promise.all(
+      (list as LocationWithThumb[]).map(async (item) => ({
+        ...item,
+        photo: item.photo
+          ? {
+              ...item.photo,
+              thumbSmallUrl: item.photo.thumbSmallKey
+                ? await getImageUrl(item.photo.thumbSmallKey)
+                : null
+            }
+          : null
+      }))
+    );
   },
 
   /**

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AiChatService } from '@/server/ai/chat.service';
-import { createSSE } from '@/server/sse';
+import { createSSE } from '@/server/infra/sse';
 
 const chatService = new AiChatService();
 

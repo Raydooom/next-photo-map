@@ -10,7 +10,7 @@ import { useMapBase, useMapClusters, useRegionLayer } from '@/components/map';
 import { TraceViewer } from './TraceViewer';
 import { MapMarker } from '@/lib/types/mapMarker';
 import { PhotoItem } from '@/lib/types';
-import * as Actions from '@/server/actions/index';
+import * as Actions from '@/server/actions';
 import { readUrlParam, removeUrlParam, setUrlParam } from '@/lib/url';
 import type { CityIndexItem } from '../page';
 import { TraceSidebar } from './TraceSidebar';
@@ -78,7 +78,7 @@ export default function Map({
   /**
    * 停留本页期间锁住文档滚动。
    *
-   * 本页按视口取景，本不该有页面级滚动，但全局 LayoutWrapper 用
+   * 本页按视口取景，本不该有页面级滚动，但 (site) 布局用
    * min-h-screen（100vh）撑最小高度，而本页高度按 100dvh 计算 ——
    * 移动端地址栏可见时 100dvh 小于 100vh，多出的一截就成了可滚动区域。
    *

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PHOTO_BASE_DIR } from '@/server/env';
+import { PHOTO_BASE_DIR } from '@/server/infra/env';
 import { PhotoService } from '@/server/photo/photo.service';
 import { scanImageGroups } from '@/server/ingestion/photo-files';
+import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,9 @@ export const dynamic = 'force-dynamic';
  * 返回总照片数、新照片数、已存在照片数
  */
 export async function GET() {
+  const denied = await requireAdminResponse();
+  if (denied) return denied;
+
   try {
     const photoService = new PhotoService();
 

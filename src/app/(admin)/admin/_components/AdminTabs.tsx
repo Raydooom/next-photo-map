@@ -3,11 +3,7 @@ import { Tabs, Tab } from '@heroui/tabs';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function AdminLayout({
-  children
-}: {
-  children: React.ReactNode;
-}) {
+export function AdminTabs({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const getSelectedKey = () => {
