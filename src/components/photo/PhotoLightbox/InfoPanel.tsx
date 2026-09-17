@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import clsx from 'clsx';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import {
   formatAltitude,
   formatDimension,
@@ -16,8 +16,8 @@ import {
   formatIso,
   formatLatLng,
   formatTakenDate
-} from '@/utils/format';
-import { SingleMarker } from '@/components/Map';
+} from '@/lib/format';
+import { SingleMarker } from '@/components/map';
 import {
   ApertureIcon,
   ExposureTimeIcon,

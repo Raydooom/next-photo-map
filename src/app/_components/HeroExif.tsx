@@ -1,12 +1,12 @@
 import clsx from 'clsx';
 
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import {
   formatExposureTime,
   formatFNumber,
   formatFocalLength,
   formatIso
-} from '@/utils/format';
+} from '@/lib/format';
 
 interface HeroExifProps {
   photo: PhotoItem | null;

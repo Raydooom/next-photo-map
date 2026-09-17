@@ -4,7 +4,7 @@ import { useState } from 'react';
 import clsx from 'clsx';
 
 import { Eyebrow } from '@/components/ui';
-import { trailingFadeStyle } from '@/utils/mask';
+import { trailingFadeStyle } from '@/lib/mask';
 import { FootprintMap, type CityGroup } from './FootprintMap';
 
 interface CityRowProps {

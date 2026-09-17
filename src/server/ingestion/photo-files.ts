@@ -1,6 +1,6 @@
 import path from 'path';
 import { glob } from 'glob';
-import * as Utils from './index';
+import * as Utils from './utils';
 
 // 支持的图片 / 视频扩展名
 export const IMAGE_EXTENSIONS = [

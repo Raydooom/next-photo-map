@@ -1,6 +1,6 @@
-import { prisma, Prisma } from '../lib/db';
-import { getImageBase64 } from '../lib/oss';
-import { generateAnalysis, generateEmbedding } from '../lib/ai';
+import { prisma, Prisma } from '@/server/db';
+import { getImageBase64 } from '@/server/storage';
+import { generateAnalysis, generateEmbedding } from '@/server/ai-client';
 
 export class AIService {
   // ai分析

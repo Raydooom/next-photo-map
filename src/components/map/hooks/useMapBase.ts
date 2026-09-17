@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import maplibreGl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MarkerPoint } from '@/types/mapMarker';
+import { MarkerPoint } from '@/lib/types/mapMarker';
 
 interface MapLibreProps {
   center?: MarkerPoint;

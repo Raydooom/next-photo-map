@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import clsx from "clsx";
 
-import { PhotoItem } from "@/types";
-import { formatTakenDate } from "@/utils/format";
-import { extractPhotoMeta } from "@/utils/photoMeta";
+import { PhotoItem } from "@/lib/types";
+import { formatTakenDate } from "@/lib/format";
+import { extractPhotoMeta } from "@/lib/photoMeta";
 import { FocusLoader, FullscreenDialog } from "@/components/ui";
-import { IconButton } from "@/components/common/PhotoLightbox/IconButton";
-import { LivePhoto } from "@/components/common/LivePhoto";
+import { IconButton } from "@/components/photo/PhotoLightbox/IconButton";
+import { LivePhoto } from "@/components/photo/LivePhoto";
 import { MetaColumn } from "./MetaColumn";
 import { Thumbs } from "./Thumbs";
 

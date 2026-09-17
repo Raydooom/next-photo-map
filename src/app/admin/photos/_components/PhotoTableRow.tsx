@@ -4,7 +4,7 @@ import { Button } from '@heroui/button';
 import { Badge } from '@heroui/badge';
 import { Image } from '@heroui/image';
 import { TableCell, TableRow } from '@heroui/table';
-import { formatDateCN } from '@/utils/format';
+import { formatDateCN } from '@/lib/format';
 import { Photo } from './types';
 
 export interface PhotoRowActions {

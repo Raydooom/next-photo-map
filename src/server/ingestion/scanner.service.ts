@@ -3,16 +3,16 @@ import path from 'path';
 import sharp from 'sharp';
 import exifr from 'exifr';
 const convert = require('heic-convert');
-import { FileManageService } from './fileManage.services';
-import { PhotoService } from './photo.services';
-import { locationService } from './location.services';
-import { photoExifService } from './photoExif.services';
+import { FileManageService } from '@/server/ingestion/file.service';
+import { PhotoService } from '@/server/photo/photo.service';
+import { locationService } from '@/server/photo/location.service';
+import { photoExifService } from '@/server/photo/exif.service';
 
-import { PHOTO_BASE_DIR } from '../config';
-import * as Utils from '../utils';
-import { GeocodingService } from '../utils/geocoding';
-import { createLogger } from '../utils/logger';
-import { FileGroup, scanImageGroups } from '../utils/photo-files';
+import { PHOTO_BASE_DIR } from '@/server/env';
+import * as Utils from '@/server/ingestion/utils';
+import { GeocodingService } from '@/server/ingestion/geocoding.service';
+import { createLogger } from '@/server/logger';
+import { FileGroup, scanImageGroups } from '@/server/ingestion/photo-files';
 import * as AI from '@/server/actions/ai';
 
 /**

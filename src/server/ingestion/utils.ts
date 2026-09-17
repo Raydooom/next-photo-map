@@ -1,6 +1,4 @@
 import path from 'path';
-import exifr from 'exifr';
-export { Logger, createLogger, logger } from './logger';
 
 // 获取文件MIME类型
 export function getMimeType(filePath: string): string {
@@ -18,50 +16,6 @@ export function getMimeType(filePath: string): string {
     default:
       return 'application/octet-stream';
   }
-}
-
-// 扩展 exifr 解析
-export const getExifMetadata = async (filePath: string) => {
-  return await exifr
-    .parse(filePath, {
-      tiff: true,
-      exif: true,
-      gps: true
-    })
-    .catch(() => null);
-};
-
-/**
- * 将十进制经纬度转换为度分秒格式
- * @param coordinate 坐标值
- * @param isLat 是否为纬度
- */
-export function toDMS(coordinate: number, isLat: boolean): string {
-  const absolute = Math.abs(coordinate);
-  const degrees = Math.floor(absolute);
-  const minutesNotTruncated = (absolute - degrees) * 60;
-  const minutes = Math.floor(minutesNotTruncated);
-  const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(2);
-
-  let direction = '';
-  if (isLat) {
-    direction = coordinate >= 0 ? 'N' : 'S';
-  } else {
-    direction = coordinate >= 0 ? 'E' : 'W';
-  }
-
-  return `${degrees}° ${minutes}' ${seconds}" ${direction}`;
-}
-
-/**
- * 格式化原始 EXIF GPS 数据为 DMS 字符串
- */
-export function formatDMSFromRaw(dms: number[], ref: string): string {
-  if (!Array.isArray(dms) || dms.length < 3) return '';
-  const [degrees, minutes, seconds] = dms;
-  const secStr =
-    typeof seconds === 'number' ? seconds.toFixed(2) : String(seconds);
-  return `${degrees}° ${minutes}' ${secStr}" ${ref}`;
 }
 
 /**

@@ -4,8 +4,8 @@ import Image from 'next/image';
 import clsx from 'clsx';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { PhotoItem } from '@/types';
-import { edgeFadeStyle } from '@/utils/mask';
+import { PhotoItem } from '@/lib/types';
+import { edgeFadeStyle } from '@/lib/mask';
 
 /** 默认列数。列多、单张小，才有照片量大的密度感 */
 const DEFAULT_COLUMNS = 6;

@@ -1,4 +1,4 @@
-import { PhotoExif, PhotoLocation } from '@/types';
+import { PhotoExif, PhotoLocation } from '@/lib/types';
 import dayjs from 'dayjs';
 
 export const formatExposureTime = (exposureTime?: string | null) => {

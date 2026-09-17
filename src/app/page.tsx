@@ -4,7 +4,7 @@ import { StatsGrid } from '@/app/_components/StatsGrid';
 import { Recently } from '@/app/_components/Recently';
 import { FootprintPanel } from '@/app/_components/FootprintPanel';
 import { AiCallout } from '@/app/_components/AiCallout';
-import { PhotoLocation } from '@/types';
+import { PhotoLocation } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 

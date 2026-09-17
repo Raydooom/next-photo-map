@@ -1,4 +1,4 @@
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 import {
   EmblaCarouselType,
   EmblaOptionsType,

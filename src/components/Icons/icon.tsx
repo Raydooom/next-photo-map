@@ -11,7 +11,7 @@ import { RiArrowDropUpLine } from 'react-icons/ri';
 
 import { Camera, BarChart3, CircleX, CalendarDays, MapPin } from 'lucide-react';
 
-import { IconSvgProps } from '@/types';
+import { IconSvgProps } from '@/lib/types';
 
 export {
   LivePhotoIcon,

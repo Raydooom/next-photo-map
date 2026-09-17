@@ -9,7 +9,7 @@ import {
   ModalFooter
 } from '@heroui/modal';
 import { Input } from '@heroui/input';
-import { useMapBase, MapMarker } from '@/components/Map';
+import { useMapBase, MapMarker } from '@/components/map';
 
 interface LocationModalProps {
   isOpen: boolean;

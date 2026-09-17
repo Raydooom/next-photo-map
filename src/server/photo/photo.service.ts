@@ -1,12 +1,12 @@
-import { prisma, Prisma } from '../lib/db';
+import { prisma, Prisma } from '@/server/db';
 import {
   getImageUrl,
   deleteFileFromMinio,
   checkObjectExists
-} from '@/server/lib/oss';
+} from '@/server/storage';
 import fs from 'fs';
 import path from 'path';
-import { VIDEO_EXTENSIONS } from '@/server/utils/photo-files';
+import { VIDEO_EXTENSIONS } from '@/server/ingestion/photo-files';
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;

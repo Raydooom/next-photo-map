@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { PHOTO_BASE_DIR } from '@/server/config';
-import { ScannerService } from '@/server/services/admin.services';
-import { groupFiles, isImageExt, isVideoExt } from '@/server/utils/photo-files';
+import { PHOTO_BASE_DIR } from '@/server/env';
+import { ScannerService } from '@/server/ingestion/scanner.service';
+import { groupFiles, isImageExt, isVideoExt } from '@/server/ingestion/photo-files';
 
 export const dynamic = 'force-dynamic';
 

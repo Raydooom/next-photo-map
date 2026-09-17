@@ -15,7 +15,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 import { siteConfig } from '@/config/site';
-import { ThemeSwitch } from '@/components/theme-switch';
+import { ThemeSwitch } from '@/components/layout/ThemeSwitch';
 import { Logo } from '@/components/Icons/custom';
 
 export const Navbar = ({ className }: { className?: string }) => {

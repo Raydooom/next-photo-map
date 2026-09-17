@@ -1,4 +1,4 @@
-import { PhotoItem } from '@/types';
+import { PhotoItem } from '@/lib/types';
 
 /** 通栏读数条空间有限，标签只取前几个 */
 const MAX_TAGS = 4;

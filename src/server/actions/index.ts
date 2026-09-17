@@ -1,7 +1,7 @@
 'use server';
-import { PhotoService } from '../services/photo.services';
-import { locationService } from '../services/location.services';
-import { getImageUrl } from '../lib/oss';
+import { PhotoService } from '@/server/photo/photo.service';
+import { locationService } from '@/server/photo/location.service';
+import { getImageUrl } from '@/server/storage';
 
 const photoService = new PhotoService();
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { internalClient, BUCKET } from '@/server/lib/oss';
+import { internalClient, BUCKET } from '@/server/storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { verifyImageToken, TOKEN_EXPIRES_IN } from '@/server/lib/image-token';
+import { verifyImageToken, TOKEN_EXPIRES_IN } from '@/server/image-token';
 
 export const dynamic = 'force-dynamic';
 

@@ -4,14 +4,14 @@ import maplibreGl from 'maplibre-gl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { bbox, featureCollection } from '@turf/turf';
 
-import { MapControls } from '@/components/Map/modules/MapControls';
-import { ClusterMarker } from '@/components/Map/modules/ClusterMarker';
-import { useMapBase, useMapClusters, useRegionLayer } from '@/components/Map';
+import { MapControls } from '@/components/map/modules/MapControls';
+import { ClusterMarker } from '@/components/map/modules/ClusterMarker';
+import { useMapBase, useMapClusters, useRegionLayer } from '@/components/map';
 import { TraceViewer } from './TraceViewer';
-import { MapMarker } from '@/types/mapMarker';
-import { PhotoItem } from '@/types';
+import { MapMarker } from '@/lib/types/mapMarker';
+import { PhotoItem } from '@/lib/types';
 import * as Actions from '@/server/actions/index';
-import { readUrlParam, removeUrlParam, setUrlParam } from '@/utils/url';
+import { readUrlParam, removeUrlParam, setUrlParam } from '@/lib/url';
 import type { CityIndexItem } from '../page';
 import { TraceSidebar } from './TraceSidebar';
 import {

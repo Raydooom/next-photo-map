@@ -1,5 +1,5 @@
 import React from 'react';
-import { LivePhoto } from '../common/LivePhoto';
+import { LivePhoto } from '../LivePhoto';
 import { MainSliderProps } from './types';
 
 export const MainSlider: React.FC<MainSliderProps> = ({
