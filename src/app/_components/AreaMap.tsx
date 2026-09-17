@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useMapBase, drawRegions } from '../Map';
-import { FullscreenIcon } from '../Icons/button';
+import { useMapBase, drawRegions } from '../../components/Map';
+import { FullscreenIcon } from '../../components/Icons/button';
 
 interface AreaMapProps {
   data?: any[];
