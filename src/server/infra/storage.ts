@@ -1,3 +1,5 @@
+import 'server-only';
+
 import crypto from 'crypto';
 import {
   S3Client,
@@ -7,7 +9,7 @@ import {
   HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import dayjs from 'dayjs';
-import { generateImageToken } from '@/server/image-token';
+import { generateImageToken } from '@/server/infra/image-token';
 
 // ============ MinIO 客户端配置 ============
 

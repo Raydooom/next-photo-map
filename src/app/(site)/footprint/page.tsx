@@ -1,5 +1,5 @@
 import Map from './_components/Map';
-import * as Actions from '@/server/actions/index';
+import { locationService } from '@/server/photo/location.service';
 import { groupByLocation } from '@/components/map/helper';
 import { Suspense } from 'react';
 import { MarkerPoint, PhotoLocation } from '@/lib/types';
@@ -64,7 +64,7 @@ function buildCityIndex(list: PhotoLocation[]): CityIndexItem[] {
 
 export default async function FootprintPage() {
   // withThumb：地图标记要显示照片本身，需要每个点位所属照片的缩略图
-  const list = (await Actions.getLocations({
+  const list = (await locationService.listLocations({
     withThumb: true
   })) as PhotoLocation[];
 

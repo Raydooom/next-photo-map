@@ -1,4 +1,4 @@
-import * as PhotoAction from '@/server/actions/index';
+import { PhotoService } from '@/server/photo/photo.service';
 import InfinitePhotoGrid from './_components/InfinitePhotoGrid';
 import { Suspense } from 'react';
 export const dynamic = 'force-dynamic';
@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
 
 export default async function DocsPage() {
-  const { list, total } = await PhotoAction.getPhotoList({
+  const { list, total } = await new PhotoService().listPhotos({
     page: 1,
     pageSize: 9999,
     // 卡片悬浮信息要展示拍摄地点与参数

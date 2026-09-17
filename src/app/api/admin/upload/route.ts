@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { PHOTO_BASE_DIR } from '@/server/env';
+import { PHOTO_BASE_DIR } from '@/server/infra/env';
 import { ScannerService } from '@/server/ingestion/scanner.service';
 import { groupFiles, isImageExt, isVideoExt } from '@/server/ingestion/photo-files';
+import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,9 @@ export const dynamic = 'force-dynamic';
  * 上传完成后自动扫描入库并进行 AI 分析
  */
 export async function POST(request: NextRequest) {
+  const denied = await requireAdminResponse();
+  if (denied) return denied;
+
   try {
     const formData = await request.formData();
     const files = formData.getAll('file') as File[];
@@ -30,6 +34,21 @@ export async function POST(request: NextRequest) {
     // 保存所有媒体文件到 photos 目录
     const savedPaths: string[] = [];
     for (const file of files) {
+      // 正常上传的 File.name 只是文件名。一旦出现路径分隔符或 ..，
+      // 说明是构造过的请求，直接拒绝而不是静默改名 —— 后者会让上传结果
+      // 与用户预期不一致，也掩盖了攻击痕迹。
+      if (
+        file.name !== path.basename(file.name) ||
+        file.name.includes('..') ||
+        file.name.includes('/') ||
+        file.name.includes('\\')
+      ) {
+        return NextResponse.json(
+          { error: `非法文件名: ${file.name}` },
+          { status: 400 }
+        );
+      }
+
       const ext = path.extname(file.name).toLowerCase();
       if (!isImageExt(ext) && !isVideoExt(ext)) continue;
 

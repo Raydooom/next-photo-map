@@ -1,3 +1,5 @@
+import 'server-only';
+
 import path from 'path';
 import { glob } from 'glob';
 import * as Utils from './utils';

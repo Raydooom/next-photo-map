@@ -1,9 +1,13 @@
 import { NextRequest } from 'next/server';
 import { ScannerService } from '@/server/ingestion/scanner.service';
+import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const denied = await requireAdminResponse();
+  if (denied) return denied;
+
   const { searchParams } = new URL(request.url);
   const force = searchParams.get('force') === 'true';
 

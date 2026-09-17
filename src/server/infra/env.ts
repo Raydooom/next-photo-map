@@ -1,3 +1,5 @@
+import 'server-only';
+
 import path from 'path';
 
 // 相片存储目录

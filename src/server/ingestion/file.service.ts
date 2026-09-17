@@ -1,8 +1,10 @@
+import 'server-only';
+
 import {
   uploadFileToMinio,
   deleteFileFromMinio,
   generateMinioKey
-} from '@/server/storage';
+} from '@/server/infra/storage';
 
 export class FileManageService {
   private STORAGE_TYPE = 'minio';

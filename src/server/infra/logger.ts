@@ -1,3 +1,5 @@
+import 'server-only';
+
 export type LogLevel = 'info' | 'success' | 'warning' | 'error';
 
 export interface LoggerOptions {

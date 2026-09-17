@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AIService } from '@/server/ai/analysis.service';
 import { PhotoService } from '@/server/photo/photo.service';
-import { createSSE } from '@/server/sse';
+import { createSSE } from '@/server/infra/sse';
+import { requireAdminResponse } from '@/server/auth';
 
 const aiService = new AIService();
 const photoService = new PhotoService();
 
 export async function GET(request: NextRequest) {
+  // middleware 的 matcher 覆盖不到 /api，必须在此自行校验
+  const denied = await requireAdminResponse();
+  if (denied) return denied;
+
   try {
     const { response, controller } = createSSE();
 

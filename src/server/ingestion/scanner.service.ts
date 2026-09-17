@@ -1,3 +1,5 @@
+import 'server-only';
+
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
@@ -8,12 +10,12 @@ import { PhotoService } from '@/server/photo/photo.service';
 import { locationService } from '@/server/photo/location.service';
 import { photoExifService } from '@/server/photo/exif.service';
 
-import { PHOTO_BASE_DIR } from '@/server/env';
+import { PHOTO_BASE_DIR } from '@/server/infra/env';
 import * as Utils from '@/server/ingestion/utils';
 import { GeocodingService } from '@/server/ingestion/geocoding.service';
-import { createLogger } from '@/server/logger';
+import { createLogger } from '@/server/infra/logger';
 import { FileGroup, scanImageGroups } from '@/server/ingestion/photo-files';
-import * as AI from '@/server/actions/ai';
+import { AIService } from '@/server/ai/analysis.service';
 
 /**
  * 照片处理结果
@@ -48,6 +50,7 @@ export class ScannerService {
   private photoService: PhotoService;
   private fileManageService: FileManageService;
   private geocodingService: GeocodingService;
+  private aiService: AIService;
   private logger = createLogger('SCANNER');
   private scanStartTime: number = 0;
   private successCount: number = 0;
@@ -59,6 +62,7 @@ export class ScannerService {
     this.photoService = new PhotoService(appUrl);
     this.fileManageService = new FileManageService();
     this.geocodingService = new GeocodingService();
+    this.aiService = new AIService();
   }
 
   setProgressCallback(callback: (data: ProgressData) => void) {
@@ -307,7 +311,7 @@ export class ScannerService {
         try {
           // 直接使用刚创建的 photo 记录（包含 thumbLargeKey）
           // 注意：不能用 getPhotoById，它会通过 transformPhoto 删除 key 字段
-          await AI.analysis(photo);
+          await this.aiService.createAiInfo(photo);
           aiAnalyzed = true;
           console.log(`AI 分析完成: ${fileName} (ID: ${photo.id})`);
         } catch (aiError) {

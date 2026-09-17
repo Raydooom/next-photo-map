@@ -4,7 +4,6 @@ import { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 
 import { siteConfig } from '@/config/site';
-import { LayoutWrapper } from '@/components/layout/LayoutWrapper';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
@@ -50,8 +49,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-lab-ink font-sans text-lab-paper antialiased">
+        {/* 导航栏与页面骨架由各路由组的 layout 负责：
+            (site) 带导航栏，(admin) 用自己的 Tabs，/chat 全屏无外框 */}
         <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          {children}
         </Providers>
         {process.env.NODE_ENV === 'production' && (
           <Script id="baidu-analytics" strategy="afterInteractive">
