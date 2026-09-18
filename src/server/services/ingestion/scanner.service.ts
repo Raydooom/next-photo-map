@@ -5,17 +5,17 @@ import path from 'path';
 import sharp from 'sharp';
 import exifr from 'exifr';
 const convert = require('heic-convert');
-import { FileManageService } from '@/server/ingestion/file.service';
-import { PhotoService } from '@/server/photo/photo.service';
-import { locationService } from '@/server/photo/location.service';
-import { photoExifService } from '@/server/photo/exif.service';
+import { FileManageService } from '@/server/services/ingestion/file.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
+import { locationService } from '@/server/services/photo/location.service';
+import { photoExifService } from '@/server/services/photo/exif.service';
 
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
-import * as Utils from '@/server/ingestion/utils';
-import { GeocodingService } from '@/server/ingestion/geocoding.service';
+import * as Utils from '@/server/services/ingestion/utils';
+import { GeocodingService } from '@/server/services/ingestion/geocoding.service';
 import { createLogger } from '@/server/infra/logger';
-import { FileGroup, scanImageGroups } from '@/server/ingestion/photo-files';
-import { AIService } from '@/server/ai/analysis.service';
+import { FileGroup, scanImageGroups } from '@/server/services/ingestion/photo-files';
+import { AIService } from '@/server/services/ai/analysis.service';
 
 export interface PhotoProcessResult {
   success: boolean;

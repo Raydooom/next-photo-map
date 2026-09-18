@@ -8,7 +8,7 @@ import {
 } from '@/server/infra/storage';
 import fs from 'fs';
 import path from 'path';
-import { VIDEO_EXTENSIONS } from '@/server/ingestion/photo-files';
+import { VIDEO_EXTENSIONS } from '@/server/services/ingestion/photo-files';
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;

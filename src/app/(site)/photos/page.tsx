@@ -1,4 +1,4 @@
-import { PhotoService } from '@/server/photo/photo.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
 import InfinitePhotoGrid from './_components/InfinitePhotoGrid';
 import { Suspense } from 'react';
 export const dynamic = 'force-dynamic';

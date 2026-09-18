@@ -11,7 +11,7 @@ import 'server-only';
  * 全是公开数据，无需鉴权。管理端写操作在 (admin)/admin/_actions.ts。
  */
 
-import { PhotoService } from '@/server/photo/photo.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
 
 const photoService = new PhotoService();
 

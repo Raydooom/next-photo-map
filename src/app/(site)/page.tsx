@@ -1,5 +1,5 @@
-import { PhotoService } from '@/server/photo/photo.service';
-import { locationService } from '@/server/photo/location.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
+import { locationService } from '@/server/services/photo/location.service';
 import { HeroCanvas } from './_components/HeroCanvas';
 import { StatsGrid } from './_components/StatsGrid';
 import { Recently } from './_components/Recently';

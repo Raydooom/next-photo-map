@@ -1,5 +1,5 @@
 import Map from './_components/Map';
-import { locationService } from '@/server/photo/location.service';
+import { locationService } from '@/server/services/photo/location.service';
 import { groupByLocation } from '@/components/map/helper';
 import { Suspense } from 'react';
 import { MarkerPoint, PhotoLocation } from '@/lib/types';

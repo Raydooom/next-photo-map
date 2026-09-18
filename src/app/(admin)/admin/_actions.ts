@@ -10,11 +10,11 @@ import 'server-only';
  */
 
 import { requireAdmin } from '@/server/auth';
-import { PhotoService } from '@/server/photo/photo.service';
-import { photoExifService } from '@/server/photo/exif.service';
-import { locationService } from '@/server/photo/location.service';
-import { GeocodingService } from '@/server/ingestion/geocoding.service';
-import { AIService } from '@/server/ai/analysis.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
+import { photoExifService } from '@/server/services/photo/exif.service';
+import { locationService } from '@/server/services/photo/location.service';
+import { GeocodingService } from '@/server/services/ingestion/geocoding.service';
+import { AIService } from '@/server/services/ai/analysis.service';
 
 const photoService = new PhotoService();
 

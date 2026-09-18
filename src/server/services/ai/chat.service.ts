@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { PhotoService } from '@/server/photo/photo.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
 import { prisma } from '@/server/infra/db';
 import { generateEmbedding, intentionAnalysis } from '@/server/infra/ai-client';
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AIService } from '@/server/ai/analysis.service';
-import { PhotoService } from '@/server/photo/photo.service';
+import { AIService } from '@/server/services/ai/analysis.service';
+import { PhotoService } from '@/server/services/photo/photo.service';
 import { createSSE } from '@/server/infra/sse';
 import { requireAdminResponse } from '@/server/auth';
 

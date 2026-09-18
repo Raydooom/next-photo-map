@@ -3,8 +3,8 @@ import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
-import { ScannerService } from '@/server/ingestion/scanner.service';
-import { groupFiles, isImageExt, isVideoExt } from '@/server/ingestion/photo-files';
+import { ScannerService } from '@/server/services/ingestion/scanner.service';
+import { groupFiles, isImageExt, isVideoExt } from '@/server/services/ingestion/photo-files';
 import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';

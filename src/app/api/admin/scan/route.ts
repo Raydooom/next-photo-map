@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { ScannerService } from '@/server/ingestion/scanner.service';
+import { ScannerService } from '@/server/services/ingestion/scanner.service';
 import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';

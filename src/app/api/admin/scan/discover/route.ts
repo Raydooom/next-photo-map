@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
-import { PhotoService } from '@/server/photo/photo.service';
-import { scanImageGroups } from '@/server/ingestion/photo-files';
+import { PhotoService } from '@/server/services/photo/photo.service';
+import { scanImageGroups } from '@/server/services/ingestion/photo-files';
 import { requireAdminResponse } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';

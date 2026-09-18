@@ -42,12 +42,13 @@ src/
 │   └── Icons/
 │
 ├── server/                     全部带 import 'server-only'
-│   ├── infra/                  db / storage / ai-client / logger / sse / image-token / env
+│   ├── infra/                  技术设施：db / storage / ai-client / logger / sse / image-token / env
+│   ├── services/               业务服务，按域切分
+│   │   ├── photo/              photo / exif / location.service
+│   │   ├── ingestion/          scanner / file / geocoding.service + photo-files + utils
+│   │   └── ai/                 analysis / chat.service
 │   ├── auth.ts                 横切的访问控制
-│   ├── actions.ts              公开读取类 action，供客户端组件调用
-│   ├── photo/                  photo / exif / location.service
-│   ├── ingestion/              scanner / file / geocoding.service + photo-files + utils
-│   └── ai/                     analysis / chat.service
+│   └── actions.ts              公开读取类 action，供客户端组件调用
 │
 ├── lib/                        universal：两端可安全引用
 │   ├── format.ts  mask.ts  photoMeta.ts
@@ -60,7 +61,7 @@ src/
 
 **组件归属**：只有一个页面用 → `app/xxx/_components/`；多个页面用 → `components/<域>/`；无业务语义 → `components/ui/`。
 
-**`server/infra/` 的判定**：文件里有没有照片、扫描、AI 这类业务概念？没有就进 `infra/`。`auth.ts` 有业务语义且是安全关注点、`actions.ts` 是入口层，两者留在 `server/` 根。
+**`server/` 的分层**：`infra/` 放技术设施，`services/` 放业务服务。判定规则是"文件里有没有照片、扫描、AI 这类业务概念" —— 有就进 `services/<域>/`，没有就进 `infra/`。`auth.ts` 有业务语义且是安全关注点、`actions.ts` 是入口层，两者都不属于上述任一类，留在 `server/` 根。
 
 **数据获取**：Server Component 直调 service，不经过 Server Action —— 后者会把函数编译成公开 POST 端点，而两者本就同进程。客户端组件运行在浏览器里，只能走 `server/actions.ts`（公开读取）或 `app/(admin)/admin/_actions.ts`（管理操作，必须鉴权）或 API Route（需要流式响应时）。
 
@@ -88,7 +89,7 @@ src/
 
 ### 1.1 `transformPhoto` 里关系名拼写错误
 
-- **位置**：`src/server/photo/photo.service.ts`，`transformPhoto` 方法末尾
+- **位置**：`src/server/services/photo/photo.service.ts`，`transformPhoto` 方法末尾
 - **成因**：写的是 `if (transformed.locations)`，但 schema 中 Photo 上的关系名是 `location`（单数）。该分支永远不会进入。
 - **影响**：`location.rawData`（高德逆地理编码的完整原始 JSON）一直全量下发给前端。注释写的"排除 rawData 字段以减小响应体积"只对 `photoExif` 生效了。
 - **旁证**：`npm run build` 的 ESLint 警告里有两处 `'rawData' is assigned a value but never used`，其中一处就是这个永不执行的分支。
@@ -96,21 +97,21 @@ src/
 
 ### 1.2 `getPhotosInBounds` 缺少 `Promise.all`
 
-- **位置**：`src/server/photo/photo.service.ts`
+- **位置**：`src/server/services/photo/photo.service.ts`
 - **成因**：`return photos.map((photo) => this.transformPhoto(photo))`，而 `transformPhoto` 是 async，返回的是 Promise 数组而非数据。同文件的 `getPhotosByIds` 写法正确。
 - **影响**：目前无调用方，属潜在缺陷。
 - **处理**：补 `Promise.all`，或直接删除（5.3 的 PostGIS 方案落地后会用 `ST_DWithin` 重写）。
 
 ### 1.4 管理后台的全量查询无法随数据量增长
 
-- **位置**：`src/server/photo/photo.service.ts` 的 `getAllPhotos` / `batchCheckFileExists`；调用方在 `src/app/(admin)/admin/_actions.ts` 和 `src/app/api/ai/analysis/route.ts`
+- **位置**：`src/server/services/photo/photo.service.ts` 的 `getAllPhotos` / `batchCheckFileExists`；调用方在 `src/app/(admin)/admin/_actions.ts` 和 `src/app/api/ai/analysis/route.ts`
 - **成因**：`getAllPhotos()` 一次拉取全部照片和三个关联表的全部字段，含 `photoExif.rawData` 与 `location.rawData` 两个大 JSON。`batchCheckFileExists` 在其之上用无并发限制的 `Promise.all`，每张照片一次 MinIO HeadObject。
 - **影响**：一千张照片就是一千个并发请求打向 MinIO，单次响应体积达数十 MB。
 - **处理**：改分页；用 `select` 收窄字段并剔除两个 `rawData`；文件存在性检查加并发上限（如 10）。
 
 ### 1.5 向量检索是全表扫描
 
-- **位置**：`prisma/migrations/**`、`src/server/ai/chat.service.ts`
+- **位置**：`prisma/migrations/**`、`src/server/services/ai/chat.service.ts`
 - **成因**：migration 中只创建了 B-tree 唯一索引，`embedding` 和 `tag_embedding` 上没有任何向量索引。
 - **影响**：每次检索都要计算全部照片的距离。数百张不明显，上千张后显著变慢。
 - **处理**：
@@ -124,7 +125,7 @@ CREATE INDEX ON photo_ai_analyses USING hnsw (tag_embedding vector_cosine_ops);
 
 ### 1.6 同一份描述有两条不一致的向量化路径
 
-- **位置**：`src/server/ai/analysis.service.ts`
+- **位置**：`src/server/services/ai/analysis.service.ts`
 - **成因**：两处对同一份描述做向量化，一处带前缀一处不带：
 
 ```ts
@@ -193,7 +194,7 @@ export type PhotoItem = Omit<
 
 ### 3.2 去掉 `transformPhoto` 的 `as any`
 
-- **位置**：`src/server/photo/photo.service.ts`
+- **位置**：`src/server/services/photo/photo.service.ts`
 - **成因**：`const transformed = { ...photo } as any` 之后所有字段操作都失去检查。
 - **处理**：配合 3.1 的 `PhotoItem` 给出明确返回类型。`delete` 操作改为构造新对象（同时避免 V8 对象降级为字典模式）。
 
