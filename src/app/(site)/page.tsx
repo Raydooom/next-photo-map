@@ -5,7 +5,6 @@ import { StatsGrid } from './_components/StatsGrid';
 import { Recently } from './_components/Recently';
 import { FootprintPanel } from './_components/FootprintPanel';
 import { AiCallout } from './_components/AiCallout';
-import { PhotoLocation } from '@/lib/types';
 import { Footer } from '@/components/layout/Footer';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +13,8 @@ export default async function Home() {
   // Server Component 与 service 同进程，直接调用即可，无需绕经 Server Action
   const photoService = new PhotoService();
 
-  // 四个查询互不依赖，并行发起
-  const [featured, recently, locations, totalPhotos] = await Promise.all([
+  // 五个查询互不依赖，并行发起
+  const [featured, recently, locations, totalPhotos, regionStats] = await Promise.all([
     photoService.listPhotos({
       pageSize: 5,
       withLocation: true,
@@ -40,11 +39,11 @@ export default async function Home() {
         longitude: true
       }
     }),
-    photoService.countAllPhotos()
+    photoService.countAllPhotos(),
+    // 城市数在 regions 上聚合。那张表只有区划数量级，
+    // 不必为一个数字把全部位置记录拉到这里 new Set
+    locationService.countDistinctRegions()
   ]);
-
-  const cityCount = new Set(locations.map((item: PhotoLocation) => item.city))
-    .size;
 
   // 没有任何照片被标记精选时回退到最新照片，避免首屏无图可轮播
   const heroPhotos =
@@ -57,7 +56,7 @@ export default async function Home() {
 
       <StatsGrid
         totalPhotos={totalPhotos}
-        cityCount={cityCount}
+        cityCount={regionStats.cities}
         spotCount={locations.length}
         latestTakenAt={recently.list[0]?.takenAt}
       />

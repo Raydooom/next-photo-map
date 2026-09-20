@@ -8,6 +8,30 @@ datasource db {
   extensions = [pgvector(map: "vector"), postgis] // 开启 pgvector 和 postgis 扩展
 }
 
+model Photo {
+  id              Int              @id @default(autoincrement())
+  filename        String
+  originalPath    String           @unique
+  size            Int
+  mimeType        String
+  originalKey     String
+  thumbSmallKey   String
+  thumbLargeKey   String
+  videoKey        String?
+  width           Int?
+  height          Int?
+  takenAt         DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now())
+  dominantColor   String?
+  top             Boolean          @default(false)
+  photoExif       PhotoExif?
+  location        Location?
+  photoAiAnalysis PhotoAiAnalysis?
+
+  @@map("photos")
+}
+
 model PhotoExif {
   id                      Int     @id @default(autoincrement())
   photoId                 Int     @unique
@@ -56,10 +80,7 @@ model Location {
   altitude         Float?
   bearing          Float?
   bearingDirection String?
-  country          String?
-  province         String?
-  city             String?
-  district         String?
+  /// 街道 / 镇 / 乡，比 adcode 粒度更细，故不在 Region 中
   township         String?
   adcode           String?
   formattedAddress String?
@@ -67,47 +88,39 @@ model Location {
   type             String?
   rawData          Json?
   photo            Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  region           Region? @relation(fields: [adcode], references: [adcode], onDelete: Restrict)
 
   @@index([latitude, longitude])
+  @@index([adcode])
   @@map("locations")
 }
 
-model Photo {
-  id              Int              @id @default(autoincrement())
-  filename        String
-  originalPath    String           @unique
-  size            Int
-  mimeType        String
-  originalKey     String
-  thumbSmallKey   String
-  thumbLargeKey   String
-  videoKey        String?
-  width           Int?
-  height          Int?
-  takenAt         DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now())
-  dominantColor   String?
-  top             Boolean          @default(false)
-  photoExif       PhotoExif?
-  location        Location?
-  photoAiAnalysis PhotoAiAnalysis?
+/// 行政区划字典。adcode 是高德的区县级代码，天然主键。
+/// 不含 township —— 街道比 adcode 粒度更细，一个区下有多个街道，
+/// 放进来会破坏主键唯一性，故留在 Location。
+model Region {
+  adcode    String     @id
+  country   String?
+  province  String?
+  city      String?
+  district  String?
+  locations Location[]
 
-  @@map("photos")
+  @@index([province, city, district])
+  @@map("regions")
 }
 
 model PhotoAiAnalysis {
-  id           Int                                    @id @default(autoincrement())
-  photoId      Int                                    @unique @map("photo_id")
+  id           Int                          @id @default(autoincrement())
+  photoId      Int                          @unique @map("photo_id")
   theme        String?
   description  String?
   tags         String[]
   embedding    Unsupported("vector(1024)")? // 向量字段
-  tagEmbedding Unsupported("vector(1024)")?            @map("tag_embedding")
-  location     Unsupported("geography(Point, 4326)")? // 地理坐标字段
-  createdAt    DateTime                               @default(now()) @map("created_at")
-  updatedAt    DateTime                               @default(now()) @updatedAt @map("updated_at")
-  photo        Photo                                  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  tagEmbedding Unsupported("vector(1024)")? @map("tag_embedding")
+  createdAt    DateTime                     @default(now()) @map("created_at")
+  updatedAt    DateTime                     @default(now()) @updatedAt @map("updated_at")
+  photo        Photo                        @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
   @@map("photo_ai_analyses")
 }

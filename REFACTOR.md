@@ -5,11 +5,11 @@
 | 批次 | 剩余 |
 |---|---|
 | 安全 | 0.3 |
-| Bug | 1.1 1.2 1.4 1.5 1.6 1.7 |
+| Bug | 1.2 1.4 1.5 1.6 1.7（1.1 随 5.8 修掉） |
 | 死代码 | 2.10 |
 | 类型收敛 | 3.1 3.2 3.3 |
 | 结构 | 4.10 4.12 |
-| 数据层 | 5.1 – 5.7 |
+| 数据层 | 5.1 – 5.7、5.9 – 5.16（5.8 已完成） |
 
 ---
 
@@ -87,13 +87,13 @@ src/
 
 ## Bug
 
-### 1.1 `transformPhoto` 里关系名拼写错误
+### ✅ 1.1 `transformPhoto` 里关系名拼写错误
 
 - **位置**：`src/server/services/photo/photo.service.ts`，`transformPhoto` 方法末尾
 - **成因**：写的是 `if (transformed.locations)`，但 schema 中 Photo 上的关系名是 `location`（单数）。该分支永远不会进入。
 - **影响**：`location.rawData`（高德逆地理编码的完整原始 JSON）一直全量下发给前端。注释写的"排除 rawData 字段以减小响应体积"只对 `photoExif` 生效了。
 - **旁证**：`npm run build` 的 ESLint 警告里有两处 `'rawData' is assigned a value but never used`，其中一处就是这个永不执行的分支。
-- **处理**：改为 `location`。更好的做法是在 Prisma 查询层用 `select` 排除 `rawData`，比在转换层 delete 更可靠。
+- **实际做法**：随 5.8 一起改为 `location`。更进一步的做法（在 Prisma 查询层用 `select` 排除 `rawData`）仍未做。
 
 ### 1.2 `getPhotosInBounds` 缺少 `Promise.all`
 
@@ -220,6 +220,12 @@ tsconfig 里 `skipLibCheck: true` **会跳过 `.d.ts` 的类型检查** —— �
 
 ## 数据层
 
+分两类，顺序不能颠倒：**5.8 – 5.14 是表结构与字段归属**，改的是表本身；
+**5.2 – 5.7 是索引与新增字段**，建在结构之上。结构未定就加索引，等于改两次表。
+
+而两者都必须排在 5.1 之后 —— 现有 migration 已与 schema 漂移，
+在漂移的基础上叠新 migration 会越来越难收拾。
+
 ### 5.1 migration 与 schema 已严重漂移
 
 - **成因**：中途使用了 `prisma db push`（`package.json` 中的 `db:push:prod` / `db:push:local`），绕过 migration 记录。
@@ -274,17 +280,167 @@ CREATE INDEX ON locations USING gist (geom);
 
 有经纬度和准确本地时间即可纯数学计算，无需外部 API，可离线批量补全历史数据。配合已有的 `bearingDirection` 能判断顺光、逆光、侧光，也能识别蓝调时刻与黄金时刻。这是摄影复盘类功能的数据基础，依赖 5.6 先完成。
 
+### ✅ 5.8 行政区划规范化为 `regions` 表
+
+- **位置**：`prisma/schema.prisma` 的 `Location`
+- **成因**：`country / province / city / district / township / adcode / formattedAddress` 全部按行存在 `locations` 里。同一个城市拍 100 张照片，"河南省 / 郑州市 / 金水区" 就重复存 100 次。
+- **代价已经显现**：首页统计城市数是把全部位置记录拉到 Node 里算 distinct ——
+
+```ts
+// app/(site)/page.tsx
+const cityCount = new Set(locations.map((item) => item.city)).size;
+```
+
+  照片上千张后，为得到一个数字要传输上千行。
+
+- **实际做法**：
+
+```
+regions   (adcode PK, country, province, city, district)
+locations (photoId, latitude, longitude, adcode → regions, township, neighborhood, formattedAddress, bearing)
+```
+
+  **`township` 没有进 `regions`** —— 这与最初设计不同。探查数据时发现两个 adcode 有"冲突"：`110102` 下有西长安街街道与金融街街道，`110105` 下有奥运村街道与孙河乡。原因是 adcode 是**区县级**代码，一个区下自然有多个街道，把 township 放进去会破坏主键唯一性。去掉它之后 13 个 adcode 全部唯一。
+
+  迁移 SQL 在 `prisma/migrations/20260918000000_extract_regions/`，顺序是建表 → 迁数据 → 加外键 → 删旧列。不能直接 `db push`，那会先删列、区划数据就丢了。
+
+  **代码侧的兼容处理**：区划字段的读取点分布在九处组件里（`PhotoCard`、`PhotoLightbox`、`InfoPanel`、`HeroReadout`、`photoMeta` 等），逐个改成 `location.region.city` 代价过大。改为在 service 层查询时 `include: { region: true }`，再把 region 字段摊平回 location 对象，前端读 `location.city` 的写法保持不变。摊平逻辑在 `location.service.ts` 的 `flattenRegion` 与 `photo.service.ts` 的 `transformPhoto`。
+
+  **收益已落地**：首页城市数改为 `locationService.countDistinctRegions()`，在 `regions` 上做 SQL 聚合，不再把全部位置记录拉到 Node 里 `new Set`。
+
+  **顺带修掉 1.1** —— `transformPhoto` 里 `transformed.locations` 的拼写错误（关系名是单数 `location`），那个分支从来没执行过，`location.rawData` 一直全量下发。改对之后 rawData 才真正被剔除。
+
+  本地库已迁移并验证：13 行 regions、零外键孤儿、外键与 RESTRICT 约束均生效、首页与足迹页正常渲染出城市与区县名。**生产库尚未迁移。**
+
+### 5.9 GPS 字段在 `photo_exifs` 与 `locations` 重复
+
+- **成因**：两张表有 7 个同名字段 —— `latitude`、`longitude`、`altitude`、`GPSLatitude`、`GPSLongitude`、`bearingDirection`、`rawData`。还有一对同物异名：exif 里叫 `gpsImgDirection`，location 里叫 `bearing`。
+- **影响**：`updatePhotoLocation` 必须同时写两张表，`deletePhotoLocation` 要两边一起清，且都没有事务包裹 —— 任一步失败就永久不一致，没有任何约束能发现。
+- **处理**：按"exif 存从文件读出的原始值、locations 存解析与逆地理编码后的结果"划分：
+
+| 字段 | 现在 | 应该在 | 原因 |
+|---|---|---|---|
+| `latitude` `longitude` `altitude` | 两张表 | `locations` | 十进制坐标是解析结果 |
+| `GPSLatitude` `GPSLongitude` | 两张表 | `photo_exifs` | 度分秒数组是原始格式 |
+| `bearingDirection` | 两张表 | 都删（见 5.11） | 中文方位词，可由 `bearing` 算出 |
+| `gpsImgDirection` / `bearing` | 各一张表 | `locations` 留 `bearing` | 同一个值两个名字 |
+
+  5.8 已先行完成（只动了区划字段），本条的 GPS 字段去重仍待做。
+
+### 5.10 两处 schema 层面的小 bug
+
+**`Photo.updatedAt` 不会自动更新。**
+
+```prisma
+model Photo {
+  updatedAt  DateTime  @default(now())             // 缺 @updatedAt
+}
+model PhotoAiAnalysis {
+  updatedAt  DateTime  @default(now()) @updatedAt   // 有
+}
+```
+
+  后果是它永远等于 `createdAt`，改置顶、重建缩略图、改位置都不会更新。补 `@updatedAt` 即可。
+
+**`takenAt` 可空，但它是唯一的排序字段。** 所有列表查询都 `orderBy: { takenAt: 'desc' }`，而 PG 在 DESC 排序时 NULL 排最前 —— 没有拍摄时间的照片会跑到列表最顶端。实际上 scanner 里有兜底（取不到 EXIF 时间就用 `stats.birthtime`），永远不会为 null，字段应改为非空让约束反映真实情况。
+
+### 5.11 三处存了展示格式而非数据
+
+**`exposureTime String?`** 存的是 `"1/125"`，转换逻辑在 `scanner.service.ts`：
+
+```ts
+exposureTimeStr = `1/${Math.round(1 / exifData.ExposureTime)}`;
+```
+
+  等于把前端的格式化固化进数据库。代价是无法做范围查询 —— "找快门慢于 1/30 的照片"没法写，字符串比较对 `"1/125"` 和 `"1/30"` 无意义。应存 `Float`（秒），展示交给 `lib/format.ts`（那里已有 `formatExposureTime`）。
+
+**枚举字段全存自由字符串。** `flash`、`whiteBalance`、`meteringMode`、`exposureProgram`、`colorSpace` 都是 `String(exifData.X ?? '')` 直接转的，`flash` 在对象时还走 `JSON.stringify`。这些本质是有限取值，存自由字符串意味着同一含义有多种写法，`GROUP BY flash` 统计"用了多少次闪光灯"结果不可靠。
+
+**`dominantColor String?`** 存 `"rgb(120,130,140)"`，无法做颜色查询。若要实现"找暖色调的照片"，需要数值形态（三个 Int，或 HSL / Lab 分量）才能算距离。
+
+**`bearingDirection`** 同属此类：存的是"东南"这种中文转译，且两张表各存一份。删掉、由 `bearing` 现算。
+
+### 5.12 命名规范不统一
+
+**列名驼峰与 snake_case 混用。** 只有 `photo_ai_analyses` 做了字段映射（`photo_id`、`tag_embedding`、`created_at`、`updated_at`），其余所有表的列名在库里就是驼峰：`photoId`、`formattedAddress`、`thumbSmallKey`…
+
+  现在能正常工作是因为原生 SQL 只碰了映射过的那张表：
+
+```sql
+JOIN "photo_ai_analyses" pa ON p.id = pa.photo_id   -- 能直接写
+```
+
+  但 PG 对未加引号的标识符会折叠成小写，将来在原生 SQL 里查 exif 必须写 `"photoId"`。5.2 的索引和 5.3 的 PostGIS 查询都是原生 SQL，会踩到。建议所有字段统一加 `@map` 转 snake_case。
+
+**关系字段名 `PhotoExif.photos` 是复数**，但它指向单个 `Photo`。`Location.photo` 与 `PhotoAiAnalysis.photo` 都是单数，统一改成 `photo`。
+
+### 5.13 `photo_exifs` 与 `locations` 没有时间戳
+
+两张表都没有 `createdAt` / `updatedAt`。位置可以被手动修改（`updatePhotoLocation`），却没有任何审计痕迹 —— 无法判断某张照片的坐标是扫描时写入的还是后来手动改的。
+
+### 5.14 缺少约束
+
+一条 CHECK 约束都没有。两个值得加的：
+
+- `locations.latitude` / `longitude` 没有范围检查。一次错误的逆地理编码或手动输入就能写进 `latitude = 999`
+- `photos.originalKey` / `thumbSmallKey` / `thumbLargeKey` 是非空 String 但没有 unique。两条记录理论上可指向同一个 MinIO 对象，删一条会让另一条的文件消失
+
+### 5.15 `exifImageWidth` 被前端误用（bug）
+
+- **成因**：`photos.width/height` 与 `photo_exifs.exifImageWidth/Height` 是两个不同的值 —— 前者来自 `metadata.autoOrient.width`（sharp 解码并应用旋转后的实际尺寸），后者是 EXIF 标签原始值（不含旋转）。
+- **影响**：前端三处都在用后者展示尺寸（`PhotoLightbox/InfoPanel.tsx`、`photo/ExifInfo.tsx`、`lib/photoMeta.ts`），竖拍照片的详情面板会显示成横向尺寸。
+- **处理**：展示改用 `photos.width/height`，`exifImageWidth` 仅作原始记录保留在 exif 表。这条独立于其他数据层改动，可随时修。
+
+### 5.16 视频文件的元信息未记录
+
+`photos.size` 只记录照片大小。有 Live Photo 时视频也上传了（`videoKey`），但它的大小、时长都没有字段承载，管理后台统计存储占用会漏掉这部分。
+
+**关联的可扩展性取舍**：四个固定的 key 列（`originalKey / thumbSmallKey / thumbLargeKey / videoKey`）意味着每增加一种衍生文件就要加一列。更可扩展的是 assets 表：
+
+```
+photo_assets (photoId, kind, key, size, width, height, mimeType)
+```
+
+但对单用户项目、衍生类型固定为这四种的情况，固定列更简单、少一次 join。**不建议现在改** —— 除非要加 WebP/AVIF 版本或多档缩略图。
+
+### 不建议改动的部分
+
+- **三张一对一表的整体结构是合理的**，别为减少表数量合并回去。
+
+  注意理由**不是**"向量太大会拖慢 `photos` 的顺序扫描" —— 实测 `embedding` 的 `attstorage` 是 `e`（external），pgvector 明确设了外置存储，两个向量共 8200 字节远超 TOAST 阈值，必然被搬到副表（`photo_ai_analyses` 主表 40 kB、TOAST 表 616 kB），主表行里只留 18 字节指针。放进 `photos` 也不会被顺序扫描读到。
+
+  真正的理由是写入模式：AI 分析可重跑（`updateEmbedding` / `analysis` 都会重写），合并后每次重跑都让 `photos` 这张核心表膨胀、需更频繁 VACUUM；HNSW 索引会跟着建在 `photos` 上，该表任何非 HOT update 都要连带更新索引条目，而 HNSW 插入要走图搜索找邻居，比 B-tree 贵；此外"清空全部分析重跑"现在是 `TRUNCATE` 一张小表，合并后要 UPDATE 全部照片行。
+
+  `photo_exifs` 拆开是因为 30+ 字段加 `rawData` 而列表查询不需要；`locations` 是因为有独立查询路径（首页地图打点只取坐标）。
+
+  以上都是规模相关的 —— 当前 67 张照片下两种设计都能正常工作，拆分的价值在于照片增长后更抗压。
+
+- **向量的版本化是过度设计，现在不做。** 若将来要换 embedding 模型或改维度，`photo_embeddings (photoId, model, dim, embedding, ...)` 复合主键的设计能并存多个模型、灰度切换。除非确实要换模型，否则不值得。
+- **`tags String[]` 用 PG 数组而非标签表**是正确的取舍。配 GIN 索引（5.2）够用，标签表要多两次 join，换来的管理能力暂时用不上。
 ---
 
 ## 建议顺序
 
-1. **1.1 与 1.5** —— 一个拼写修正、一条加索引的 SQL，改动最小、收益直接，且无连带影响
-2. **3.1 类型收敛** —— 做完 `lib/types/` 的定位才清晰（从 schema 派生的类型层），1.7 和 3.2 会顺带变简单
-3. **5.1 与 5.5** —— baseline migration 关系到能否重建数据库；`visibility` 关系到私人照片是否对外可见。两者不依赖其他条目
-4. **1.4 / 1.2 / 1.6** —— 各自独立，按需推进
-5. **0.3 登录流程** —— 需要新增登录页，是个独立小功能
-6. **4.10 / 4.12 / 2.10 / 3.3** —— 一致性与清理，无功能影响
-7. **ingestion 抽 worker 进程** —— 见 `src/worker/README.md`。触发条件是扫描期间前台响应受影响到不可忍受，或需要任务断线续跑。独立于以上所有条目
+**先做这些，代价小、无连带影响**
+
+1. **1.1** 拼写修正、**1.5** 两条 HNSW 索引、**5.10** 两行 schema 修正、**5.15** 尺寸显示 bug
+2. **5.1 baseline migration** —— 后续所有表结构改动的前置。现有 migration 已与 schema 漂移，不先对齐会越滚越难
+3. **5.5 `visibility`** —— 关系到私人照片是否对外可见，不依赖其他条目
+
+**表结构改造，一次 migration 做完**
+
+4. **5.8 + 5.9** —— 都要动 `locations`（拆 `regions`、GPS 字段去重），分两次改表不值得
+5. **5.12 列名统一** + **5.2 索引** + **5.3 PostGIS 列** + **5.13 时间戳** + **5.14 约束** —— 同样都是改表，跟上一步合并或紧随其后
+6. **5.11 展示格式改数值** —— 需要配套改写入端（`scanner.service.ts`）与读取端（`lib/format.ts`），且要迁移历史数据
+
+**其余按需推进**
+
+7. **3.1 类型收敛** —— 做完 `lib/types/` 的定位才清晰（从 schema 派生的类型层），1.7 与 3.2 会顺带变简单。注意它依赖 schema 稳定，宜在上一组之后
+8. **1.4 / 1.2 / 1.6** —— 各自独立
+9. **0.3 登录流程** —— 需要新增登录页，是个独立小功能
+10. **5.6 + 5.7** —— 时区与太阳角度，后者依赖前者
+11. **4.10 / 4.12 / 2.10 / 3.3 / 5.4 / 5.16** —— 一致性与清理，无功能影响
+12. **ingestion 抽 worker 进程** —— 见 `src/worker/README.md`。触发条件是扫描期间前台响应受影响到不可忍受，或需要任务断线续跑。独立于以上所有条目
 
 ## 验证方式
 

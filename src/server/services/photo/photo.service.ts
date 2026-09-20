@@ -54,7 +54,7 @@ export class PhotoService {
       orderBy: { takenAt: 'desc' },
       include: {
         photoExif: true,
-        location: true,
+        location: { include: { region: true } },
         photoAiAnalysis: {
           select: {
             id: true,
@@ -137,7 +137,7 @@ export class PhotoService {
       where: { id },
       include: {
         photoExif: true,
-        location: true
+        location: { include: { region: true } }
       }
     });
 
@@ -276,7 +276,7 @@ export class PhotoService {
         take: pageSize,
         orderBy: { takenAt: 'desc' },
         include: {
-          location: withLocation,
+          location: withLocation ? { include: { region: true } } : false,
           photoExif: withExif,
           photoAiAnalysis: withAiAnalysis
             ? {
@@ -306,7 +306,7 @@ export class PhotoService {
       where: { id },
       include: {
         photoExif: true, // 默认包含 EXIF 信息
-        location: true,
+        location: { include: { region: true } },
         photoAiAnalysis: true
       }
     });
@@ -365,7 +365,7 @@ export class PhotoService {
       },
       include: {
         photoExif: true,
-        location: true,
+        location: { include: { region: true } },
         // 与 getPhotoById 取齐：查看器要显示标签，缺了这个关联标签一直是空的
         photoAiAnalysis: true
       }
@@ -413,10 +413,11 @@ export class PhotoService {
       transformed.photoExif = rest as any;
     }
 
-    if (transformed.locations) {
-      // 排除 rawData 字段以减小响应体积
-      const { rawData, ...rest } = transformed.locations;
-      transformed.locations = rest as any;
+    if (transformed.location) {
+      // 剔除 rawData 减小响应体积，并把 region 的区划字段摊平上来，
+      // 使调用方仍能读 location.city（区划已规范化到独立表）
+      const { rawData, region, ...rest } = transformed.location;
+      transformed.location = { ...rest, ...(region ?? {}) } as any;
     }
 
     delete transformed.thumbSmallKey;

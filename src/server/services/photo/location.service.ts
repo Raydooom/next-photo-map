@@ -16,21 +16,53 @@ interface LocationWithThumb {
 }
 
 /**
+ * 把关联出来的 region 字段摊平到 location 上，使调用方仍能读
+ * `location.city`。区划已规范化到独立表，但调用点分布在九处组件里，
+ * 摊平比逐个改成 `location.region.city` 更省事，也不必改前端类型。
+ */
+const flattenRegion = <T extends { region?: unknown } | Record<string, any>>(
+  row: T
+): any => {
+  const { region, ...rest } = row as any;
+  return region ? { ...rest, ...region } : rest;
+};
+
+/**
  * 位置服务 - 提供 location 数据表的增删改查操作
  */
 export const locationService = {
+  /**
+   * 写入位置。调用方仍传扁平的区划字段（country / province / city / district），
+   * 由本方法拆出来 upsert 进 regions，locations 只留 adcode 外键。
+   *
+   * 两次写入包在事务里：region 缺失会让 location 的外键失败，
+   * 分开执行可能留下"有 location 无 region"的中间态。
+   */
   saveLocation: async (photoId: number, location: any) => {
-    return await prisma.location.upsert({
-      where: { photoId },
-      update: {
-        ...location,
-        rawData: location.rawData ?? Prisma.JsonNull
-      },
-      create: {
-        photoId,
-        ...location,
-        rawData: location.rawData ?? Prisma.JsonNull
+    const { country, province, city, district, adcode, ...rest } = location;
+    const region = { country, province, city, district };
+    const hasRegion = Boolean(adcode);
+
+    return await prisma.$transaction(async (tx) => {
+      if (hasRegion) {
+        await tx.region.upsert({
+          where: { adcode },
+          update: region,
+          create: { adcode, ...region }
+        });
       }
+
+      const data = {
+        ...rest,
+        adcode: hasRegion ? adcode : null,
+        rawData: location.rawData ?? Prisma.JsonNull
+      };
+
+      return await tx.location.upsert({
+        where: { photoId },
+        update: data,
+        create: { photoId, ...data }
+      });
     });
   },
   getLocationById: async (id: number): Promise<Location | null> => {
@@ -62,25 +94,72 @@ export const locationService = {
     select?: Record<string, unknown>;
     withThumb?: boolean;
   } = {}): Promise<Location[] | any> => {
-    // 判断对象是否为空
-    const hasSelect = Object.keys(select).length > 0;
-    return await prisma.location.findMany({
-      ...(hasSelect ? { select } : {}),
-      ...(!hasSelect && withThumb
-        ? {
-            include: {
-              photo: {
-                select: {
-                  id: true,
-                  thumbSmallKey: true,
-                  width: true,
-                  height: true
+    // 区划字段已移到 regions，调用方 select 它们时要转成关联查询
+    const { country, province, city, district, ...ownSelect } = select as any;
+    const regionKeys = { country, province, city, district };
+    const wantsRegion = Object.values(regionKeys).some(Boolean);
+    const hasSelect = Object.keys(ownSelect).length > 0 || wantsRegion;
+
+    // select 与 include 互斥，分两条分支写，类型才推导得出来
+    const rows = hasSelect
+      ? await prisma.location.findMany({
+          select: {
+            ...ownSelect,
+            ...(wantsRegion
+              ? {
+                  region: {
+                    select: Object.fromEntries(
+                      Object.entries(regionKeys).filter(([, v]) => v)
+                    )
+                  }
                 }
-              }
-            }
+              : {})
           }
-        : {})
-    });
+        })
+      : await prisma.location.findMany({
+          include: {
+            region: true,
+            ...(withThumb
+              ? {
+                  photo: {
+                    select: {
+                      id: true,
+                      thumbSmallKey: true,
+                      width: true,
+                      height: true
+                    }
+                  }
+                }
+              : {})
+          }
+        });
+
+    return (rows as any[]).map(flattenRegion);
+  },
+
+  /**
+   * 去重后的城市数与省份数。
+   *
+   * 规范化之前这是把全部位置记录拉到 Node 里 `new Set(...)` 算的 ——
+   * 为一个数字传输上千行。现在直接在 regions 上聚合，那张表只有区划数量级。
+   */
+  countDistinctRegions: async (): Promise<{
+    cities: number;
+    provinces: number;
+  }> => {
+    const [row] = await prisma.$queryRaw<
+      { cities: bigint; provinces: bigint }[]
+    >`
+      SELECT COUNT(DISTINCT r."city")::bigint     AS cities,
+             COUNT(DISTINCT r."province")::bigint AS provinces
+      FROM "regions" r
+      WHERE EXISTS (SELECT 1 FROM "locations" l WHERE l."adcode" = r."adcode")
+    `;
+
+    return {
+      cities: Number(row?.cities ?? 0),
+      provinces: Number(row?.provinces ?? 0)
+    };
   },
 
   /**
