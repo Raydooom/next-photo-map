@@ -1,4 +1,4 @@
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { locationService } from '@/server/services/photo/location.service';
 import { HeroCanvas } from './_components/HeroCanvas';
 import { StatsGrid } from './_components/StatsGrid';
@@ -11,7 +11,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   // Server Component 与 service 同进程，直接调用即可，无需绕经 Server Action
-  const photoService = new PhotoService();
 
   // 五个查询互不依赖，并行发起
   const [featured, recently, locations, totalPhotos, regionStats] = await Promise.all([

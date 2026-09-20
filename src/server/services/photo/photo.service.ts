@@ -19,14 +19,7 @@ interface ListPhotosInput {
   top?: boolean;
   ids?: number[];
 }
-export class PhotoService {
-  private readonly photosBaseUrl = '/photos';
-  private appUrl: string;
-
-  constructor(appUrl?: string) {
-    this.appUrl = appUrl || process.env.APP_URL || '';
-  }
-
+class PhotoService {
   async checkPhotoExists(originalPath: string) {
     return prisma.photo.findUnique({
       where: { originalPath }
@@ -427,3 +420,9 @@ export class PhotoService {
     return transformed;
   }
 }
+
+/**
+ * 进程级单例。class 不导出，外部拿不到构造器，也就不会误以为需要 new。
+ * 只有带任务级状态的 service（ScannerService）才导出类、由调用方每次新建。
+ */
+export const photoService = new PhotoService();

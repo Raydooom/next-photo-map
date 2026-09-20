@@ -29,7 +29,7 @@ interface ReverseGeocodingResponse {
   infocode: string;
 }
 
-export class GeocodingService {
+class GeocodingService {
   private key: string;
 
   constructor() {
@@ -84,3 +84,6 @@ export class GeocodingService {
     }
   }
 }
+
+/** 进程级单例，class 不导出 */
+export const geocodingService = new GeocodingService();

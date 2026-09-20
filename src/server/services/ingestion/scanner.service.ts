@@ -5,17 +5,17 @@ import path from 'path';
 import sharp from 'sharp';
 import exifr from 'exifr';
 const convert = require('heic-convert');
-import { FileManageService } from '@/server/services/ingestion/file.service';
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { fileManageService } from '@/server/services/ingestion/file.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { locationService } from '@/server/services/photo/location.service';
 import { photoExifService } from '@/server/services/photo/exif.service';
 
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
 import * as Utils from '@/server/services/ingestion/utils';
-import { GeocodingService } from '@/server/services/ingestion/geocoding.service';
+import { geocodingService } from '@/server/services/ingestion/geocoding.service';
 import { createLogger } from '@/server/infra/logger';
 import { FileGroup, scanImageGroups } from '@/server/services/ingestion/photo-files';
-import { AIService } from '@/server/services/ai/analysis.service';
+import { aiService } from '@/server/services/ai/analysis.service';
 
 export interface PhotoProcessResult {
   success: boolean;
@@ -40,24 +40,21 @@ interface ProgressData {
   data?: any;
 }
 
+/**
+ * 照片扫描。这是唯一导出类而非单例的 service —— 下面的计数器与
+ * progressCallback 属于一次扫描任务，两次扫描必须各自隔离。
+ * 曾被做成模块级单例，导致计数互相覆盖、progressCallback 被后一次调用
+ * 替换掉，前一个 SSE 连接静默失联。
+ *
+ * 依赖的其他 service 都是进程级单例，直接用导入的实例即可。
+ */
 export class ScannerService {
-  private photoService: PhotoService;
-  private fileManageService: FileManageService;
-  private geocodingService: GeocodingService;
-  private aiService: AIService;
   private logger = createLogger('SCANNER');
   private scanStartTime: number = 0;
   private successCount: number = 0;
   private failedCount: number = 0;
   private skippedCount: number = 0;
   private progressCallback?: (data: ProgressData) => void;
-
-  constructor(appUrl?: string) {
-    this.photoService = new PhotoService(appUrl);
-    this.fileManageService = new FileManageService();
-    this.geocodingService = new GeocodingService();
-    this.aiService = new AIService();
-  }
 
   setProgressCallback(callback: (data: ProgressData) => void) {
     this.progressCallback = callback;
@@ -173,7 +170,7 @@ export class ScannerService {
 
     try {
       // 检查是否已存在
-      const existing = await this.photoService.checkPhotoExists(imagePath);
+      const existing = await photoService.checkPhotoExists(imagePath);
       if (existing && !force) {
         return { success: false, skipped: true, error: '照片已存在' };
       }
@@ -211,19 +208,19 @@ export class ScannerService {
 
       // 上传文件到 MinIO
       const uploadTasks = [
-        this.fileManageService.uploadFile({
+        fileManageService.uploadFile({
           date: dateStr,
           fileName: fileName,
           fileBuffer,
           size: 'raw'
         }),
-        this.fileManageService.uploadFile({
+        fileManageService.uploadFile({
           date: dateStr,
           fileName: fileName,
           fileBuffer: smallBuffer,
           size: 'small'
         }),
-        this.fileManageService.uploadFile({
+        fileManageService.uploadFile({
           date: dateStr,
           fileName: fileName,
           fileBuffer: largeBuffer,
@@ -236,7 +233,7 @@ export class ScannerService {
         const videoBuffer = await fs.promises.readFile(videoPath);
         const videoFileName = path.basename(videoPath);
         uploadTasks.push(
-          this.fileManageService.uploadFile({
+          fileManageService.uploadFile({
             date: dateStr,
             fileName: videoFileName,
             fileBuffer: videoBuffer,
@@ -246,7 +243,7 @@ export class ScannerService {
       }
 
       const uploadRes = await Promise.all(uploadTasks);
-      const isSuccess = uploadRes.every(res => res?.key && res?.success);
+      const isSuccess = uploadRes.every((res) => res.key && res.success);
 
       if (!isSuccess) {
         return {
@@ -262,10 +259,10 @@ export class ScannerService {
         originalPath: imagePath,
         size,
         mimeType,
-        originalKey: uploadRes[0]!.key,
-        thumbSmallKey: uploadRes[1]!.key,
-        thumbLargeKey: uploadRes[2]!.key,
-        videoKey: videoPath ? uploadRes[3]!.key : null,
+        originalKey: uploadRes[0].key,
+        thumbSmallKey: uploadRes[1].key,
+        thumbLargeKey: uploadRes[2].key,
+        videoKey: videoPath ? uploadRes[3].key : null,
         width,
         height,
         takenAt,
@@ -275,9 +272,9 @@ export class ScannerService {
       // 创建或更新照片记录
       let photo;
       if (force && existing) {
-        photo = await this.photoService.updatePhoto(photoData, existing.id);
+        photo = await photoService.updatePhoto(photoData, existing.id);
       } else {
-        photo = await this.photoService.createPhoto(photoData);
+        photo = await photoService.createPhoto(photoData);
       }
 
       // 保存 EXIF 信息
@@ -290,7 +287,7 @@ export class ScannerService {
       if (enableAI) {
         try {
           // 用刚创建的 photo 而非 getPhotoById —— 后者经 transformPhoto 会删掉 key 字段
-          await this.aiService.createAiInfo(photo);
+          await aiService.createAiInfo(photo);
           aiAnalyzed = true;
           console.log(`AI 分析完成: ${fileName} (ID: ${photo.id})`);
         } catch (aiError) {
@@ -381,7 +378,7 @@ export class ScannerService {
       const bearingDirection =
         bearing !== null ? Utils.getDirectionFromBearing(bearing) : null;
 
-      const addressInfo = await this.geocodingService.reverseGeocode(
+      const addressInfo = await geocodingService.reverseGeocode(
         exifData.latitude,
         exifData.longitude
       );
@@ -441,7 +438,7 @@ export class ScannerService {
     // 增量模式：批量过滤掉已存在的照片，只处理新照片
     let groupsToScan = allGroups;
     if (!force) {
-      const existingPaths = await this.photoService.findExistingPaths(
+      const existingPaths = await photoService.findExistingPaths(
         allGroups.map(g => g.imageAbsolutePath!)
       );
       groupsToScan = allGroups.filter(

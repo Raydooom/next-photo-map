@@ -10,13 +10,12 @@ import 'server-only';
  */
 
 import { requireAdmin } from '@/server/auth';
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { photoExifService } from '@/server/services/photo/exif.service';
 import { locationService } from '@/server/services/photo/location.service';
-import { GeocodingService } from '@/server/services/ingestion/geocoding.service';
-import { AIService } from '@/server/services/ai/analysis.service';
+import { geocodingService } from '@/server/services/ingestion/geocoding.service';
+import { aiService } from '@/server/services/ai/analysis.service';
 
-const photoService = new PhotoService();
 
 /** 获取全部照片并附带 MinIO 中的文件存在状态 */
 export const getPhotosWithFileStatus = async () => {
@@ -45,7 +44,7 @@ export const updatePhotoLocation = async (
 ) => {
   await requireAdmin();
 
-  const addressInfo = await new GeocodingService().reverseGeocode(
+  const addressInfo = await geocodingService.reverseGeocode(
     latitude,
     longitude
   );
@@ -102,5 +101,5 @@ export const updatePhotoTop = async (photoId: number, top: boolean) => {
 /** 对单张照片重跑 AI 分析 */
 export const analysis = async (photo: any) => {
   await requireAdmin();
-  return await new AIService().createAiInfo(photo);
+  return await aiService.createAiInfo(photo);
 };

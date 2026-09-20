@@ -4,7 +4,7 @@ import { prisma, Prisma } from '@/server/infra/db';
 import { getImageBase64 } from '@/server/infra/storage';
 import { generateAnalysis, generateEmbedding } from '@/server/infra/ai-client';
 
-export class AIService {
+class AIService {
   // ai分析
   async analysis(key: string) {
     const base64Image = await getImageBase64(key);
@@ -102,3 +102,6 @@ export class AIService {
     `;
   }
 }
+
+/** 进程级单例，class 不导出 */
+export const aiService = new AIService();

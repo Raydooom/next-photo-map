@@ -8,7 +8,7 @@
 | Bug | 1.2 1.4 1.5 1.6 1.7（1.1 随 5.8 修掉） |
 | 死代码 | 2.10 |
 | 类型收敛 | 3.1 3.2 3.3 |
-| 结构 | 4.10 4.12 |
+| 结构 | 4.12（4.10 已完成） |
 | 数据层 | 5.1 – 5.7、5.9 – 5.16（5.8 已完成） |
 
 ---
@@ -206,11 +206,25 @@ tsconfig 里 `skipLibCheck: true` **会跳过 `.d.ts` 的类型检查** —— �
 
 ## 结构
 
-### 4.10 统一服务实例化方式
+### ✅ 4.10 统一服务实例化方式
 
-仍并存两种风格：`PhotoService` / `ScannerService` / `AIService` / `AiChatService` / `FileManageService` / `GeocodingService` 导出类，`locationService` / `photoExifService` 导出单例对象。调用方每次都要确认该 `new` 还是直接用。
+- **成因**：原先并存两种风格 —— 六个 service 导出类由调用方 `new`，`locationService` / `photoExifService` 导出对象字面量。调用方每次都要确认该不该 `new`。
+- **实际做法**：统一为 **class 不导出、只导出单例实例**，判断标准是状态的生命周期而非有无状态：
 
-建议统一导出类，生命周期由调用方决定 —— 单例模式此前在 `ScannerService` 上造成过实际问题：它持有可变实例状态（计数器、`progressCallback`），被做成模块级单例后并发调用会互相覆盖，`progressCallback` 被替换会导致前一个 SSE 连接静默失联。
+| 导出形态 | 含义 | 谁 |
+|---|---|---|
+| `export const xxx = new XxxService()`，class 不导出 | 进程级单例，外部拿不到构造器 | 其余六个 |
+| `export class XxxService` | 任务级状态，调用方每次新建 | 只有 `ScannerService` |
+
+  `ScannerService` 是唯一例外，因为它的计数器与 `progressCallback` 属于**一次扫描任务**，两次扫描必须隔离 —— 1.3 那个 bug 正是它被做成模块级单例导致的。它不再持有其他 service 的实例字段（那些都是进程级单例，直接用导入的即可），构造函数随之删除。
+
+  为什么不用对象字面量：`location.service.ts` 里 `listLocations` 要调 `getAllLocations` 时只能写 `locationService.getAllLocations(...)` 自引用模块级常量，改成 class 后是 `this.getAllLocations(...)`，且能有真正的 `private`（`flattenRegion` 已收为私有方法）。
+
+  为什么不用静态方法：`ScannerService` 必须是实例，若其余改成静态 class，代码里会出现 `AIService.analysis()` 与 `new ScannerService().startScanner()` 两种相反用法而外观都是 class。现在"导出实例 vs 导出类"本身就区分了用法。
+
+- **顺带清掉两处死代码**：
+  - `PhotoService` 的 `constructor(appUrl?: string)` 与 `appUrl` / `photosBaseUrl` 字段 —— `appUrl` 只在构造函数里赋值、全文从未读取，`photosBaseUrl` 也未使用，而 `ScannerService` 还在往里传这个读不到的值
+  - `FileManageService` 的 `private STORAGE_TYPE = 'minio'` 及 `if (this.STORAGE_TYPE === 'minio')` —— 永远为真且无 else 分支，导致 `uploadFile` 返回类型被推导成 `{...} | undefined`，调用方得处理永不出现的 `undefined`（scanner 里那些 `res?.key` 和 `uploadRes[0]!.key` 就是为此写的，已一并简化）
 
 ### 4.12 抽出 `useEmblaSync` hook
 

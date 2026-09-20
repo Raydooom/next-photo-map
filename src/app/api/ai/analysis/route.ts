@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AIService } from '@/server/services/ai/analysis.service';
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { aiService } from '@/server/services/ai/analysis.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { createSSE } from '@/server/infra/sse';
 import { requireAdminResponse } from '@/server/auth';
 
-const aiService = new AIService();
-const photoService = new PhotoService();
 
 export async function GET(request: NextRequest) {
   const denied = await requireAdminResponse();

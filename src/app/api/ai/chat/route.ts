@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AiChatService } from '@/server/services/ai/chat.service';
+import { aiChatService } from '@/server/services/ai/chat.service';
 import { createSSE } from '@/server/infra/sse';
 
-const chatService = new AiChatService();
 
 interface ChatRequest {
   inputText: string;
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
         });
 
         // 2. 解析意图
-        const intention = await chatService.queryIntention(data.inputText);
+        const intention = await aiChatService.queryIntention(data.inputText);
 
         // 3. 根据意图处理
         if (intention.intent === 'PHOTO_SEARCH') {
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
             type: 'text'
           });
 
-          const content = await chatService.queryPhotosByEmbedding(
+          const content = await aiChatService.queryPhotosByEmbedding(
             intention.embeddingDesc,
             intention.params
           );

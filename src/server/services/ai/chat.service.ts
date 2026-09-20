@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { prisma } from '@/server/infra/db';
 import { generateEmbedding, intentionAnalysis } from '@/server/infra/ai-client';
 
@@ -35,9 +35,8 @@ interface PhotoMatch {
   semantic_distance: number;
 }
 
-const photoService = new PhotoService();
 
-export class AiChatService {
+class AiChatService {
   async queryIntention(input: string): Promise<Intention> {
     const intention = await intentionAnalysis({
       input,
@@ -84,3 +83,6 @@ export class AiChatService {
     return photo;
   }
 }
+
+/** 进程级单例，class 不导出 */
+export const aiChatService = new AiChatService();

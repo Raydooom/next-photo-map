@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
-import { PhotoService } from '@/server/services/photo/photo.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { scanImageGroups } from '@/server/services/ingestion/photo-files';
 import { requireAdminResponse } from '@/server/auth';
 
@@ -15,7 +15,6 @@ export async function GET() {
   if (denied) return denied;
 
   try {
-    const photoService = new PhotoService();
 
     // 扫描文件系统（仅图片，无需配对视频）
     const { files, groups } = await scanImageGroups(PHOTO_BASE_DIR, false);
