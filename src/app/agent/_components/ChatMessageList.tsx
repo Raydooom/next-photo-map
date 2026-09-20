@@ -18,8 +18,9 @@ export function ChatMessageList({
   onSuggestionClick
 }: ChatMessageListProps) {
   return (
-    <ScrollShadow ref={scrollRef} className="min-h-0 flex-1 px-4 py-6 md:px-8">
-      <div className="mx-auto max-w-3xl space-y-5">
+    <ScrollShadow ref={scrollRef} className="min-h-0 flex-1 px-4 py-8 md:px-8">
+      {/* 消息之间靠留白分隔，不再有边框划界，故间距要给足 */}
+      <div className="mx-auto max-w-3xl space-y-8">
         {messages.length === 0 ? (
           <WelcomeScreen onSuggestionClick={onSuggestionClick} />
         ) : (

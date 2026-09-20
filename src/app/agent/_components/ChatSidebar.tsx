@@ -3,7 +3,7 @@
 import { ScrollShadow } from '@heroui/scroll-shadow';
 import { Plus, Trash2, Camera } from 'lucide-react';
 import clsx from 'clsx';
-import { Eyebrow } from '@/components/ui';
+import { Eyebrow, LabButton } from '@/components/ui';
 import { ChatHistory } from './types';
 
 interface ChatSidebarProps {
@@ -29,34 +29,29 @@ export function ChatSidebar({
         <div className="mb-5 flex items-center gap-3">
           {/* 标识用描边方框而非渐变圆角，与导航栏的 logo 处理一致 */}
           <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-lab-line-strong">
-            <Camera className="h-4 w-4 text-lab-accent" />
+            <Camera className="h-4 w-4 text-lab-muted" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm text-lab-paper">
-              摄影助手
+            <span className="lab-action block truncate text-lab-paper">
+              智能助手
             </span>
-            <Eyebrow className="block text-[11px]">Agent</Eyebrow>
+            {/* 拉丁标签才用等宽字 */}
+            <Eyebrow className="mt-1 block">Agent</Eyebrow>
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onNewChat}
-          className={clsx(
-            'group/new flex h-10 w-full items-center justify-center gap-2',
-            'border border-lab-line-strong text-lab-paper',
-            'transition-colors duration-300 hover:border-lab-accent hover:text-lab-accent',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-accent'
-          )}
-        >
-          <Plus size={15} />
-          <span className="text-[13px]">新建对话</span>
-        </button>
+        {/* 这一页唯一的常驻主行动点，用实底色块。同时给整屏一个视觉锚点 */}
+        <LabButton variant="primary" className="w-full" onClick={onNewChat}>
+          <span className="inline-flex items-center gap-2">
+            <Plus size={15} />
+            新建对话
+          </span>
+        </LabButton>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="px-5 pb-2 pt-4">
-          <Eyebrow className="text-[11px]">History</Eyebrow>
+          <Eyebrow>历史对话</Eyebrow>
         </div>
 
         <ScrollShadow className="min-h-0 flex-1 px-2 pb-2">
@@ -89,6 +84,7 @@ export function ChatSidebar({
                   className={clsx(
                     'shrink-0 p-1 text-lab-faint opacity-0',
                     'transition-opacity duration-200',
+                    // danger 是语义色，与强调色的收敛无关，保留
                     'group-hover/item:opacity-100 hover:text-lab-danger',
                     'focus-visible:opacity-100 focus-visible:outline-1 focus-visible:outline-lab-accent'
                   )}
@@ -102,7 +98,7 @@ export function ChatSidebar({
       </div>
 
       <div className="border-t border-lab-line px-5 py-4">
-        <Eyebrow className="text-[11px]">Qwen · bge-m3</Eyebrow>
+        <Eyebrow>Qwen · bge-m3</Eyebrow>
       </div>
     </aside>
   );

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ThemeSwitch } from '@/components/layout/ThemeSwitch';
-import { Eyebrow } from '@/components/ui';
 
 interface ChatHeaderProps {
   title?: string;
@@ -17,7 +16,7 @@ interface ChatHeaderProps {
  * 否则进来之后没有站内出口。
  */
 export function ChatHeader({
-  title = '摄影助手',
+  title = '智能助手',
   subtitle = '照片检索与影像分析'
 }: ChatHeaderProps) {
   return (
@@ -26,7 +25,7 @@ export function ChatHeader({
         <Link
           href="/"
           aria-label="返回首页"
-          className="shrink-0 p-1 text-lab-muted transition-colors duration-300 hover:text-lab-accent focus-visible:outline-1 focus-visible:outline-lab-accent"
+          className="shrink-0 p-1 text-lab-muted transition-colors duration-300 hover:text-lab-paper focus-visible:outline-1 focus-visible:outline-lab-accent"
         >
           <ArrowLeft size={16} />
         </Link>
@@ -34,8 +33,13 @@ export function ChatHeader({
         <span className="h-8 w-px shrink-0 bg-lab-line" aria-hidden />
 
         <span className="min-w-0">
-          <span className="block truncate text-sm text-lab-paper">{title}</span>
-          <Eyebrow className="block text-[11px]">{subtitle}</Eyebrow>
+          <span className="lab-action block truncate text-lab-paper">
+            {title}
+          </span>
+          {/* 中文不走 lab-mono：那个类带 0.12em 字距与 uppercase，只适用于拉丁字符 */}
+          <span className="mt-1 block truncate text-xs text-lab-muted">
+            {subtitle}
+          </span>
         </span>
       </div>
 
