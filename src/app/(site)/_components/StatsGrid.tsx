@@ -12,8 +12,8 @@ interface StatsGridProps {
   totalPhotos: number;
   cityCount: number;
   spotCount: number;
-  /** 最近一张照片的拍摄时间 */
-  latestTakenAt?: string | null;
+  /** 最近一张照片的拍摄时间。Prisma 的 DateTime 映射为 Date，RSC 序列化后仍是 Date */
+  latestTakenAt?: Date | string | null;
 }
 
 /**

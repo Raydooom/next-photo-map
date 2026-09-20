@@ -74,8 +74,22 @@ export const formatFileSize = (size: number) => {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
 };
 
+/**
+ * 优先用度分秒加参考方向，没有则退回十进制坐标。
+ *
+ * 参数不写成 `Partial<PhotoLocation> | Partial<PhotoExif>` —— 联合类型上
+ * 只能访问共有字段，而 GPSLatitudeRef / GPSLongitudeRef 只有 EXIF 有
+ * （Location 表没这两列）。列成结构化类型，两种实参都能传。
+ */
 export const formatLatLng = (
-  location?: Partial<PhotoLocation> | Partial<PhotoExif> | null
+  location?: {
+    GPSLatitude?: number[] | null;
+    GPSLongitude?: number[] | null;
+    GPSLatitudeRef?: string | null;
+    GPSLongitudeRef?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null
 ) => {
   const { GPSLatitude, GPSLongitude, GPSLatitudeRef, GPSLongitudeRef } =
     location || {};
@@ -95,7 +109,7 @@ export const formatAltitude = (altitude?: number | null) => {
   return `海拔约 ${altitude.toFixed(2)} 米`;
 };
 
-export const formatDateCN = (datetime?: string | null) => {
+export const formatDateCN = (datetime?: Date | string | null) => {
   if (!datetime) {
     return '';
   }
@@ -117,7 +131,12 @@ export const formatDateCN = (datetime?: string | null) => {
  *   传入则以它连接各段（'/' → 2025/10/03），供等宽读数一类场景使用，
  *   中文的「年/月/日」在宽字距下会被拉散。
  */
-export const formatTakenDate = (date?: string | null, separator?: string) => {
+export const formatTakenDate = (
+  // Prisma 的 DateTime 映射为 Date，RSC 序列化后仍是 Date。
+  // 原先只声明 string 是错的，运行时靠 dayjs 兼容才没出问题
+  date?: Date | string | null,
+  separator?: string
+) => {
   if (!date) {
     return '';
   }

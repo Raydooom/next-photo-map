@@ -17,11 +17,10 @@ import { geocodingService } from '@/server/services/ingestion/geocoding.service'
 import { aiService } from '@/server/services/ai/analysis.service';
 
 
-/** 获取全部照片并附带 MinIO 中的文件存在状态 */
+/** 获取全部照片，带签名 URL 与 MinIO 中的文件存在状态 */
 export const getPhotosWithFileStatus = async () => {
   await requireAdmin();
-  const photos = await photoService.getAllPhotos();
-  return await photoService.batchCheckFileExists(photos);
+  return await photoService.listAllWithFileStatus();
 };
 
 /** 删除单张照片（含数据库记录、MinIO 对象、源文件） */

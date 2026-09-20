@@ -4,11 +4,11 @@ import { useMemo } from 'react';
 import { ScrollShadow } from '@heroui/scroll-shadow';
 import { Spinner } from '@heroui/spinner';
 import { Table, TableBody, TableColumn, TableHeader } from '@heroui/table';
-import { Photo } from './types';
+import { PhotoRow } from './types';
 import { renderPhotoRow, PhotoRowActions } from './PhotoTableRow';
 
 interface PhotosTableProps extends PhotoRowActions {
-  photos: Photo[];
+  photos: PhotoRow[];
   loading: boolean;
   analyzingIds: Set<number>;
 }

@@ -7,7 +7,7 @@
 | 安全 | 0.3 |
 | Bug | 1.2 1.4 1.5 1.6 1.7（1.1 随 5.8 修掉） |
 | 死代码 | 2.10 |
-| 类型收敛 | 3.1 3.2 3.3 |
+| 类型收敛 | 已全部完成 |
 | 结构 | 4.12（4.10 已完成） |
 | 数据层 | 5.1 – 5.7、5.9 – 5.16（5.8 已完成） |
 
@@ -159,7 +159,7 @@ const vectorString = await generateEmbedding(photo.description || '');
 
 ## 类型收敛
 
-### 3.1 `lib/types/photo.ts` 手抄了 Prisma 类型且已漂移
+### ✅ 3.1 `lib/types/photo.ts` 手抄了 Prisma 类型且已漂移
 
 - **成因**：Prisma 已生成准确类型，此处又手写了一份平行定义，两边随 schema 演进逐渐脱节。
 - **已发现的漂移**：
@@ -168,7 +168,7 @@ const vectorString = await generateEmbedding(photo.description || '');
   - `PhotoItem` 声明了 `thumbSmallKey` / `thumbLargeKey` / `videoKey`，但 `transformPhoto` 结尾把这三个字段 `delete` 了 —— 类型宣称存在，运行时保证不存在
   - `PhotoItem.tags` 是早期 migration 遗留，schema 的 Photo 模型中已无此字段
 - **影响**：叠加 `transformPhoto` 里的 `as any`，服务端返回 `any`、前端用漂移的手写类型接收，这条链路上类型系统完全失效。
-- **处理**：改为从 Prisma 派生：
+- **实际做法**：改为从 Prisma 派生：
 
 ```ts
 // src/lib/types/photo.ts
@@ -192,15 +192,15 @@ export type PhotoItem = Omit<
 
 必须用 `import type`。写成 `import { Prisma }` 会把运行时对象带进 bundle —— 本文件两端都会引用。
 
-### 3.2 去掉 `transformPhoto` 的 `as any`
+### ✅ 3.2 去掉 `transformPhoto` 的 `as any`
 
 - **位置**：`src/server/services/photo/photo.service.ts`
 - **成因**：`const transformed = { ...photo } as any` 之后所有字段操作都失去检查。
-- **处理**：配合 3.1 的 `PhotoItem` 给出明确返回类型。`delete` 操作改为构造新对象（同时避免 V8 对象降级为字典模式）。
+- **实际做法**：返回类型改为 `Promise<PhotoItem>`，`delete` 换成解构后构造新对象（避免 V8 降级为字典模式，该函数在列表查询里每行都要跑）。顺带发现并修掉一处实际缺陷：`getPhotoById` 用 `photoAiAnalysis: true` 取全字段，而 `transformPhoto` 不剔除向量，两个 `vector(1024)` 约 8KB 会下发给前端。现已剥离 `embedding` / `tagEmbedding` 与死字段 `location`，实测三个页面的响应中 `embedding` 出现 0 次。
 
-### 3.3 `src/components/map/type.d.ts` 仍是 `.d.ts`
+### ✅ 3.3 `src/components/map/type.d.ts` 仍是 `.d.ts`
 
-tsconfig 里 `skipLibCheck: true` **会跳过 `.d.ts` 的类型检查** —— 放在里面的业务类型从来没被检查过。此前把 `types/photo.d.ts` 改成 `.ts` 时，立刻冒出一个一直隐藏的类型错误（`PhotoDetail` 不兼容地扩展 `PhotoItem`，该 interface 零引用已删）。这个文件是同类隐患的最后一处，改成 `.ts`。
+tsconfig 里 `skipLibCheck: true` **会跳过 `.d.ts` 的类型检查** —— 放在里面的业务类型从来没被检查过。此前把 `types/photo.d.ts` 改成 `.ts` 时，立刻冒出一个一直隐藏的类型错误（`PhotoDetail` 不兼容地扩展 `PhotoItem`，该 interface 零引用已删）。该文件经查是空文件，已删除。`src/` 下现已无业务 `.d.ts`（仅剩 Next.js 生成的 `next-env.d.ts`）。
 
 ---
 

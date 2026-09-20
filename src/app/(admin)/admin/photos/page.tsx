@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardBody } from '@heroui/card';
 import { useDisclosure } from '@heroui/modal';
 import {
-  Photo,
+  PhotoRow,
   PhotosToolbar,
   PhotosFilterTabs,
   PhotosTable,
@@ -30,7 +30,7 @@ export default function PhotosManagementPage() {
     analyzePhoto
   } = usePhotosManagement();
 
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoRow | null>(null);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
   // Modal 控制
@@ -41,17 +41,17 @@ export default function PhotosManagementPage() {
 
   // ============ 事件处理 ============
 
-  const handleOpenDelete = (photo: Photo) => {
+  const handleOpenDelete = (photo: PhotoRow) => {
     setSelectedPhoto(photo);
     deleteModal.onOpen();
   };
 
-  const handleOpenMarkLocation = (photo: Photo) => {
+  const handleOpenMarkLocation = (photo: PhotoRow) => {
     setSelectedPhoto(photo);
     locationModal.onOpen();
   };
 
-  const handleOpenDeleteLocation = (photo: Photo) => {
+  const handleOpenDeleteLocation = (photo: PhotoRow) => {
     setSelectedPhoto(photo);
     deleteLocationModal.onOpen();
   };

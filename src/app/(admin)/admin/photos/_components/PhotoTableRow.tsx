@@ -5,23 +5,18 @@ import { Badge } from '@heroui/badge';
 import { Image } from '@heroui/image';
 import { TableCell, TableRow } from '@heroui/table';
 import { formatDateCN } from '@/lib/format';
-import { Photo } from './types';
+import { PhotoRow } from './types';
 
 export interface PhotoRowActions {
-  onMarkLocation: (photo: Photo) => void;
-  onDeleteLocation: (photo: Photo) => void;
-  onToggleTop: (photo: Photo) => void;
-  onDelete: (photo: Photo) => void;
-  onAnalyze: (photo: Photo) => void;
+  onMarkLocation: (photo: PhotoRow) => void;
+  onDeleteLocation: (photo: PhotoRow) => void;
+  onToggleTop: (photo: PhotoRow) => void;
+  onDelete: (photo: PhotoRow) => void;
+  onAnalyze: (photo: PhotoRow) => void;
 }
 
-// 行数据：在基础 Photo 上附加运行时状态
-type PhotoRowItem = Photo & { isAnalyzing?: boolean };
+// 行数据：在基础 PhotoRow 上附加运行时状态
 
-const getThumbnailUrl = (photo: Photo) => {
-  if (!photo.thumbLargeKey) return null;
-  return `/api/image?key=${encodeURIComponent(photo.thumbLargeKey)}`;
-};
 
 /**
  * 渲染单行照片记录
@@ -30,7 +25,7 @@ const getThumbnailUrl = (photo: Photo) => {
  * HeroUI/React-Aria 的 Table 集合机制要求 TableBody 的子节点
  * 必须是真实的 TableRow 元素，不能包裹在自定义组件中。
  */
-export function renderPhotoRow(photo: PhotoRowItem, actions: PhotoRowActions) {
+export function renderPhotoRow(photo: PhotoRow, actions: PhotoRowActions) {
   const { onMarkLocation, onDeleteLocation, onToggleTop, onDelete, onAnalyze } =
     actions;
 
@@ -39,9 +34,9 @@ export function renderPhotoRow(photo: PhotoRowItem, actions: PhotoRowActions) {
   return (
     <TableRow key={photo.id}>
       <TableCell>
-        {photo.fileExists && photo.thumbLargeKey ? (
+        {photo.fileExists && photo.thumbLargeUrl ? (
           <Image
-            src={getThumbnailUrl(photo) || ''}
+            src={photo.thumbLargeUrl}
             alt={photo.filename}
             className="object-cover max-w-[50px] max-h-[50px] rounded-lg"
           />
@@ -55,7 +50,7 @@ export function renderPhotoRow(photo: PhotoRowItem, actions: PhotoRowActions) {
       <TableCell className="max-w-xs truncate" title={photo.filename}>
         {photo.filename}
       </TableCell>
-      <TableCell>{photo.tags?.join(', ') || '-'}</TableCell>
+      <TableCell>{photo.photoAiAnalysis?.tags?.join(', ') || '-'}</TableCell>
       <TableCell>{formatDateCN(photo.takenAt)}</TableCell>
       <TableCell>{formatDateCN(photo.createdAt)}</TableCell>
       <TableCell>
@@ -65,7 +60,7 @@ export function renderPhotoRow(photo: PhotoRowItem, actions: PhotoRowActions) {
       </TableCell>
       <TableCell>
         <div className="flex gap-2">
-          {!photo.hasLocation ? (
+          {!photo.location ? (
             <Button
               variant="flat"
               size="sm"

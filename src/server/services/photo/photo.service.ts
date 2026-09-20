@@ -9,6 +9,15 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { VIDEO_EXTENSIONS } from '@/server/services/ingestion/photo-files';
+import type { PhotoItem } from '@/lib/types';
+
+/**
+ * transformPhoto 的输入：照片行本身，关联表按需带上。
+ * 各查询 include 的组合不同（有的用 select 只取几个字段），故关联部分
+ * 宽松处理，由 transformPhoto 内部按存在性剥离。
+ */
+type PhotoRow = Prisma.PhotoGetPayload<{}> & Record<string, unknown>;
+
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;
@@ -63,12 +72,10 @@ class PhotoService {
     });
   }
 
-  /** 检查文件是否存在于 MinIO */
-  async checkFileExists(
-    photo: Prisma.PhotoGetPayload<{
-      include: { photoExif?: boolean; location?: boolean };
-    }>
-  ): Promise<{ exists: boolean; key: string }> {
+  /** 检查文件是否存在于 MinIO。只用到 originalKey，故不限定完整的行类型 */
+  async checkFileExists(photo: {
+    originalKey: string | null;
+  }): Promise<{ exists: boolean; key: string }> {
     const key = photo.originalKey;
     if (!key) {
       return { exists: false, key: '' };
@@ -78,14 +85,8 @@ class PhotoService {
   }
 
   /** 批量检查。注意未限制并发，照片多时会同时打出大量 HeadObject 请求 */
-  async batchCheckFileExists(
-    photos: Prisma.PhotoGetPayload<{
-      include: {
-        photoExif?: boolean;
-        location?: boolean;
-        photoAiAnalysis?: boolean;
-      };
-    }>[]
+  async batchCheckFileExists<T extends { originalKey: string | null }>(
+    photos: T[]
   ) {
     return Promise.all(
       photos.map(async (photo) => {
@@ -97,6 +98,21 @@ class PhotoService {
         };
       })
     );
+  }
+
+  /**
+   * 后台照片列表：过一遍 transformPhoto 拿到签名 URL，再附上文件存在标记。
+   *
+   * 后台原先直接用 getAllPhotos 的原始行，于是拿到的是存储键、得自己拼
+   * `/api/image?key=...`（不带 token）。改走这里之后拿到的是 thumbLargeUrl，
+   * 类型也能直接复用 PhotoItem。
+   */
+  async listAllWithFileStatus() {
+    const photos = await this.getAllPhotos();
+    const items = await Promise.all(
+      photos.map((photo) => this.transformPhoto(photo as PhotoRow))
+    );
+    return await this.batchCheckFileExists(items);
   }
 
   /** 清理源文件已丢失的照片记录 */
@@ -378,46 +394,70 @@ class PhotoService {
    * 转换照片数据，处理 URL
    */
   private async transformPhoto(
-    photo: Prisma.PhotoGetPayload<{
-      include?: {
-        photoExif?: boolean;
-        location?: boolean;
-        photoAiAnalysis?: boolean;
-      };
-    }>
-  ) {
-    const transformed = { ...photo } as any;
-    // 处理缩略图 URL
-    if (photo.thumbSmallKey) {
-      transformed.thumbSmallUrl = await getImageUrl(photo.thumbSmallKey);
-    }
-    if (photo.thumbLargeKey) {
-      transformed.thumbLargeUrl = await getImageUrl(photo.thumbLargeKey);
-    }
+    photo: PhotoRow
+  ): Promise<PhotoItem> {
+    const {
+      thumbSmallKey,
+      thumbLargeKey,
+      videoKey,
+      photoExif,
+      location,
+      photoAiAnalysis,
+      ...rest
+    } = photo as PhotoRow & {
+      photoExif?: unknown;
+      location?: unknown;
+      photoAiAnalysis?: unknown;
+    };
 
-    // 处理视频 URL
-    if (transformed.videoKey) {
-      transformed.videoUrl = await getImageUrl(transformed.videoKey);
-    }
+    // 构造新对象而不是 delete：delete 会让 V8 把对象降级为字典模式，
+    // 而这个函数在列表查询里对每一行都要跑一次
+    const item: PhotoItem = {
+      ...(rest as Omit<PhotoItem, 'thumbSmallUrl' | 'thumbLargeUrl'>),
+      thumbSmallUrl: await getImageUrl(thumbSmallKey),
+      thumbLargeUrl: await getImageUrl(thumbLargeKey)
+    };
 
-    if (transformed.photoExif) {
-      // 排除 rawData 字段以减小响应体积
-      const { rawData, ...rest } = transformed.photoExif;
-      transformed.photoExif = rest as any;
-    }
-
-    if (transformed.location) {
-      // 剔除 rawData 减小响应体积，并把 region 的区划字段摊平上来，
-      // 使调用方仍能读 location.city（区划已规范化到独立表）
-      const { rawData, region, ...rest } = transformed.location;
-      transformed.location = { ...rest, ...(region ?? {}) } as any;
+    if (videoKey) {
+      item.videoUrl = await getImageUrl(videoKey);
     }
 
-    delete transformed.thumbSmallKey;
-    delete transformed.thumbLargeKey;
-    delete transformed.videoKey;
+    if (photoExif) {
+      // rawData 是完整的原始 EXIF，不下发
+      const { rawData: _exifRaw, ...exifRest } = photoExif as Record<
+        string,
+        unknown
+      >;
+      item.photoExif = exifRest as unknown as PhotoItem['photoExif'];
+    }
 
-    return transformed;
+    if (location) {
+      // 剔除 rawData，并把 region 的区划字段摊平上来 ——
+      // 调用方读的是 location.city，而它实际存在 regions 表里
+      const {
+        rawData: _locRaw,
+        region,
+        ...locRest
+      } = location as Record<string, unknown>;
+      item.location = {
+        ...locRest,
+        ...((region as object) ?? {})
+      } as unknown as PhotoItem['location'];
+    }
+
+    if (photoAiAnalysis) {
+      // 两个 vector(1024) 约 8KB，前端用不到；location 是从未写入的死字段
+      const {
+        embedding: _emb,
+        tagEmbedding: _tagEmb,
+        location: _aiLoc,
+        ...aiRest
+      } = photoAiAnalysis as Record<string, unknown>;
+      item.photoAiAnalysis =
+        aiRest as unknown as PhotoItem['photoAiAnalysis'];
+    }
+
+    return item;
   }
 }
 

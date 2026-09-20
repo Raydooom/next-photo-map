@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { addToast } from '@heroui/toast';
 import * as Admin from '../../_actions';
 import * as AI from '../../_actions';
-import { Photo, PhotoStats, FilterTab } from '../_components/types';
+import { PhotoRow, PhotoStats, FilterTab } from '../_components/types';
 
 export function usePhotosManagement() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<PhotoRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   // 正在 AI 分析的照片 ID 集合
@@ -15,22 +15,8 @@ export function usePhotosManagement() {
   const loadPhotos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await Admin.getPhotosWithFileStatus();
-      const formatted: Photo[] = data.map((p) => ({
-        id: p.id,
-        filename: p.filename,
-        tags: p.photoAiAnalysis?.tags || [],
-        originalPath: p.originalPath,
-        originalKey: p.originalKey,
-        thumbLargeKey: p.thumbLargeKey,
-        thumbSmallKey: p.thumbSmallKey,
-        takenAt: p.takenAt?.toISOString() || null,
-        fileExists: p.fileExists,
-        createdAt: p.createdAt.toISOString(),
-        hasLocation: Boolean(p.location) || false,
-        top: p.top || false
-      }));
-      setPhotos(formatted);
+      // 服务端已返回带签名 URL 的 PhotoItem 形状，无需再转换
+      setPhotos(await Admin.getPhotosWithFileStatus());
     } catch (error) {
       console.error('加载图片失败:', error);
     } finally {
@@ -48,7 +34,7 @@ export function usePhotosManagement() {
       total: photos.length,
       exists: photos.filter((p) => p.fileExists).length,
       missing: photos.filter((p) => !p.fileExists).length,
-      noLocation: photos.filter((p) => !p.hasLocation).length,
+      noLocation: photos.filter((p) => !p.location).length,
       top: photos.filter((p) => p.top).length
     }),
     [photos]
@@ -62,7 +48,7 @@ export function usePhotosManagement() {
       case 'missing':
         return photos.filter((p) => !p.fileExists);
       case 'no-location':
-        return photos.filter((p) => !p.hasLocation);
+        return photos.filter((p) => !p.location);
       case 'top':
         return photos.filter((p) => p.top);
       default:
@@ -116,7 +102,7 @@ export function usePhotosManagement() {
     }
   }, []);
 
-  const toggleTop = useCallback(async (photo: Photo) => {
+  const toggleTop = useCallback(async (photo: PhotoRow) => {
     try {
       await Admin.updatePhotoTop(photo.id, !photo.top);
       setPhotos((prev) =>
@@ -127,7 +113,7 @@ export function usePhotosManagement() {
     }
   }, []);
 
-  const analyzePhoto = useCallback(async (photo: Photo) => {
+  const analyzePhoto = useCallback(async (photo: PhotoRow) => {
     setAnalyzingIds((prev) => new Set(prev).add(photo.id));
     try {
       const { tags } = await AI.analysis(photo);
