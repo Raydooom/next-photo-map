@@ -18,8 +18,8 @@ export function ChatMessageList({
   onSuggestionClick
 }: ChatMessageListProps) {
   return (
-    <ScrollShadow ref={scrollRef} className="flex-1 px-4 md:px-8 py-6">
-      <div className="max-w-3xl mx-auto space-y-4">
+    <ScrollShadow ref={scrollRef} className="min-h-0 flex-1 px-4 py-6 md:px-8">
+      <div className="mx-auto max-w-3xl space-y-5">
         {messages.length === 0 ? (
           <WelcomeScreen onSuggestionClick={onSuggestionClick} />
         ) : (

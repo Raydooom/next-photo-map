@@ -47,14 +47,15 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
+    // dvh 而非 vh：移动端 100vh 含地址栏高度，会让页面多出一截可滚动区域
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-lab-ink">
       <ChatSidebar
         chatHistories={chatHistories}
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
       />
 
-      <main className="flex flex-col flex-1 relative bg-background">
+      <main className="flex min-w-0 flex-1 flex-col">
         <ChatHeader />
 
         <ChatMessageList
