@@ -86,7 +86,7 @@ export function ChatInput({
               // 可发送时是实底色块；不可发送时保留可辨的描边与图标，
               // 让人看得出「这里有个按钮，只是现在不能点」
               canSend
-                ? 'border-lab-accent bg-lab-accent text-lab-accent-ink hover:border-lab-accent-hover hover:bg-lab-accent-hover'
+                ? 'cursor-pointer border-lab-accent bg-lab-accent text-lab-accent-ink hover:border-lab-accent-hover hover:bg-lab-accent-hover'
                 : 'cursor-not-allowed border-lab-line text-lab-muted',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-accent'
             )}

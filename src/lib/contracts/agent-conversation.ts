@@ -1,3 +1,5 @@
+import type { PhotoItem } from '@/lib/types/photo';
+
 export type AgentConversationSummary = {
   id: string;
   title: string;
@@ -13,6 +15,8 @@ export type AgentConversationMessage = {
   kind: 'text' | 'photoResults';
   status: 'completed' | 'interrupted' | 'error';
   content: string;
+  photoTotal?: number | null;
+  photos?: PhotoItem[];
   createdAt: string;
 };
 

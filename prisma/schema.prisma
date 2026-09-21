@@ -41,9 +41,10 @@ model Photo {
   updatedAt       DateTime         @default(now())
   dominantColor   String?
   top             Boolean          @default(false)
-  photoExif       PhotoExif?
-  location        Location?
-  photoAiAnalysis PhotoAiAnalysis?
+  photoExif         PhotoExif?
+  location          Location?
+  photoAiAnalysis   PhotoAiAnalysis?
+  agentMessagePhotos AgentMessagePhoto[]
 
   @@map("photos")
 }
@@ -163,10 +164,26 @@ model AgentMessage {
   kind           AgentMessageKind   @default(TEXT)
   status         AgentMessageStatus @default(COMPLETED)
   content        String             @db.Text
+  photoTotal     Int?               @map("photo_total")
   createdAt      DateTime           @default(now()) @map("created_at")
   conversation   AgentConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  photoResults   AgentMessagePhoto[]
 
   @@unique([conversationId, sequence])
   @@index([conversationId, sequence])
   @@map("agent_messages")
+}
+
+/// 一条 Agent 照片结果中的稳定引用与显示顺序；签名 URL 每次回放时重新生成。
+model AgentMessagePhoto {
+  messageId String       @map("message_id")
+  photoId   Int          @map("photo_id")
+  position  Int
+  message   AgentMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  photo     Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, photoId])
+  @@unique([messageId, position])
+  @@index([photoId])
+  @@map("agent_message_photos")
 }

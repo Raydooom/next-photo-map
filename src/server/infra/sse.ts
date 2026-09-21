@@ -9,6 +9,7 @@ export interface SSEMessage {
     | 'killed'
     | 'running'
     | 'streaming'
+    | 'photo-results'
     | 'success'
     | 'error'
     | 'loading';

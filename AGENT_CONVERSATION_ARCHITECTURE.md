@@ -70,7 +70,7 @@ erDiagram
 | `status` | `COMPLETED`、`INTERRUPTED`、`ERROR` |
 | `content` | 用户输入或最终助手正文 |
 
-当前数据库迁移只创建会话与文本消息。照片卡片持久化进入下一阶段：新增 `AgentMessagePhotoReference`，只保存 `photoId`、位置和引用理由，不保存会过期的签名 URL。
+当前数据库已支持文本消息和照片结果消息：`PHOTO_RESULTS` 助手消息保存 `photoTotal` 与有序 `AgentMessagePhoto` 引用。引用只保存 `photoId` 和位置，不保存会过期的签名 URL；历史回放时按 photoId 重新查询并签发图片 URL。
 
 ## 4. 身份与授权
 
@@ -205,14 +205,14 @@ LangGraph PostgresSaver
 - 匿名浏览器内会话隔离；
 - 文本会话创建、列表、读取、删除与恢复；
 - 流式 Agent 终态持久化；
+- `PHOTO_RESULTS` 消息的有序 photoId 引用、九宫格展示与历史 URL 重签名；
 - conversationId 驱动 LangGraph thread；
 - 侧栏选中态、点击读取与删除。
 
 ### 下一阶段
 
-1. `AgentMessagePhotoReference`：历史会话恢复照片卡片，并按 `photoId` 重新签发 URL；
-2. 会话标题异步摘要：替代第一句截断标题；
-3. 会话搜索、分页与归档；
-4. 登录迁移与 userId 归属；
-5. checkpoint TTL/删除策略；
-6. 保存工具摘要、可复用候选集和策展 artifact。
+1. 会话标题异步摘要：替代第一句截断标题；
+2. 会话搜索、分页与归档；
+3. 登录迁移与 userId 归属；
+4. checkpoint TTL/删除策略；
+5. 保存工具摘要和可复用候选集。

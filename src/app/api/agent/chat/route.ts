@@ -1,4 +1,4 @@
-import { AgentMessageStatus } from '@prisma/client';
+import { AgentMessageKind, AgentMessageStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -6,6 +6,7 @@ import {
   conversationService
 } from '@/server/services/ai/agent/conversation.service';
 import { agentService } from '@/server/services/ai/agent/agent.service';
+import { photoService } from '@/server/services/photo/photo.service';
 import { createSSE } from '@/server/infra/sse';
 import {
   applyAgentVisitorCookie,
@@ -19,6 +20,20 @@ const chatRequestSchema = z.object({
 
 const AGENT_ERROR_MESSAGE = '处理请求时发生错误，请稍后重试';
 const AGENT_EMPTY_MESSAGE = '没有生成可展示的回答';
+
+type PhotoResultState = {
+  photoIds: number[];
+  total: number;
+};
+
+async function hydratePhotos(photoIds: number[]) {
+  const photos = await photoService.getPhotosByIds(photoIds);
+  const photoById = new Map(photos.map((photo) => [photo.id, photo]));
+
+  return photoIds
+    .map((photoId) => photoById.get(photoId))
+    .filter((photo) => Boolean(photo));
+}
 
 export async function POST(request: NextRequest) {
   let payload: unknown;
@@ -63,6 +78,24 @@ export async function POST(request: NextRequest) {
 
   void (async () => {
     let accumulatedText = '';
+    const photoResult: PhotoResultState = { photoIds: [], total: 0 };
+
+    const persistAssistantMessage = (
+      content: string,
+      status: AgentMessageStatus = AgentMessageStatus.COMPLETED
+    ) =>
+      conversationService.appendAssistantMessage({
+        visitorId: visitor.id,
+        conversationId: turn.conversation.id,
+        content,
+        status,
+        kind:
+          photoResult.photoIds.length > 0
+            ? AgentMessageKind.PHOTO_RESULTS
+            : AgentMessageKind.TEXT,
+        photoIds: photoResult.photoIds,
+        photoTotal: photoResult.total || photoResult.photoIds.length
+      });
 
     try {
       if (request.signal.aborted) return;
@@ -77,31 +110,61 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      for await (const delta of agentService.stream({
+      for await (const event of agentService.stream({
         conversationId: turn.conversation.id,
         userMsg: parsed.data.inputText,
         signal: request.signal
       })) {
         if (request.signal.aborted) return;
 
-        accumulatedText += delta;
+        if (event.type === 'text') {
+          accumulatedText += event.delta;
+          controller.sendMessage({
+            status: 'streaming',
+            message: event.delta,
+            type: 'text',
+            data: { conversationId: turn.conversation.id }
+          });
+          continue;
+        }
+
+        for (const photoId of event.photoIds) {
+          if (!photoResult.photoIds.includes(photoId)) {
+            photoResult.photoIds.push(photoId);
+          }
+        }
+        photoResult.total = Math.max(
+          photoResult.total,
+          event.total,
+          photoResult.photoIds.length
+        );
+
+        const photos = await hydratePhotos(photoResult.photoIds);
+        if (photos.length === 0) continue;
+
         controller.sendMessage({
-          status: 'streaming',
-          message: delta,
-          type: 'text',
-          data: { conversationId: turn.conversation.id }
+          status: 'photo-results',
+          message: `找到 ${photoResult.total} 张相关照片`,
+          type: 'photoCard',
+          data: {
+            conversationId: turn.conversation.id,
+            photoResult: {
+              toolCallId: event.toolCallId,
+              toolName: event.toolName,
+              query: event.query,
+              total: photoResult.total,
+              photos
+            }
+          }
         });
       }
 
       if (request.signal.aborted) return;
 
-      const assistantMessage = await conversationService.appendAssistantMessage({
-        visitorId: visitor.id,
-        conversationId: turn.conversation.id,
-        content: accumulatedText || AGENT_EMPTY_MESSAGE
-      });
+      const assistantMessage = await persistAssistantMessage(
+        accumulatedText || AGENT_EMPTY_MESSAGE
+      );
 
-      // 正文已经由 streaming 事件发出，终态仅同步持久化后的消息标识。
       controller.sendMessage({
         status: 'done',
         message: '',
@@ -116,17 +179,13 @@ export async function POST(request: NextRequest) {
 
       console.error('Agent 聊天处理错误:', error);
 
-      const assistantMessage = await conversationService
-        .appendAssistantMessage({
-          visitorId: visitor.id,
-          conversationId: turn.conversation.id,
-          content: accumulatedText || AGENT_ERROR_MESSAGE,
-          status: AgentMessageStatus.ERROR
-        })
-        .catch(persistError => {
-          console.error('保存 Agent 错误消息失败:', persistError);
-          return null;
-        });
+      const assistantMessage = await persistAssistantMessage(
+        accumulatedText || AGENT_ERROR_MESSAGE,
+        AgentMessageStatus.ERROR
+      ).catch((persistError) => {
+        console.error('保存 Agent 错误消息失败:', persistError);
+        return null;
+      });
 
       controller.sendMessage({
         status: 'error',
@@ -139,14 +198,10 @@ export async function POST(request: NextRequest) {
       });
     } finally {
       if (request.signal.aborted && accumulatedText) {
-        await conversationService
-          .appendAssistantMessage({
-            visitorId: visitor.id,
-            conversationId: turn.conversation.id,
-            content: accumulatedText,
-            status: AgentMessageStatus.INTERRUPTED
-          })
-          .catch(error => console.error('保存中断消息失败:', error));
+        await persistAssistantMessage(
+          accumulatedText,
+          AgentMessageStatus.INTERRUPTED
+        ).catch((error) => console.error('保存中断消息失败:', error));
       }
 
       request.signal.removeEventListener('abort', handleAbort);

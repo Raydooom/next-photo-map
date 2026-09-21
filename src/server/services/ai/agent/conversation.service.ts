@@ -6,12 +6,14 @@ import {
   AgentMessageStatus,
   Prisma
 } from '@prisma/client';
+import type { PhotoItem } from '@/lib/types/photo';
 import type {
   AgentConversationDetail,
   AgentConversationMessage,
   AgentConversationSummary
 } from '@/lib/contracts/agent-conversation';
 import { prisma } from '@/server/infra/db';
+import { photoService } from '@/server/services/photo/photo.service';
 
 const PREVIEW_LENGTH = 72;
 const TITLE_LENGTH = 30;
@@ -23,9 +25,16 @@ export class AgentConversationNotFoundError extends Error {
   }
 }
 
-type ConversationRow = Prisma.AgentConversationGetPayload<{
+type PhotoReference = {
+  photoId: number;
+  position: number;
+};
+
+type MessageWithPhotoResults = Prisma.AgentMessageGetPayload<{
   include: {
-    messages: true;
+    photoResults: {
+      orderBy: { position: 'asc' };
+    };
   };
 }>;
 
@@ -43,8 +52,30 @@ function createPreview(input: string) {
   return normalized.slice(0, PREVIEW_LENGTH) || '暂无消息';
 }
 
+function uniquePhotoIds(photoIds?: number[]) {
+  if (!photoIds) return [];
+  return [...new Set(photoIds.filter((id) => Number.isInteger(id) && id > 0))];
+}
+
+async function hydratePhotoReferences(
+  references: PhotoReference[]
+): Promise<PhotoItem[]> {
+  if (references.length === 0) return [];
+
+  const photos = await photoService.getPhotosByIds(
+    references.map((reference) => reference.photoId)
+  );
+  const photoById = new Map(photos.map((photo) => [photo.id, photo]));
+
+  return [...references]
+    .sort((left, right) => left.position - right.position)
+    .map((reference) => photoById.get(reference.photoId))
+    .filter((photo): photo is PhotoItem => Boolean(photo));
+}
+
 function toMessageDto(
-  message: Prisma.AgentMessageGetPayload<Record<string, never>>
+  message: Prisma.AgentMessageGetPayload<Record<string, never>>,
+  photos?: PhotoItem[]
 ): AgentConversationMessage {
   return {
     id: message.id,
@@ -58,6 +89,8 @@ function toMessageDto(
           ? 'error'
           : 'completed',
     content: message.content,
+    photoTotal: message.photoTotal,
+    ...(photos && photos.length > 0 ? { photos } : {}),
     createdAt: message.createdAt.toISOString()
   };
 }
@@ -115,7 +148,12 @@ class ConversationService {
       where: { id: conversationId, visitorId },
       include: {
         messages: {
-          orderBy: { sequence: 'asc' }
+          orderBy: { sequence: 'asc' },
+          include: {
+            photoResults: {
+              orderBy: { position: 'asc' }
+            }
+          }
         }
       }
     });
@@ -123,12 +161,22 @@ class ConversationService {
     if (!conversation) throw new AgentConversationNotFoundError();
 
     const { messages, ...conversationRow } = conversation;
+    const allReferences = messages.flatMap((message) => message.photoResults);
+    const photos = await hydratePhotoReferences(allReferences);
+    const photoById = new Map(photos.map((photo) => [photo.id, photo]));
+
     return {
       conversation: toSummary(
         conversationRow,
         createPreview(messages.at(-1)?.content ?? '')
       ),
-      messages: messages.map(toMessageDto)
+      messages: messages.map((message) => {
+        const messagePhotos = message.photoResults
+          .map((reference) => photoById.get(reference.photoId))
+          .filter((photo): photo is PhotoItem => Boolean(photo));
+
+        return toMessageDto(message, messagePhotos);
+      })
     };
   }
 
@@ -186,14 +234,22 @@ class ConversationService {
     visitorId,
     conversationId,
     content,
-    status = AgentMessageStatus.COMPLETED
+    status = AgentMessageStatus.COMPLETED,
+    kind = AgentMessageKind.TEXT,
+    photoIds,
+    photoTotal
   }: {
     visitorId: string;
     conversationId: string;
     content: string;
     status?: AgentMessageStatus;
+    kind?: AgentMessageKind;
+    photoIds?: number[];
+    photoTotal?: number;
   }): Promise<AgentConversationMessage> {
-    return prisma.$transaction(async tx => {
+    const orderedPhotoIds = uniquePhotoIds(photoIds);
+
+    const message = await prisma.$transaction(async tx => {
       const conversation = await tx.agentConversation.findFirst({
         where: { id: conversationId, visitorId },
         select: { id: true }
@@ -201,14 +257,25 @@ class ConversationService {
 
       if (!conversation) throw new AgentConversationNotFoundError();
 
-      const message = await tx.agentMessage.create({
+      const created = await tx.agentMessage.create({
         data: {
           conversationId,
           sequence: await getNextSequence(tx, conversationId),
           role: AgentMessageRole.ASSISTANT,
-          kind: AgentMessageKind.TEXT,
+          kind,
           status,
-          content
+          content,
+          photoTotal: kind === AgentMessageKind.PHOTO_RESULTS ? photoTotal : null,
+          ...(orderedPhotoIds.length > 0
+            ? {
+                photoResults: {
+                  create: orderedPhotoIds.map((photoId, position) => ({
+                    photoId,
+                    position
+                  }))
+                }
+              }
+            : {})
         }
       });
 
@@ -217,8 +284,14 @@ class ConversationService {
         data: { updatedAt: new Date() }
       });
 
-      return toMessageDto(message);
+      return created;
     });
+
+    const photos = await hydratePhotoReferences(
+      orderedPhotoIds.map((photoId, position) => ({ photoId, position }))
+    );
+
+    return toMessageDto(message, photos);
   }
 
   async deleteConversation(visitorId: string, conversationId: string) {

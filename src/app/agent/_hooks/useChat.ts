@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import type { PhotoItem } from '@/lib/types/photo';
 import type { AgentConversationMessage } from '@/lib/contracts/agent-conversation';
 import { Message } from '../_components/types';
 
@@ -27,9 +28,24 @@ interface ChatEventData {
   conversationId?: string;
   userMessage?: AgentConversationMessage;
   assistantMessage?: AgentConversationMessage | null;
+  photoResult?: {
+    total: number;
+    photos: PhotoItem[];
+  };
+}
+
+function revivePhoto(photo: PhotoItem): PhotoItem {
+  return {
+    ...photo,
+    takenAt: photo.takenAt ? new Date(photo.takenAt) : null,
+    createdAt: new Date(photo.createdAt),
+    updatedAt: new Date(photo.updatedAt)
+  };
 }
 
 function fromStoredMessage(message: AgentConversationMessage): Message {
+  const photos = message.photos?.map(revivePhoto);
+
   return {
     id: message.id,
     conversationId: message.conversationId,
@@ -37,7 +53,15 @@ function fromStoredMessage(message: AgentConversationMessage): Message {
     status: 'done',
     content: message.content,
     timestamp: new Date(message.createdAt),
-    type: message.kind === 'photoResults' ? 'photoCard' : 'text'
+    type: message.kind === 'photoResults' ? 'photoCard' : 'text',
+    ...(photos && photos.length > 0
+      ? {
+          data: {
+            total: message.photoTotal ?? photos.length,
+            list: photos
+          }
+        }
+      : {})
   };
 }
 
@@ -105,6 +129,26 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       )
     );
   }, []);
+
+  const applyPhotoResult = useCallback(
+    (id: string, result: NonNullable<ChatEventData['photoResult']>) => {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === id
+            ? {
+                ...message,
+                type: 'photoCard',
+                data: {
+                  total: result.total,
+                  list: result.photos.map(revivePhoto)
+                }
+              }
+            : message
+        )
+      );
+    },
+    []
+  );
 
   const reconcileMessage = useCallback(
     (localId: string, storedMessage: AgentConversationMessage) => {
@@ -218,6 +262,13 @@ export function useChat(options: UseChatOptions): UseChatReturn {
               return;
             }
 
+            if (data.status === 'photo-results') {
+              if (eventData?.photoResult) {
+                applyPhotoResult(localAssistantId, eventData.photoResult);
+              }
+              return;
+            }
+
             if (data.status === 'streaming') {
               appendAssistantText(localAssistantId, data.message || '');
               return;
@@ -281,6 +332,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       isTyping,
       ensureAssistantMessage,
       appendAssistantText,
+      applyPhotoResult,
       reconcileMessage,
       failAssistantMessage,
       onConversationCreated,

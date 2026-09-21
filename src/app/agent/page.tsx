@@ -10,7 +10,8 @@ import {
   ChatHeader,
   ChatInput,
   ChatMessageList,
-  ChatHistory
+  ChatHistory,
+  MobileHistoryDrawer
 } from './_components';
 import { useChat } from './_hooks';
 
@@ -37,6 +38,8 @@ export default function ChatPage() {
     null
   );
   const [historyReady, setHistoryReady] = useState(false);
+  const [isConversationLoading, setIsConversationLoading] = useState(false);
+  const [isMobileHistoryOpen, setIsMobileHistoryOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -105,6 +108,7 @@ export default function ChatPage() {
       clearMessages();
       setActiveConversationId(null);
       setInputValue('');
+      setIsConversationLoading(false);
 
       if (syncUrl) syncConversationUrl(null, syncUrl);
     },
@@ -116,6 +120,7 @@ export default function ChatPage() {
       if (conversationId === activeConversationId) return;
 
       const requestId = ++historyRequestRef.current;
+      setIsConversationLoading(true);
       clearMessages();
       setActiveConversationId(conversationId);
       setInputValue('');
@@ -129,9 +134,11 @@ export default function ChatPage() {
         if (requestId !== historyRequestRef.current) return;
 
         replaceMessages(detail.messages);
+        setIsConversationLoading(false);
       } catch (error) {
         if (requestId === historyRequestRef.current) {
           console.error('读取会话记录失败:', error);
+          setIsConversationLoading(false);
           resetConversation('replace');
         }
       }
@@ -196,8 +203,10 @@ export default function ChatPage() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
-    inputRef.current?.focus();
+    if (!historyReady || isTyping) return;
+
+    setInputValue('');
+    void sendMessage(suggestion);
   };
 
   return (
@@ -210,11 +219,31 @@ export default function ChatPage() {
         onDeleteChat={handleDeleteChat}
       />
 
+      <MobileHistoryDrawer
+        isOpen={isMobileHistoryOpen}
+        chatHistories={chatHistories}
+        activeConversationId={activeConversationId}
+        onClose={() => setIsMobileHistoryOpen(false)}
+        onNewChat={() => {
+          setIsMobileHistoryOpen(false);
+          handleNewChat();
+        }}
+        onSelectChat={(conversationId) => {
+          setIsMobileHistoryOpen(false);
+          void loadConversation(conversationId, 'push');
+        }}
+        onDeleteChat={(conversationId) => {
+          setIsMobileHistoryOpen(false);
+          void handleDeleteChat(conversationId);
+        }}
+      />
+
       <main className="flex min-w-0 flex-1 flex-col">
-        <ChatHeader />
+        <ChatHeader onOpenHistory={() => setIsMobileHistoryOpen(true)} />
 
         <ChatMessageList
           messages={messages}
+          isLoading={isConversationLoading}
           scrollRef={scrollRef}
           onSuggestionClick={handleSuggestionClick}
         />

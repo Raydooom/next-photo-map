@@ -1,3 +1,5 @@
+import type { PhotoItem } from '@/lib/types/photo';
+
 export type Message = {
   id: string;
   conversationId: string;
@@ -7,8 +9,8 @@ export type Message = {
   timestamp: Date;
   type: 'text' | 'photoCard';
   data?: {
-    total?: number;
-    list?: Array<Record<string, unknown>>;
+    total: number;
+    list: PhotoItem[];
   };
 };
 
