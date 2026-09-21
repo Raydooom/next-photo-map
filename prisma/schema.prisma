@@ -8,6 +8,22 @@ datasource db {
   extensions = [pgvector(map: "vector"), postgis] // 开启 pgvector 和 postgis 扩展
 }
 
+enum AgentMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum AgentMessageKind {
+  TEXT
+  PHOTO_RESULTS
+}
+
+enum AgentMessageStatus {
+  COMPLETED
+  INTERRUPTED
+  ERROR
+}
+
 model Photo {
   id              Int              @id @default(autoincrement())
   filename        String
@@ -123,4 +139,34 @@ model PhotoAiAnalysis {
   photo        Photo                        @relation(fields: [photoId], references: [id], onDelete: Cascade)
 
   @@map("photo_ai_analyses")
+}
+
+/// 登录接入前，visitorId 由 HTTP-only 随机 cookie 提供；后续可迁移为用户归属。
+model AgentConversation {
+  id        String         @id @default(uuid())
+  visitorId String         @map("visitor_id")
+  title     String
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at")
+  messages  AgentMessage[]
+
+  @@index([visitorId, updatedAt])
+  @@map("agent_conversations")
+}
+
+/// 可展示、可排序的对话记录；与 LangGraph checkpoint 分工，不存模型内部上下文。
+model AgentMessage {
+  id             String             @id @default(uuid())
+  conversationId String             @map("conversation_id")
+  sequence       Int
+  role           AgentMessageRole
+  kind           AgentMessageKind   @default(TEXT)
+  status         AgentMessageStatus @default(COMPLETED)
+  content        String             @db.Text
+  createdAt      DateTime           @default(now()) @map("created_at")
+  conversation   AgentConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, sequence])
+  @@map("agent_messages")
 }

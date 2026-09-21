@@ -1,11 +1,15 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import type { AgentConversationMessage } from '@/lib/contracts/agent-conversation';
 import { Message } from '../_components/types';
 
 const generateId = () =>
   `${Date.now()}_${Math.random().toString(36).substring(2)}`;
 
 interface UseChatOptions {
+  conversationId: string | null;
+  onConversationCreated?: (conversationId: string) => void;
+  onConversationUpdated?: () => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
 }
@@ -15,17 +19,37 @@ interface UseChatReturn {
   isTyping: boolean;
   sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
+  replaceMessages: (messages: AgentConversationMessage[]) => void;
   abortRef: React.MutableRefObject<AbortController | null>;
+}
+
+interface ChatEventData {
+  conversationId?: string;
+  userMessage?: AgentConversationMessage;
+  assistantMessage?: AgentConversationMessage | null;
+}
+
+function fromStoredMessage(message: AgentConversationMessage): Message {
+  return {
+    id: message.id,
+    conversationId: message.conversationId,
+    role: message.role === 'assistant' ? 'ai' : 'user',
+    status: 'done',
+    content: message.content,
+    timestamp: new Date(message.createdAt),
+    type: message.kind === 'photoResults' ? 'photoCard' : 'text'
+  };
 }
 
 function createAssistantMessage(
   id: string,
+  conversationId: string,
   status: Message['status'],
   content = ''
 ): Message {
   return {
     id,
-    chatId: id,
+    conversationId,
     role: 'ai',
     status,
     content,
@@ -34,32 +58,43 @@ function createAssistantMessage(
   };
 }
 
-export function useChat(options: UseChatOptions = {}): UseChatReturn {
-  const { onError, onComplete } = options;
+export function useChat(options: UseChatOptions): UseChatReturn {
+  const {
+    conversationId,
+    onConversationCreated,
+    onConversationUpdated,
+    onError,
+    onComplete
+  } = options;
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const activeConversationRef = useRef<string | null>(conversationId);
 
-  const addMessage = useCallback((message: Message) => {
-    setMessages((prev) => [...prev, message]);
+  useEffect(() => {
+    activeConversationRef.current = conversationId;
+  }, [conversationId]);
+
+  const replaceMessages = useCallback((storedMessages: AgentConversationMessage[]) => {
+    setMessages(storedMessages.map(fromStoredMessage));
   }, []);
 
-  const ensureAssistantMessage = useCallback((id: string) => {
-    setMessages((prev) => {
-      if (prev.some((message) => message.id === id)) return prev;
-      return [...prev, createAssistantMessage(id, 'loading')];
-    });
-  }, []);
+  const ensureAssistantMessage = useCallback(
+    (id: string, currentConversationId: string) => {
+      setMessages((prev) => {
+        if (prev.some((message) => message.id === id)) return prev;
+        return [
+          ...prev,
+          createAssistantMessage(id, currentConversationId, 'loading')
+        ];
+      });
+    },
+    []
+  );
 
   const appendAssistantText = useCallback((id: string, delta: string) => {
-    setMessages((prev) => {
-      const existing = prev.find((message) => message.id === id);
-
-      if (!existing) {
-        return [...prev, createAssistantMessage(id, 'streaming', delta)];
-      }
-
-      return prev.map((message) =>
+    setMessages((prev) =>
+      prev.map((message) =>
         message.id === id
           ? {
               ...message,
@@ -67,75 +102,62 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
               content: message.content + delta
             }
           : message
-      );
-    });
+      )
+    );
   }, []);
 
-  const settleAssistantMessage = useCallback(
-    (id: string, finalContent = '') => {
-      setMessages((prev) => {
-        const existing = prev.find((message) => message.id === id);
+  const reconcileMessage = useCallback(
+    (localId: string, storedMessage: AgentConversationMessage) => {
+      const persisted = fromStoredMessage(storedMessage);
 
-        if (!existing) {
-          return [...prev, createAssistantMessage(id, 'done', finalContent)];
-        }
-
-        return prev.map((message) =>
-          message.id === id
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === localId
             ? {
-                ...message,
-                status: 'done',
-                // 流式链路的 done 不携带正文；兼容非流式终态才补全文本。
-                content:
-                  message.content || finalContent
-                    ? message.content || finalContent
-                    : '没有生成可展示的回答'
+                ...persisted,
+                // SSE done 的正文为空时，保留已逐字显示的内容，避免视觉跳动。
+                content: message.content || persisted.content
               }
             : message
-        );
-      });
+        )
+      );
     },
     []
   );
 
   const failAssistantMessage = useCallback((id: string, errorMessage: string) => {
-    setMessages((prev) => {
-      const existing = prev.find((message) => message.id === id);
-
-      if (!existing) {
-        return [...prev, createAssistantMessage(id, 'done', errorMessage)];
-      }
-
-      return prev.map((message) =>
+    setMessages((prev) =>
+      prev.map((message) =>
         message.id === id
-          ? {
-              ...message,
-              status: 'done',
-              content: message.content || errorMessage
-            }
+          ? { ...message, status: 'done', content: message.content || errorMessage }
           : message
-      );
-    });
+      )
+    );
   }, []);
 
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || isTyping) return;
 
-      const userMessage: Message = {
-        id: `user_${generateId()}`,
-        chatId: generateId(),
-        role: 'user',
-        status: 'done',
-        content: content.trim(),
-        timestamp: new Date(),
-        type: 'text'
-      };
+      const localUserId = `user_${generateId()}`;
+      const localAssistantId = `assistant_${generateId()}`;
+      let requestConversationId = conversationId;
+      const inputText = content.trim();
 
-      addMessage(userMessage);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: localUserId,
+          conversationId: requestConversationId ?? 'pending',
+          role: 'user',
+          status: 'done',
+          content: inputText,
+          timestamp: new Date(),
+          type: 'text'
+        }
+      ]);
       setIsTyping(true);
 
-      const aiMessageId = `ai_${generateId()}`;
       const requestController = new AbortController();
       abortRef.current = requestController;
       let receivedTerminalEvent = false;
@@ -153,8 +175,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           headers: { 'Content-Type': 'application/json' },
           signal: requestController.signal,
           body: JSON.stringify({
-            inputText: userMessage.content,
-            id: aiMessageId
+            inputText,
+            ...(requestConversationId ? { conversationId: requestConversationId } : {})
           }),
           // 对 POST 对话请求保持连接，不允许库在页面切回前台时重放同一条消息。
           openWhenHidden: true,
@@ -165,22 +187,49 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
             }
           },
           onmessage: (event) => {
-            const data = JSON.parse(event.data);
+            const data = JSON.parse(event.data) as {
+              status: string;
+              message?: string;
+              data?: ChatEventData;
+            };
+            const eventData = data.data;
+
+            if (eventData?.conversationId) {
+              requestConversationId = eventData.conversationId;
+            }
+
+            // 切换会话后，旧 SSE 即使晚到也不得覆盖当前会话 UI。
+            if (
+              requestConversationId &&
+              activeConversationRef.current &&
+              activeConversationRef.current !== requestConversationId
+            ) {
+              return;
+            }
 
             if (data.status === 'loading') {
-              ensureAssistantMessage(aiMessageId);
+              if (!requestConversationId) return;
+
+              if (eventData?.userMessage) {
+                reconcileMessage(localUserId, eventData.userMessage);
+              }
+              ensureAssistantMessage(localAssistantId, requestConversationId);
+              onConversationCreated?.(requestConversationId);
               return;
             }
 
             if (data.status === 'streaming') {
-              appendAssistantText(aiMessageId, data.message || '');
+              appendAssistantText(localAssistantId, data.message || '');
               return;
             }
 
             if (data.status === 'done') {
               receivedTerminalEvent = true;
-              settleAssistantMessage(aiMessageId, data.message || '');
+              if (eventData?.assistantMessage) {
+                reconcileMessage(localAssistantId, eventData.assistantMessage);
+              }
               finishCurrentRequest();
+              onConversationUpdated?.();
               onComplete?.();
               return;
             }
@@ -188,8 +237,13 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
             if (data.status === 'error') {
               receivedTerminalEvent = true;
               const errorMessage = data.message || '处理请求时发生错误，请稍后重试';
-              failAssistantMessage(aiMessageId, errorMessage);
+              if (eventData?.assistantMessage) {
+                reconcileMessage(localAssistantId, eventData.assistantMessage);
+              } else {
+                failAssistantMessage(localAssistantId, errorMessage);
+              }
               finishCurrentRequest();
+              onConversationUpdated?.();
               onError?.(new Error(errorMessage));
             }
           },
@@ -214,17 +268,23 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       } catch (error) {
         finishCurrentRequest();
         if (!requestController.signal.aborted) {
+          failAssistantMessage(
+            localAssistantId,
+            error instanceof Error ? error.message : '发送消息失败'
+          );
           onError?.(error as Error);
         }
       }
     },
     [
+      conversationId,
       isTyping,
-      addMessage,
       ensureAssistantMessage,
       appendAssistantText,
-      settleAssistantMessage,
+      reconcileMessage,
       failAssistantMessage,
+      onConversationCreated,
+      onConversationUpdated,
       onError,
       onComplete
     ]
@@ -242,6 +302,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     isTyping,
     sendMessage,
     clearMessages,
+    replaceMessages,
     abortRef
   };
 }

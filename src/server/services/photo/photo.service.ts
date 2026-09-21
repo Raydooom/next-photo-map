@@ -25,6 +25,42 @@ interface TakenAtRange {
   endExclusive: Date;
 }
 
+/**
+ * 照片地点筛选：行政区字段属于 Region，街道和地址片段属于 Location。
+ * 工具层只传结构化条件；这里统一转为 Prisma 关联查询，避免 Agent 直接访问数据库。
+ */
+interface LocationSearchFilter {
+  province?: string;
+  city?: string;
+  district?: string;
+  township?: string;
+  keyword?: string;
+}
+
+interface NumericRange {
+  min?: number;
+  max?: number;
+}
+
+/** 非向量 AI 元数据筛选，依赖已有 tags/theme/description 字段。 */
+interface AiMetadataSearchFilter {
+  tagsAny?: string[];
+  tagsAll?: string[];
+  tagsExclude?: string[];
+  theme?: string;
+  descriptionKeyword?: string;
+}
+
+/** 可直接由现有原生数值 EXIF 列支持的摄影参数筛选。 */
+interface ExifSearchFilter {
+  camera?: string;
+  lens?: string;
+  fNumber?: NumericRange;
+  iso?: NumericRange;
+  focalLength?: NumericRange;
+  flashMode?: 'fired' | 'not_fired';
+}
+
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;
@@ -35,7 +71,125 @@ interface ListPhotosInput {
   top?: boolean;
   ids?: number[];
   takenAtRange?: TakenAtRange;
+  locationFilter?: LocationSearchFilter;
+  aiMetadataFilter?: AiMetadataSearchFilter;
+  exifFilter?: ExifSearchFilter;
 }
+
+function normalizeLocationTerm(value?: string) {
+  const normalized = value?.trim();
+  return normalized || undefined;
+}
+
+function createLocationFilter(
+  input: LocationSearchFilter
+): Prisma.LocationWhereInput | null {
+  const province = normalizeLocationTerm(input.province);
+  const city = normalizeLocationTerm(input.city);
+  const district = normalizeLocationTerm(input.district);
+  const township = normalizeLocationTerm(input.township);
+  const keyword = normalizeLocationTerm(input.keyword);
+
+  const region: Prisma.RegionWhereInput = {};
+  if (province) region.province = { equals: province, mode: 'insensitive' };
+  if (city) region.city = { equals: city, mode: 'insensitive' };
+  if (district) region.district = { equals: district, mode: 'insensitive' };
+
+  const location: Prisma.LocationWhereInput = {};
+  if (Object.keys(region).length > 0) {
+    location.region = { is: region };
+  }
+  if (township) {
+    location.township = { contains: township, mode: 'insensitive' };
+  }
+  if (keyword) {
+    const textFilter = { contains: keyword, mode: 'insensitive' } as const;
+    location.OR = [
+      { township: textFilter },
+      { formattedAddress: textFilter },
+      { neighborhood: textFilter }
+    ];
+  }
+
+  return Object.keys(location).length > 0 ? location : null;
+}
+
+function normalizeTerms(values?: string[]) {
+  if (!values) return [];
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function createAiMetadataFilter(
+  input: AiMetadataSearchFilter
+): Prisma.PhotoAiAnalysisWhereInput | null {
+  const tagsAny = normalizeTerms(input.tagsAny);
+  const tagsAll = normalizeTerms(input.tagsAll);
+  const tagsExclude = normalizeTerms(input.tagsExclude);
+  const theme = normalizeLocationTerm(input.theme);
+  const descriptionKeyword = normalizeLocationTerm(input.descriptionKeyword);
+  const conditions: Prisma.PhotoAiAnalysisWhereInput[] = [];
+
+  if (tagsAny.length > 0) conditions.push({ tags: { hasSome: tagsAny } });
+  if (tagsAll.length > 0) conditions.push({ tags: { hasEvery: tagsAll } });
+  if (tagsExclude.length > 0) {
+    conditions.push({ NOT: { tags: { hasSome: tagsExclude } } });
+  }
+  if (theme) {
+    conditions.push({ theme: { contains: theme, mode: 'insensitive' } });
+  }
+  if (descriptionKeyword) {
+    conditions.push({
+      description: { contains: descriptionKeyword, mode: 'insensitive' }
+    });
+  }
+
+  return conditions.length > 0 ? { AND: conditions } : null;
+}
+
+function createRangeFilter(range?: NumericRange) {
+  if (!range) return null;
+
+  const filter = {
+    ...(range.min !== undefined ? { gte: range.min } : {}),
+    ...(range.max !== undefined ? { lte: range.max } : {})
+  };
+
+  return Object.keys(filter).length > 0 ? filter : null;
+}
+
+function createExifFilter(
+  input: ExifSearchFilter
+): Prisma.PhotoExifWhereInput | null {
+  const camera = normalizeLocationTerm(input.camera);
+  const lens = normalizeLocationTerm(input.lens);
+  const fNumber = createRangeFilter(input.fNumber);
+  const iso = createRangeFilter(input.iso);
+  const focalLength = createRangeFilter(input.focalLength);
+  const conditions: Prisma.PhotoExifWhereInput[] = [];
+
+  if (camera) {
+    const textFilter = { contains: camera, mode: 'insensitive' } as const;
+    conditions.push({ OR: [{ make: textFilter }, { model: textFilter }] });
+  }
+  if (lens) {
+    const textFilter = { contains: lens, mode: 'insensitive' } as const;
+    conditions.push({ OR: [{ lensMake: textFilter }, { lensModel: textFilter }] });
+  }
+  if (fNumber) conditions.push({ fNumber });
+  if (iso) conditions.push({ iso });
+  if (focalLength) conditions.push({ focalLength });
+  if (input.flashMode === 'fired') {
+    conditions.push({ flash: { contains: 'fired', mode: 'insensitive' } });
+  }
+  if (input.flashMode === 'not_fired') {
+    conditions.push({
+      flash: { contains: 'did not fire', mode: 'insensitive' }
+    });
+  }
+
+  return conditions.length > 0 ? { AND: conditions } : null;
+}
+
 class PhotoService {
   async checkPhotoExists(originalPath: string) {
     return prisma.photo.findUnique({
@@ -272,7 +426,10 @@ class PhotoService {
     withAiAnalysis = false,
     top = false,
     ids = [],
-    takenAtRange
+    takenAtRange,
+    locationFilter,
+    aiMetadataFilter,
+    exifFilter
   }: ListPhotosInput = {}) {
     const skip = (page - 1) * pageSize;
 
@@ -291,6 +448,24 @@ class PhotoService {
         gte: takenAtRange.start,
         lt: takenAtRange.endExclusive
       };
+    }
+    if (locationFilter) {
+      const location = createLocationFilter(locationFilter);
+      if (location) {
+        where.location = { is: location };
+      }
+    }
+    if (aiMetadataFilter) {
+      const aiMetadata = createAiMetadataFilter(aiMetadataFilter);
+      if (aiMetadata) {
+        where.photoAiAnalysis = { is: aiMetadata };
+      }
+    }
+    if (exifFilter) {
+      const exif = createExifFilter(exifFilter);
+      if (exif) {
+        where.photoExif = { is: exif };
+      }
     }
     const [total, list] = await prisma.$transaction([
       prisma.photo.count({ where: where }),

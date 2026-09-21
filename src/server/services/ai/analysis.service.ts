@@ -1,8 +1,20 @@
 import 'server-only';
 
+import { z } from 'zod';
 import { prisma, Prisma } from '@/server/infra/db';
 import { getImageBase64 } from '@/server/infra/storage';
 import { generateAnalysis, generateEmbedding } from '@/server/infra/ai-client';
+
+const analysisResultSchema = z.object({
+  description: z.string().trim().min(1),
+  theme: z.string().trim().min(1).nullable().optional().transform((value) => value ?? null),
+  tags: z
+    .union([z.array(z.string()), z.string()])
+    .transform((value) => {
+      const tags = Array.isArray(value) ? value : value.split(/[,，]/);
+      return [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))];
+    })
+});
 
 class AIService {
   // ai分析
@@ -43,7 +55,9 @@ class AIService {
       ]
     });
     const formattedDescription = text.replace(/```json\n|```/g, '').trim();
-    const { description, theme, tags } = JSON.parse(formattedDescription);
+    const { description, theme, tags } = analysisResultSchema.parse(
+      JSON.parse(formattedDescription)
+    );
 
     // 步骤 2: 让轻量文本模型“提炼标签”
     const embeddingStr = await generateEmbedding(
@@ -73,6 +87,7 @@ class AIService {
         (${photo.id}, ${theme}, ${description}, ${tags}, ${embeddingStr}::vector, ${tagEmbeddingStr}::vector, NOW())
       ON CONFLICT (photo_id) 
       DO UPDATE SET
+        theme = EXCLUDED.theme,
         description = EXCLUDED.description,
         tags = EXCLUDED.tags,
         embedding = EXCLUDED.embedding,

@@ -9,7 +9,6 @@ const ARCHIVE_TIME_ZONE = 'Asia/Shanghai';
 /** 从模型内容块中只提取可展示正文，忽略工具调用与其他内部块。 */
 function getTextDelta(content: unknown) {
   if (typeof content === 'string') return content;
-
   if (!Array.isArray(content)) return '';
 
   return content
@@ -22,12 +21,6 @@ function getTextDelta(content: unknown) {
 }
 
 class AgentService {
-  private threadId: string;
-
-  constructor(threadId: string) {
-    this.threadId = threadId;
-  }
-
   private createArchiveAgent() {
     const currentDate = new Intl.DateTimeFormat('zh-CN', {
       timeZone: ARCHIVE_TIME_ZONE,
@@ -50,35 +43,35 @@ date_search 的 startDate 和 endDate 均为包含边界的 YYYY-MM-DD 日历日
     });
   }
 
-  private getRunConfig(signal?: AbortSignal) {
+  /**
+   * 应用层会话先经过 visitor 归属校验，才会进入 Agent；
+   * 因而可安全作为 LangGraph checkpoint 的 thread_id，避免不同会话串上下文。
+   */
+  private getRunConfig(conversationId: string, signal?: AbortSignal) {
     return {
       configurable: {
-        thread_id: `session-${this.threadId}`
+        thread_id: `conversation:${conversationId}`
       },
       ...(signal ? { signal } : {})
     };
   }
 
-  async invoke(userMsg: string) {
-    return this.createArchiveAgent().invoke(
-      {
-        messages: [{ role: 'user', content: userMsg }]
-      },
-      this.getRunConfig()
-    );
-  }
-
-  /**
-   * 仅产出最终回答的可展示文本增量。
-   * 工具调用块与模型内部内容不会进入 SSE，避免在 UI 中泄露工具参数或推理过程。
-   */
-  async *stream(userMsg: string, signal?: AbortSignal) {
+  /** 仅产出最终回答的可展示文本增量。 */
+  async *stream({
+    conversationId,
+    userMsg,
+    signal
+  }: {
+    conversationId: string;
+    userMsg: string;
+    signal?: AbortSignal;
+  }) {
     const stream = await this.createArchiveAgent().stream(
       {
         messages: [{ role: 'user', content: userMsg }]
       },
       {
-        ...this.getRunConfig(signal),
+        ...this.getRunConfig(conversationId, signal),
         streamMode: 'messages'
       }
     );
@@ -93,6 +86,5 @@ date_search 的 startDate 和 endDate 均为包含边界的 YYYY-MM-DD 日历日
   }
 }
 
-const agentService = new AgentService('123');
-
-export { agentService };
+/** 无状态单例；会话隔离由每次 stream 传入的 conversationId 决定。 */
+export const agentService = new AgentService();

@@ -57,7 +57,7 @@ function LoadingMessage() {
 }
 
 function PhotoCardMessage({ message }: { message: Message }) {
-  const photos = message.data.list.slice(0, 4);
+  const photos = message.data?.list?.slice(0, 4) ?? [];
 
   return (
     <div>

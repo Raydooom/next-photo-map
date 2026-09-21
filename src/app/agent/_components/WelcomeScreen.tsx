@@ -28,7 +28,7 @@ export function WelcomeScreen({
     <div className="pb-10 pt-6 md:pt-[12vh]">
       <Eyebrow className="block">Agent</Eyebrow>
 
-      <h2 className="lab-title mt-4 text-lab-paper">从一句话开始检索</h2>
+      {/* <h2 className="lab-title mt-4 text-lab-paper">从一句话开始检索</h2> */}
 
       <p className="lab-body mt-4 max-w-[38ch] text-lab-muted">
         照片已按语义建立索引，可以问地点、时间、光线或画面内容。
