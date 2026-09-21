@@ -4,7 +4,14 @@ import { NextResponse } from 'next/server';
 
 export interface SSEMessage {
   id?: string;
-  status: 'done' | 'killed' | 'running' | 'success' | 'error' | 'loading';
+  status:
+    | 'done'
+    | 'killed'
+    | 'running'
+    | 'streaming'
+    | 'success'
+    | 'error'
+    | 'loading';
   message: string;
   duration?: number;
   type?: 'text' | 'photoCard';

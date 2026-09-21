@@ -16,7 +16,7 @@ interface WelcomeScreenProps {
  */
 export function WelcomeScreen({
   suggestions = [
-    '故宫附近拍过什么',
+    '查找去年秋天拍摄的照片',
     '找雪山的照片',
     '去年秋天在哪拍的',
     '哪些照片是逆光'

@@ -18,6 +18,13 @@ import type { PhotoItem } from '@/lib/types';
  */
 type PhotoRow = Prisma.PhotoGetPayload<{}> & Record<string, unknown>;
 
+interface TakenAtRange {
+  /** 起始时刻，包含 */
+  start: Date;
+  /** 结束时刻，排除；用半开区间避免日末毫秒精度问题 */
+  endExclusive: Date;
+}
+
 interface ListPhotosInput {
   page?: number;
   pageSize?: number;
@@ -27,6 +34,7 @@ interface ListPhotosInput {
   withAiAnalysis?: boolean;
   top?: boolean;
   ids?: number[];
+  takenAtRange?: TakenAtRange;
 }
 class PhotoService {
   async checkPhotoExists(originalPath: string) {
@@ -263,7 +271,8 @@ class PhotoService {
     withExif = false,
     withAiAnalysis = false,
     top = false,
-    ids = []
+    ids = [],
+    takenAtRange
   }: ListPhotosInput = {}) {
     const skip = (page - 1) * pageSize;
 
@@ -276,6 +285,12 @@ class PhotoService {
     }
     if (top) {
       where.top = true;
+    }
+    if (takenAtRange) {
+      where.takenAt = {
+        gte: takenAtRange.start,
+        lt: takenAtRange.endExclusive
+      };
     }
     const [total, list] = await prisma.$transaction([
       prisma.photo.count({ where: where }),
