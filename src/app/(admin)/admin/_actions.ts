@@ -14,7 +14,7 @@ import { photoService } from '@/server/services/photo/photo.service';
 import { photoExifService } from '@/server/services/photo/exif.service';
 import { locationService } from '@/server/services/photo/location.service';
 import { geocodingService } from '@/server/services/ingestion/geocoding.service';
-import { aiService } from '@/server/services/ai/analysis.service';
+import { imageAnalysisService } from '@/server/services/ai/image-analysis';
 
 
 /** 获取全部照片，带签名 URL 与 MinIO 中的文件存在状态 */
@@ -97,8 +97,12 @@ export const updatePhotoTop = async (photoId: number, top: boolean) => {
   return { success: true, message: top ? '置顶成功' : '取消置顶成功' };
 };
 
-/** 对单张照片重跑 AI 分析 */
-export const analysis = async (photo: any) => {
+/** 对单张照片重跑 AI 分析，只接受照片 ID，避免信任客户端对象。 */
+export const analysis = async (photoId: number) => {
   await requireAdmin();
-  return await aiService.createAiInfo(photo);
+  if (!Number.isInteger(photoId) || photoId <= 0) {
+    throw new Error('照片 ID 不合法');
+  }
+
+  return imageAnalysisService.analyzePhoto(photoId);
 };

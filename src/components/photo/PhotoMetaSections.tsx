@@ -125,11 +125,8 @@ export function PhotoMetaSections({
 }: PhotoMetaSectionsProps) {
   const meta = extractPhotoMeta(photo);
   const hasGear = Boolean(meta.model || meta.lensModel);
-  const whereDetails = [
-    meta.latLng,
-    meta.altitude,
-    meta.bearingDirection
-  ].filter(Boolean);
+  const locationDetails = [meta.altitude, meta.bearingDirection].filter(Boolean);
+  const hasWhereDetails = Boolean(meta.latLng || locationDetails.length > 0);
   const hasMap = Boolean(photo.location?.latitude && photo.location?.longitude);
 
   const exposureSection =
@@ -150,7 +147,7 @@ export function PhotoMetaSections({
     ) : null;
 
   const gearSection =
-    hasGear || meta.details.length > 0 ? (
+    hasGear || meta.captureDetails.length > 0 || meta.fileDetails.length > 0 ? (
       <section className="border-t border-lab-line pt-5 wide:pt-6">
         <GroupLabel>Gear</GroupLabel>
 
@@ -171,16 +168,21 @@ export function PhotoMetaSections({
           </p>
         )}
 
-        {meta.details.length > 0 && (
+        {(meta.captureDetails.length > 0 || meta.fileDetails.length > 0) && (
           <div className={clsx(hasGear && 'mt-3')}>
-            <DetailFlow items={meta.details} />
+            <DetailFlow items={meta.captureDetails} />
+            {meta.fileDetails.length > 0 && (
+              <div className={clsx(meta.captureDetails.length > 0 && 'mt-1')}>
+                <DetailFlow items={meta.fileDetails} />
+              </div>
+            )}
           </div>
         )}
       </section>
     ) : null;
 
   const whereSection =
-    meta.place || showDate || whereDetails.length > 0 || (showMap && hasMap) ? (
+    meta.place || showDate || hasWhereDetails || (showMap && hasMap) ? (
       <section className={clsx('border-t border-lab-line pt-5 wide:pt-6', whereClassName)}>
         <GroupLabel>Where &amp; When</GroupLabel>
 
@@ -202,9 +204,14 @@ export function PhotoMetaSections({
           </p>
         )}
 
-        {whereDetails.length > 0 && (
+        {hasWhereDetails && (
           <div className="mt-2.5">
-            <DetailFlow items={whereDetails} />
+            {meta.latLng && <DetailFlow items={[meta.latLng]} />}
+            {locationDetails.length > 0 && (
+              <div className={clsx(meta.latLng && 'mt-1')}>
+                <DetailFlow items={locationDetails} />
+              </div>
+            )}
           </div>
         )}
 

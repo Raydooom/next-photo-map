@@ -1,66 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { aiService } from '@/server/services/ai/analysis.service';
-import { photoService } from '@/server/services/photo/photo.service';
+import { NextRequest } from 'next/server';
+import { batchAnalysisService } from '@/server/services/ai/image-analysis';
 import { createSSE } from '@/server/infra/sse';
 import { requireAdminResponse } from '@/server/auth';
-
 
 export async function GET(request: NextRequest) {
   const denied = await requireAdminResponse();
   if (denied) return denied;
 
-  try {
-    const { response, controller } = createSSE();
+  const { response, controller } = createSSE();
+  const signal = request.signal;
 
-    // 监听客户端断开/中止
-    const signal = request.signal;
+  void (async () => {
+    try {
+      for await (const event of batchAnalysisService.analyzeAll(signal)) {
+        if (signal.aborted) return;
 
-    (async () => {
-      try {
-        const allPhotos = await photoService.getAllPhotos();
-
-        let count = 0;
-        for (const photo of allPhotos) {
-          // 客户端已中止，停止后续分析
-          if (signal.aborted) {
-            console.log('客户端已停止分析，中断处理');
-            break;
-          }
-
-          await aiService.createAiInfo(photo);
-          count++;
-
-          // 中止后不再发送消息（连接可能已关闭）
-          if (signal.aborted) break;
-
-          controller.sendMessage({
-            current: count,
-            total: allPhotos.length,
-            status: count === allPhotos.length ? 'done' : 'loading',
-            message:
-              count === allPhotos.length
-                ? '已完成'
-                : `正在分析照片 ${count}/${allPhotos.length}`,
-            type: 'text'
-          });
-        }
-      } catch (err) {
-        console.error('批量分析过程出错:', err);
-        if (!signal.aborted) {
-          controller.sendMessage({
-            status: 'error',
-            message: '分析过程中发生错误',
-            type: 'text'
-          });
-        }
-      } finally {
-        controller.close();
+        const isDone = event.status === 'completed';
+        const isCancelled = event.status === 'cancelled';
+        controller.sendMessage({
+          current: event.current,
+          total: event.total,
+          failed: event.failed,
+          status: isDone ? 'done' : isCancelled ? 'killed' : 'loading',
+          done: isDone,
+          message: event.message,
+          type: 'text'
+        });
       }
-    })();
+    } catch (error) {
+      console.error('批量图片分析任务出错:', error);
+      if (!signal.aborted) {
+        controller.sendMessage({
+          status: 'error',
+          message: '批量分析过程中发生错误',
+          type: 'text'
+        });
+      }
+    } finally {
+      controller.close();
+    }
+  })();
 
-    return response;
-  } catch (error) {
-    console.error('AI 分析照片 API 错误:', error);
-    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
-  }
+  return response;
 }

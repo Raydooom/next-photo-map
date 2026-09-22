@@ -15,7 +15,7 @@ import * as Utils from '@/server/services/ingestion/utils';
 import { geocodingService } from '@/server/services/ingestion/geocoding.service';
 import { createLogger } from '@/server/infra/logger';
 import { FileGroup, scanImageGroups } from '@/server/services/ingestion/photo-files';
-import { aiService } from '@/server/services/ai/analysis.service';
+import { imageAnalysisService } from '@/server/services/ai/image-analysis';
 
 export interface PhotoProcessResult {
   success: boolean;
@@ -286,8 +286,8 @@ export class ScannerService {
       let aiAnalyzed = false;
       if (enableAI) {
         try {
-          // 用刚创建的 photo 而非 getPhotoById —— 后者经 transformPhoto 会删掉 key 字段
-          await aiService.createAiInfo(photo);
+          // 新服务只接收 photoId，并在服务端重新读取私有缩略图 key。
+          await imageAnalysisService.analyzePhoto(photo.id);
           aiAnalyzed = true;
           console.log(`AI 分析完成: ${fileName} (ID: ${photo.id})`);
         } catch (aiError) {

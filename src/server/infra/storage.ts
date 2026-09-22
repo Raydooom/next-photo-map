@@ -64,7 +64,10 @@ export async function checkObjectExists(key: string): Promise<boolean> {
 
 // ============ 读取操作（走内网） ============
 
-export async function getImageBase64(key: string): Promise<string> {
+export async function getImageBase64(
+  key: string,
+  contentType?: string
+): Promise<string> {
   try {
     const command = new GetObjectCommand({
       Bucket: BUCKET,
@@ -79,9 +82,9 @@ export async function getImageBase64(key: string): Promise<string> {
 
     const buffer = await streamToBuffer(response.Body as any);
     const ext = key.split('.').pop()?.toLowerCase();
-    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+    const inferredMimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
 
-    return `data:${mimeType};base64,${buffer.toString('base64')}`;
+    return `data:${contentType || inferredMimeType};base64,${buffer.toString('base64')}`;
   } catch (error) {
     console.error('S3 Error:', error);
     throw error;

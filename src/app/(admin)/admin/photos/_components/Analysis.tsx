@@ -7,15 +7,22 @@ import { useDisclosure } from '@heroui/modal';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { ConfirmModal } from './ConfirmModal';
 
+type AnalysisProgress = {
+  current: number;
+  total: number;
+  failed: number;
+};
+
 export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
-  const [count, setCount] = useState({ current: 0, total: 0 });
+  const [count, setCount] = useState<AnalysisProgress>({
+    current: 0,
+    total: 0,
+    failed: 0
+  });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 中止控制器引用，供停止操作使用
   const abortRef = useRef<AbortController | null>(null);
-  // 标记是否为用户主动停止，避免触发错误提示
   const manualStopRef = useRef(false);
-
   const stopModal = useDisclosure();
 
   const startAnalysis = async () => {
@@ -24,7 +31,7 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
     manualStopRef.current = false;
 
     setIsAnalyzing(true);
-    setCount({ current: 0, total: 0 });
+    setCount({ current: 0, total: 0, failed: 0 });
 
     try {
       await fetchEventSource('/api/ai/analysis', {
@@ -38,8 +45,16 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
           }
         },
         onmessage: (event) => {
-          const data = JSON.parse(event.data);
-          setCount(data);
+          const data = JSON.parse(event.data) as Partial<AnalysisProgress> & {
+            status?: string;
+            done?: boolean;
+            message?: string;
+          };
+          setCount((previous) => ({
+            current: data.current ?? previous.current,
+            total: data.total ?? previous.total,
+            failed: data.failed ?? previous.failed
+          }));
 
           if (data.status === 'error') {
             throw new Error(data.message || '分析过程出错');
@@ -47,9 +62,9 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
 
           if (data.status === 'done' || data.done) {
             addToast({
-              title: '批量分析完成',
-              description: `已完成 ${data.total} 张照片的分析`,
-              color: 'success'
+              title: data.failed ? '批量分析完成，但有失败项' : '批量分析完成',
+              description: `已处理 ${data.total ?? 0} 张照片，失败 ${data.failed ?? 0} 张`,
+              color: data.failed ? 'warning' : 'success'
             });
             onFinish();
           }
@@ -67,10 +82,7 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
     } catch (error) {
       setIsAnalyzing(false);
 
-      // 用户主动停止，不视为错误
-      if (manualStopRef.current) {
-        return;
-      }
+      if (manualStopRef.current) return;
 
       console.error('批量分析失败:', error);
       addToast({
@@ -91,11 +103,10 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
 
     addToast({
       title: '已停止分析',
-      description: `已分析 ${count.current}/${count.total} 张照片`,
+      description: `已处理 ${count.current}/${count.total} 张，失败 ${count.failed} 张`,
       color: 'warning'
     });
 
-    // 刷新列表以展示已分析的结果
     onFinish();
   };
 
@@ -124,8 +135,7 @@ export const AnalysisAll = ({ onFinish }: { onFinish: () => void }) => {
         title="确认停止分析"
         message={
           <>
-            当前已分析 {count.current}/{count.total}{' '}
-            张照片，停止后剩余照片将不再处理。已完成的分析结果会保留。
+            当前已处理 {count.current}/{count.total} 张照片，停止后剩余照片将不再处理。已完成的分析结果会保留。
           </>
         }
         confirmText="确认停止"

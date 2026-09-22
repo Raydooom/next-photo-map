@@ -27,8 +27,10 @@ export interface ExposureReadout {
 export interface PhotoMeta {
   /** 曝光四要素，缺失项已剔除，剩几项排几项 */
   readouts: ExposureReadout[];
-  /** 白平衡、测光、尺寸这类次要参数，压成一串 */
-  details: string[];
+  /** 白平衡、测光和曝光补偿等拍摄设置 */
+  captureDetails: string[];
+  /** 分辨率和文件大小等图像文件信息 */
+  fileDetails: string[];
   /** 机身型号 */
   model?: string | null;
   /** 镜头型号 */
@@ -87,17 +89,20 @@ export function extractPhotoMeta(photo: PhotoItem): PhotoMeta {
     .filter((item) => Boolean(item.value))
     .map((item) => ({ ...item, value: String(item.value) }));
 
-  const details = [
+  const captureDetails = [
     exif?.whiteBalance && `WB ${exif.whiteBalance}`,
     exif?.meteringMode,
-    formatExposurebias(exif?.exposureBias),
+    formatExposurebias(exif?.exposureBias)
+  ].filter((item): item is string => Boolean(item));
+  const fileDetails = [
     formatDimension(exif?.exifImageWidth || 0, exif?.exifImageHeight || 0),
     formatFileSize(photo.size || 0)
   ].filter((item): item is string => Boolean(item));
 
   return {
     readouts,
-    details,
+    captureDetails,
+    fileDetails,
     model: exif?.model,
     lensModel: exif?.lensModel,
     place: [location?.city, location?.district].filter(Boolean).join(' · '),

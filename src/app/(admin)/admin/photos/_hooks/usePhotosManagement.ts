@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { addToast } from '@heroui/toast';
 import * as Admin from '../../_actions';
-import * as AI from '../../_actions';
 import { PhotoRow, PhotoStats, FilterTab } from '../_components/types';
 
 export function usePhotosManagement() {
@@ -116,12 +115,8 @@ export function usePhotosManagement() {
   const analyzePhoto = useCallback(async (photo: PhotoRow) => {
     setAnalyzingIds((prev) => new Set(prev).add(photo.id));
     try {
-      const { tags } = await AI.analysis(photo);
-      if (tags?.length) {
-        setPhotos((prev) =>
-          prev.map((p) => (p.id === photo.id ? { ...p, tags } : p))
-        );
-      }
+      await Admin.analysis(photo.id);
+      await loadPhotos();
       addToast({
         title: 'AI 分析完成',
         description: `已完成「${photo.filename}」的分析`,
@@ -141,7 +136,7 @@ export function usePhotosManagement() {
         return next;
       });
     }
-  }, []);
+  }, [loadPhotos]);
 
   return {
     // 数据
