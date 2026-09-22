@@ -397,11 +397,8 @@ export function PhotoLightbox({
           )}
         </AnimatePresence>
 
-        {/* 读数行随移动端 44px 的按钮一起加高，桌面回到 40px */}
+        {/* 左侧日期地点仅供阅读；右侧设备与参数组是完整的信息入口。 */}
         <div className="flex h-11 items-center justify-between gap-x-6 px-4 wide:h-10 wide:px-6">
-          {/* 日期与地点。不套 lab-mono —— 中文会被那 0.12em 的宽字距拉散，
-              日期取中文写法（formatTakenDate 不传分隔符即为中文，跨年自动补年份），
-              与后面的中文地名同一套字形才连得起来 */}
           <div
             className={clsx(
               'flex min-w-0 items-baseline gap-2 text-[12px]',
@@ -424,13 +421,20 @@ export function PhotoLightbox({
             )}
           </div>
 
-          {/* 参数与详情入口整体不收缩，宽度不够时先截断左侧的地点 */}
-          <div className="flex shrink-0 items-center gap-x-2.5">
-            {/* 手机屏放不下这一串，会把日期地点挤成一个孤零零的间隔点，
-                故只留详情按钮，完整参数点开面板去看。
-                这里按 md 而非 wide 判断：平板竖屏虽然纵向紧张（布局仍走紧凑那套），
-                横向却有足够空间摆下型号与四项参数 */}
-            <div className="hidden items-center gap-x-2.5 md:flex">
+          <button
+            type="button"
+            onClick={() => setIsInfoOpen((open) => !open)}
+            aria-label={isInfoOpen ? '收起拍摄信息' : '展开拍摄信息'}
+            aria-expanded={isInfoOpen}
+            className={clsx(
+              'pointer-events-auto group/meta flex h-11 shrink-0 cursor-pointer items-center gap-x-2.5 px-2 text-left wide:h-10',
+              'transition-colors duration-300',
+              'hover:bg-lab-sunken/60 dark:hover:bg-lab-on-media/10',
+              'focus-visible:outline-1 focus-visible:outline-inset focus-visible:outline-lab-accent dark:focus-visible:outline-lab-on-media',
+              isInfoOpen && 'bg-lab-sunken/60 dark:bg-lab-on-media/10'
+            )}
+          >
+            <span className="hidden items-center gap-x-2.5 md:flex">
               {model && (
                 <>
                   <span
@@ -442,8 +446,6 @@ export function PhotoLightbox({
                   >
                     {model}
                   </span>
-                  {/* 这条线两侧各留 2px，比参数彼此之间的间隔更宽，
-                      把"设备"与"参数"分成两组读 */}
                   <span
                     aria-hidden
                     className="mx-0.5 h-2.5 w-px shrink-0 bg-lab-line-strong dark:bg-lab-on-media/25"
@@ -453,34 +455,31 @@ export function PhotoLightbox({
 
               {specs.map((item, index) => (
                 <Fragment key={item}>
-                  {/* 细竖线分隔，比空格更有读数条的秩序感 */}
                   {index > 0 && (
                     <span
                       aria-hidden
                       className="h-2.5 w-px shrink-0 bg-lab-line-strong dark:bg-lab-on-media/25"
                     />
                   )}
-                  {/* normal-case 覆盖 lab-mono 的大写：mm / f / s 惯例为小写 */}
                   <span className="lab-mono shrink-0 whitespace-nowrap normal-case tracking-[0.06em] text-lab-muted dark:text-lab-on-media-muted">
                     {item}
                   </span>
                 </Fragment>
               ))}
-            </div>
+            </span>
 
-            {/* 详情入口接在这组参数之后：它展开的正是这些参数的完整版，
-                按钮与内容同处一行的延长线上。
-                桌面收到 32px 与 11px 的读数文字配重；移动端要够点，
-                放到 44px，并让它纵向溢出读数行而不撑高整条 */}
-            <IconButton
-              label="拍摄信息"
-              onClick={() => setIsInfoOpen((open) => !open)}
-              isActive={isInfoOpen}
-              className="-mr-2 ml-0.5 h-11 w-11 wide:-mr-1.5 wide:h-8 wide:w-8"
+            <span
+              aria-hidden
+              className={clsx(
+                'flex h-11 w-11 items-center justify-center wide:h-8 wide:w-8',
+                'text-lab-muted transition-colors duration-300',
+                'group-hover/meta:text-lab-paper dark:group-hover/meta:text-lab-on-media',
+                isInfoOpen && 'text-lab-accent dark:text-lab-accent-on-media'
+              )}
             >
               <Info className="h-[18px] w-[18px] wide:h-4 wide:w-4" />
-            </IconButton>
-          </div>
+            </span>
+          </button>
         </div>
 
         <div className="pointer-events-auto mt-2">
