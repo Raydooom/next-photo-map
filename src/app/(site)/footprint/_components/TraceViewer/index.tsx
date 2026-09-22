@@ -10,6 +10,7 @@ import { extractPhotoMeta } from "@/lib/photoMeta";
 import { FocusLoader, FullscreenDialog } from "@/components/ui";
 import { IconButton } from "@/components/photo/PhotoLightbox/IconButton";
 import { LivePhoto } from "@/components/photo/LivePhoto";
+import { PhotoMetaHeader } from '@/components/photo/PhotoMetaSections';
 import { MetaColumn } from "./MetaColumn";
 import { Thumbs } from "./Thumbs";
 
@@ -326,17 +327,22 @@ export function TraceViewer({
               />
             </button>
 
-            {/* 宽屏的关闭按钮：参数栏常驻时它可见，又不压在照片上 */}
-            <IconButton
-              label="关闭"
-              onClick={onClose}
-              className="absolute right-2 top-2 z-10 hidden h-9 w-9 wide:flex"
-            >
-              <X className="h-[18px] w-[18px]" />
-            </IconButton>
+            <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              {/* 文件名、主题和日期固定在顶部，滚动长信息时仍能确认当前照片。 */}
+              <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-lab-line bg-lab-raised px-5 pb-4 pt-5">
+                <PhotoMetaHeader photo={photo} className="pr-2" />
+                <IconButton
+                  label="关闭"
+                  onClick={onClose}
+                  className="-mr-2 -mt-2 h-11 w-11 wide:h-9 wide:w-9"
+                >
+                  <X className="h-[18px] w-[18px] wide:h-4 wide:w-4" />
+                </IconButton>
+              </div>
 
-            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
-              <MetaColumn photo={photo} />
+              <div className="px-5 pb-5 pt-5">
+                <MetaColumn photo={photo} showDate={false} showTheme={false} />
+              </div>
             </div>
           </div>
         </div>

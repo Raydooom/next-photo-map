@@ -41,6 +41,8 @@ export interface PhotoMeta {
   altitude: string;
   /** 中文朝向（东、东南……） */
   bearingDirection: string;
+  /** AI 分析出的主题 */
+  theme?: string | null;
   /** AI 分析出的标签 */
   tags: string[];
 }
@@ -102,6 +104,7 @@ export function extractPhotoMeta(photo: PhotoItem): PhotoMeta {
     latLng: formatLatLng(location) || '',
     altitude: formatAltitude(exif?.altitude) || '',
     bearingDirection: exif?.bearingDirection ?? '',
+    theme: photo.photoAiAnalysis?.theme,
     tags: photo.photoAiAnalysis?.tags ?? []
   };
 }
