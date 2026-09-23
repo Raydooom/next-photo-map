@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { Eyebrow, LabButton, Reveal } from "@/components/ui";
 import { PhotoItem } from "@/lib/types";
 import { PhotoTicker } from "./PhotoTicker";
 
-/** 提示的停留时长（毫秒），够读完一句话 */
-const NOTICE_DURATION = 2800;
+/** AI 助手页路由，按钮与快捷键共用 */
+const AGENT_PATH = "/agent";
 
 interface AiCalloutProps {
   /** 作为背景滚动的照片，纯装饰 */
@@ -23,43 +23,24 @@ interface AiCalloutProps {
  */
 export function AiCallout({ photos = [] }: AiCalloutProps) {
   const [shortcut, setShortcut] = useState("⌘K");
-  const [isNoticeOpen, setIsNoticeOpen] = useState(false);
-  const noticeTimer = useRef<number | undefined>(undefined);
-
-  /**
-   * 功能尚未开放，按钮与快捷键都只给一句提示。
-   *
-   * 没有做成禁用态：按钮一灰下去，观者只会以为自己没资格用，
-   * 不知道是"还没做好"。留着可点、点了告诉他进展，信息更准。
-   *
-   * 重复触发时重新计时，而不是排队 —— 连按几下只该看到同一句话多停一会儿。
-   */
-  const announceSoon = useCallback(() => {
-    setIsNoticeOpen(true);
-    window.clearTimeout(noticeTimer.current);
-    noticeTimer.current = window.setTimeout(
-      () => setIsNoticeOpen(false),
-      NOTICE_DURATION,
-    );
-  }, []);
-
-  useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
+  const router = useRouter();
 
   useEffect(() => {
     const isMac = navigator.userAgent.toLowerCase().includes("mac");
     setShortcut(isMac ? "⌘K" : "Ctrl+K");
 
+    // key 取小写比对：按住 Shift 时浏览器给的是 "K"，直接比 "k" 会漏掉
     const onKeyDown = (event: KeyboardEvent) => {
       const withModifier = isMac ? event.metaKey : event.ctrlKey;
-      if (withModifier && event.key === "k") {
+      if (withModifier && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        announceSoon();
+        router.push(AGENT_PATH);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [announceSoon]);
+  }, [router]);
 
   return (
     // 上方留白刻意大于常规章节间距，与足迹地图区块拉开距离
@@ -75,10 +56,6 @@ export function AiCallout({ photos = [] }: AiCalloutProps) {
               <Eyebrow className="flex items-center gap-2 text-lab-accent">
                 <Sparkles className="h-3.5 w-3.5" />
                 AI search
-                {/* 常驻标注：点之前就该知道这块还没通，不必先点一次才发现 */}
-                <span className="border border-lab-line px-1.5 py-0.5 text-lab-faint">
-                  开发中
-                </span>
               </Eyebrow>
 
               <h2 className="lab-title mt-5 text-lab-paper">
@@ -93,7 +70,7 @@ export function AiCallout({ photos = [] }: AiCalloutProps) {
               <div className="flex items-center gap-4">
                 <LabButton
                   variant="primary"
-                  onClick={announceSoon}
+                  href={AGENT_PATH}
                   endContent={<ArrowUpRight className="h-3.5 w-3.5" />}
                 >
                   开始提问
@@ -101,31 +78,6 @@ export function AiCallout({ photos = [] }: AiCalloutProps) {
                 <kbd className="lab-mono hidden border border-lab-line-strong px-2.5 py-1.5 text-lab-muted sm:block">
                   {shortcut}
                 </kbd>
-              </div>
-
-              {/**
-               * 点击后的即时反馈。
-               *
-               * 高度留在原处（grid 占位），提示进出时按钮不会被顶动 ——
-               * 否则每次点击整块都要跳一下。
-               * aria-live 让读屏也能听到，不然这条提示对它是不存在的。
-               */}
-              <div className="mt-3 grid min-h-5">
-                <AnimatePresence>
-                  {isNoticeOpen && (
-                    <motion.p
-                      role="status"
-                      aria-live="polite"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="lab-mono normal-case tracking-normal text-lab-muted"
-                    >
-                      检索还在搭，先看照片墙吧
-                    </motion.p>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { LayoutPanelTop, MapPinned, Home } from 'lucide-react';
+import { LayoutPanelTop, MapPinned, Home, Sparkles } from 'lucide-react';
 
 export type SiteConfig = typeof siteConfig;
 
@@ -25,9 +25,10 @@ export const siteConfig = {
       meta: { icon: MapPinned }
     },
     {
+      // 图标不跟 Footprints 共用 MapPinned：导航里两项同图标，图标就不再是区分手段
       label: 'Agent',
       href: '/agent',
-      meta: { icon: MapPinned, hidden: true }
+      meta: { icon: Sparkles }
     },
     {
       label: 'Admin',
