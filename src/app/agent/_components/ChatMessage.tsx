@@ -21,7 +21,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <article className={clsx(isUser && 'border-l-2 border-lab-accent pl-4')}>
       <Eyebrow as="h3" className={isUser ? 'text-lab-accent' : undefined}>
-        {isUser ? 'You' : 'Agent'}
+        {isUser ? '' : 'AI智能助手'}
       </Eyebrow>
 
       <div className="mt-2.5">

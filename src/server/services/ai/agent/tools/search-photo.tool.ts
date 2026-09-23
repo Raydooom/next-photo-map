@@ -229,7 +229,7 @@ function toPhotoSummary(photo: PhotoItem) {
     filename: photo.filename,
     takenAt: formatTakenAt(photo.takenAt),
     location: location?.formattedAddress ?? (region || null),
-    description: photo.photoAiAnalysis?.description?.slice(0, 200) ?? null,
+    description: photo.photoAiAnalysis?.description ?? null,
     theme: photo.photoAiAnalysis?.theme ?? null,
     tags: photo.photoAiAnalysis?.tags ?? []
   };

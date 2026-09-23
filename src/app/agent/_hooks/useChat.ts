@@ -43,15 +43,31 @@ function revivePhoto(photo: PhotoItem): PhotoItem {
   };
 }
 
+function getStoredPhotoResultContent(content: string) {
+  const normalizedContent = content.trim();
+  const containsInternalOrVerboseContent =
+    /semanticQuery|relatedTerms|推荐理由|照片\s*ID|(?:^|\n)\s*\d+[.、]/.test(
+      normalizedContent
+    );
+
+  return containsInternalOrVerboseContent || !normalizedContent
+    ? '已找到相关照片。'
+    : normalizedContent;
+}
+
 function fromStoredMessage(message: AgentConversationMessage): Message {
   const photos = message.photos?.map(revivePhoto);
+  const hasPhotos = Boolean(photos?.length);
 
   return {
     id: message.id,
     conversationId: message.conversationId,
     role: message.role === 'assistant' ? 'ai' : 'user',
     status: 'done',
-    content: message.content,
+    content:
+      hasPhotos && message.kind === 'photoResults'
+        ? getStoredPhotoResultContent(message.content)
+        : message.content,
     timestamp: new Date(message.createdAt),
     type: message.kind === 'photoResults' ? 'photoCard' : 'text',
     ...(photos && photos.length > 0
