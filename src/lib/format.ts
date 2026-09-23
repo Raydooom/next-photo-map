@@ -109,19 +109,31 @@ export const formatAltitude = (altitude?: number | null) => {
   return `海拔约 ${altitude.toFixed(2)} 米`;
 };
 
-export const formatDateCN = (datetime?: Date | string | null) => {
+/**
+ * 中文本地化日期。
+ *
+ * @param withTime 是否补上时分秒。
+ *   列表类场景多数只关心日期，时间会把列撑宽。
+ */
+export const formatDateCN = (
+  datetime?: Date | string | null,
+  withTime = true
+) => {
   if (!datetime) {
     return '';
   }
   const date = new Date(datetime);
-  return date.toLocaleDateString('zh-CN', {
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+    day: '2-digit'
+  };
+  if (withTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+    options.second = '2-digit';
+  }
+  return date.toLocaleDateString('zh-CN', options);
 };
 
 /**

@@ -22,6 +22,38 @@ const PHOTO_SEARCH_TOOL_NAMES = new Set([
 const INTERNAL_QUERY_PLAN_PATTERN =
   /\{\s*"semanticQuery"\s*:\s*"[^"]*"\s*,\s*"relatedTerms"\s*:\s*\[[\s\S]*?\]\s*\}/g;
 
+/**
+ * 跑过照片工具但一张都没命中时的回复。
+ *
+ * 只说「没找到」会把对话堵死 —— 用户不知道是条件太窄还是档案里真没有，
+ * 因而给出可调整的方向；三个方向对应三类检索维度（时间、地点、画面内容）。
+ */
+const NO_PHOTO_RESULT_REPLY =
+  '照片库里暂时没有符合这些条件的照片。可以把条件放宽一些再试：换个时间范围、换个地点，或者直接描述画面里有什么。';
+
+/** 本轮没有任何可回放正文时的兜底，顺带交代这个助手能按什么条件查 */
+const NO_CONTENT_REPLY =
+  '想找哪段时间、哪个地方，或者画面里有什么，说一说我就去照片里翻。';
+
+/**
+ * 指向照片网格的操作引导。
+ *
+ * 系统提示里交代了「界面会展示照片网格」，模型于是会顺口补上「点击查看详细信息，
+ * 或告诉我是否需要调整搜索条件」。这话只在真出了网格时成立，本轮没有照片时
+ * 界面上并没有可点的东西，留着就是指着空处让人点。
+ */
+const PHOTO_UI_HINT_PATTERN =
+  /(点击|点开|点选)[^。！？\n]*(查看|详细信息|详情|大图|照片)|调整(搜索|检索|筛选|查询)条件/;
+
+/** 按句切分后剔除误导句。lookbehind 保留句末标点，未命中的句子原样拼回 */
+function stripPhotoUiHints(text: string) {
+  return text
+    .split(/(?<=[。！？\n])/)
+    .filter((sentence) => !PHOTO_UI_HINT_PATTERN.test(sentence))
+    .join('')
+    .trim();
+}
+
 const photoToolPhotoSchema = z.object({
   id: z.number().int().positive(),
   description: z.string().trim().min(1).nullable().optional(),
@@ -177,7 +209,8 @@ class AgentService {
 当用户提到相机、机身、镜头、焦段、长焦、广角、光圈、ISO 或闪光灯时，必须调用 exif_search；大光圈对应较小的 f-number。
 工具返回的拍摄时间均按 ${ARCHIVE_TIME_ZONE} 表示，回答时不要改标为 UTC。
 调用工具前不要输出面向用户的解释、规划过程、JSON 或 Markdown。照片工具有结果后，不要输出照片数量、编号列表、照片 ID、逐张介绍、时间、地点、拍摄参数、标签清单或推荐理由，因为界面会展示照片网格。
-如果工具没有返回照片，明确说明在照片里暂时没找到符合条件、且已经有相关信息的照片。`,
+如果工具没有返回照片，明确说明在照片里暂时没找到符合条件、且已经有相关信息的照片。
+任何情况下都不要让用户点击界面元素、查看详细信息或确认是否调整搜索条件，界面交互不由你交代。`,
       tools: [
         dateSearchTool,
         locationSearchTool,
@@ -281,9 +314,14 @@ class AgentService {
     if (photoResultSummary) {
       yield { type: 'text', delta: photoResultSummary };
     } else if (hasPhotoToolRun) {
-      yield { type: 'text', delta: '暂时没找到符合条件的照片。' };
-    } else if (bufferedText) {
-      yield { type: 'text', delta: bufferedText };
+      yield { type: 'text', delta: NO_PHOTO_RESULT_REPLY };
+    } else {
+      // 没有照片时也要保证有一句话可发：原先正文为空就什么都不发，
+      // 落库会退成「没有生成可展示的回答」，界面上等同于一句故障提示
+      yield {
+        type: 'text',
+        delta: stripPhotoUiHints(bufferedText) || NO_CONTENT_REPLY
+      };
     }
 
     if (requestedToolCallIds.size === 0) {
