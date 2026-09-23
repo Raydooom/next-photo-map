@@ -248,7 +248,9 @@ class AgentService {
     userMsg: string;
     signal?: AbortSignal;
   }): AsyncGenerator<AgentStreamEvent> {
-    const stream = await this.createArchiveAgent().stream(
+    // createArchiveAgent 现在是异步的：checkpoint 建表改为首次调用时完成
+    const agent = await this.createArchiveAgent();
+    const stream = await agent.stream(
       {
         messages: [{ role: 'user', content: userMsg }]
       },
