@@ -9,16 +9,12 @@
     "build": "prisma generate && next build",
     "build:docker": "dotenv -e .env.docker -- prisma generate && next build",
     "start": "next start",
-    "start:docker": "dotenv -e .env.docker -- next start",
     "lint": "eslint",
-    "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio",
-    "db:push:prod": "dotenv -e .env.prod -- prisma db push",
-    "db:migrate:docker": "dotenv -e .env.docker -- prisma migrate deploy",
+    "prisma:studio": "dotenv -e .env.local -- prisma studio",
     "db:migrate:local": "dotenv -e .env.local -- prisma migrate dev",
-    "db:generate:local": "dotenv -e .env.local -- prisma generate",
-    "db:push:local": "dotenv -e .env.local -- prisma db push"
+    "db:migrate:prod": "dotenv -e .env.prod -- prisma migrate deploy",
+    "db:status:prod": "dotenv -e .env.prod -- prisma migrate status"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1021.0",
