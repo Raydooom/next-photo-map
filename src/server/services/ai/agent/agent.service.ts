@@ -3,6 +3,7 @@ import 'server-only';
 import { AIMessageChunk, ToolMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { createAgent } from '@/server/infra/agent';
+import { getAgentModelName } from '@/server/infra/chat-model';
 import {
   aiMetadataSearchTool,
   dateSearchTool,
@@ -199,7 +200,8 @@ class AgentService {
     }).format(new Date());
 
     return createAgent({
-      model: 'ollama',
+      // 默认本地 ollama，AGENT_PROVIDER=qw 时切云端，见 chat-model.ts
+      model: getAgentModelName(),
       systemPrompt: `你是帮用户翻照片、找回拍下瞬间的照片小助手，只能依据工具返回的照片资料回答，不得编造照片、时间、地点或拍摄参数。
 当前日期（${ARCHIVE_TIME_ZONE}）：${currentDate}。
 当用户的问题包含明确日期、相对日期、月份、季度或年份时，必须调用 date_search。
@@ -208,6 +210,7 @@ class AgentService {
 当用户以自然语言描述主体关系、动作、空间层次、复杂氛围、抽象风格或同义表达，且不能可靠落为明确标签时，必须调用 semantic_photo_search；保留用户原意，不得补充不存在的拍摄信息。
 当用户提到相机、机身、镜头、焦段、长焦、广角、光圈、ISO 或闪光灯时，必须调用 exif_search；大光圈对应较小的 f-number。
 工具返回的拍摄时间均按 ${ARCHIVE_TIME_ZONE} 表示，回答时不要改标为 UTC。
+一次回答只调用一个照片工具。工具返回照片后立即作答，不得再调用其他工具，也不得拿返回结果里的主题或描述另编查询去二次检索；只有工具没返回任何照片时才允许换条件重试。
 调用工具前不要输出面向用户的解释、规划过程、JSON 或 Markdown。照片工具有结果后，不要输出照片数量、编号列表、照片 ID、逐张介绍、时间、地点、拍摄参数、标签清单或推荐理由，因为界面会展示照片网格。
 如果工具没有返回照片，明确说明在照片里暂时没找到符合条件、且已经有相关信息的照片。
 任何情况下都不要让用户点击界面元素、查看详细信息或确认是否调整搜索条件，界面交互不由你交代。`,
@@ -275,7 +278,22 @@ class AgentService {
         }
 
         const result = getPhotoToolResult(message);
-        if (result && !processedToolCalls.has(result.toolCallId)) {
+        /**
+         * 已经拿到一组照片后，丢弃模型的后续检索结果。
+         *
+         * 工具返回里带着 theme 与 description，模型常据此再编一个查询去二次检索
+         * （按地点查完北京，又拿「自然生态的光影叙事」去做语义搜索）。
+         * 路由层把各次结果并集后落在同一条消息上，于是没经过原条件筛选的照片
+         * 会混进结果里 —— 用户问北京，却看到别处的照片。
+         *
+         * photoResultSummary 只在真的取到照片时被赋值，因此首个工具 0 结果时
+         * 仍允许模型换条件重试。
+         */
+        if (
+          result &&
+          !photoResultSummary &&
+          !processedToolCalls.has(result.toolCallId)
+        ) {
           processedToolCalls.add(result.toolCallId);
           photoResultSummary = getPhotoResultSummary(
             result.toolName,

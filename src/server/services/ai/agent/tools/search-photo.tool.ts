@@ -211,48 +211,21 @@ function createTakenAtRange({ startDate, endDate }: DateSearchInput) {
   };
 }
 
-function formatTakenAt(takenAt: Date | null) {
-  return takenAt
-    ? dayjs(takenAt).tz(ARCHIVE_TIME_ZONE).format('YYYY-MM-DD HH:mm')
-    : null;
-}
-
-/** 工具结果只保留模型回答与后续照片引用所需的字段，不传存储键、URL 或原始 EXIF。 */
+/**
+ * 工具结果只给模型 id 与一组短标签，不含描述、文件名、时间、地点与 EXIF。
+ *
+ * 这些字段模型一个都用不到：界面靠 id 取照片，回答正文在有照片时会被服务端
+ * 换成固定摘要，system prompt 也禁止它输出时间、地点、参数与文件名。
+ * 但它们要占掉工具回填那一轮的绝大部分输入 —— 12 张照片的 description
+ * 约 3K token，在纯 CPU 推理下就是几十秒的等待。
+ *
+ * theme 保留：服务端据此生成画面概述（getPhotoResultSummary 的 summaryTerms）。
+ */
 function toPhotoSummary(photo: PhotoItem) {
-  const location = photo.location;
-  const region = [location?.province, location?.city, location?.district]
-    .filter((part): part is string => Boolean(part))
-    .join('');
-
   return {
     id: photo.id,
-    filename: photo.filename,
-    takenAt: formatTakenAt(photo.takenAt),
-    location: location?.formattedAddress ?? (region || null),
-    description: photo.photoAiAnalysis?.description ?? null,
     theme: photo.photoAiAnalysis?.theme ?? null,
     tags: photo.photoAiAnalysis?.tags ?? []
-  };
-}
-
-function toExifPhotoSummary(photo: PhotoItem) {
-  const exif = photo.photoExif;
-
-  return {
-    ...toPhotoSummary(photo),
-    exif: exif
-      ? {
-          make: exif.make ?? null,
-          model: exif.model ?? null,
-          lensMake: exif.lensMake ?? null,
-          lensModel: exif.lensModel ?? null,
-          fNumber: exif.fNumber ?? null,
-          exposureTime: exif.exposureTime ?? null,
-          iso: exif.iso ?? null,
-          focalLength: exif.focalLength ?? null,
-          flash: exif.flash ?? null
-        }
-      : null
   };
 }
 
@@ -492,7 +465,8 @@ export const exifSearchTool = tool(
         flashMode
       },
       total: result.list.length,
-      photos: result.list.map(toExifPhotoSummary)
+      // 拍摄参数不回给模型：筛选已在数据库完成，prompt 也禁止它复述参数
+      photos: result.list.map(toPhotoSummary)
     };
   },
   {
