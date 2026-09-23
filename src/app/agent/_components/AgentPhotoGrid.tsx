@@ -2,12 +2,14 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { PhotoPreview } from '@/components/photo/PhotoPreview';
 import type { PhotoItem } from '@/lib/types/photo';
 
 interface AgentPhotoGridProps {
   photos: PhotoItem[];
   total: number;
+  animate?: boolean;
 }
 
 function getGridClass(photoCount: number) {
@@ -22,15 +24,26 @@ function getGridClass(photoCount: number) {
  * 检索结果采用自适应社交式图片组：1 张单列、2/4 张双列、3 或 5–9 张三列。
  * 背景只属于实际图片单元，未占用的网格轨道保持页面底色，不会形成灰色空白格。
  */
-export function AgentPhotoGrid({ photos, total }: AgentPhotoGridProps) {
+export function AgentPhotoGrid({
+  photos,
+  total,
+  animate = false
+}: AgentPhotoGridProps) {
   const [previewId, setPreviewId] = useState<number>();
+  const shouldReduceMotion = useReducedMotion();
+  const shouldAnimate = animate && !shouldReduceMotion;
   const visiblePhotos = photos.slice(0, 9);
-  const hiddenCount = Math.max(total - visiblePhotos.length, 0);
+  const hiddenCount = Math.max(photos.length - visiblePhotos.length, 0);
 
   if (visiblePhotos.length === 0) return null;
 
   return (
-    <section className="mt-5">
+    <motion.section
+      className="mt-5"
+      initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
+      animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="mb-2 flex items-baseline gap-2">
         <span className="lab-action text-lab-paper">相关照片</span>
         <span className="text-[12px] text-lab-muted">
@@ -77,6 +90,6 @@ export function AgentPhotoGrid({ photos, total }: AgentPhotoGridProps) {
         isOpen={previewId !== undefined}
         onClose={() => setPreviewId(undefined)}
       />
-    </section>
+    </motion.section>
   );
 }

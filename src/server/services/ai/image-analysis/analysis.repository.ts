@@ -9,6 +9,14 @@ export interface AnalysisPhotoInput {
   thumbLargeKey: string;
 }
 
+export interface SemanticPhotoMatch {
+  photoId: number;
+  descriptionSimilarity: number | null;
+  tagSimilarity: number | null;
+  similarity: number;
+  total: number;
+}
+
 class AnalysisRepository {
   async getPhotoInput(photoId: number): Promise<AnalysisPhotoInput | null> {
     return prisma.photo.findUnique({
@@ -31,6 +39,51 @@ class AnalysisRepository {
       where: { photoId },
       select: { photoId: true, description: true, theme: true, tags: true }
     });
+  }
+
+  async searchByVector(
+    queryVector: string,
+    limit: number,
+    minSimilarity: number
+  ): Promise<SemanticPhotoMatch[]> {
+    return prisma.$queryRaw<SemanticPhotoMatch[]>`
+      WITH similarities AS (
+        SELECT
+          pa.photo_id,
+          CASE
+            WHEN pa.embedding IS NULL THEN NULL
+            ELSE 1 - (pa.embedding <=> ${queryVector}::vector)
+          END AS description_similarity,
+          CASE
+            WHEN pa.tag_embedding IS NULL THEN NULL
+            ELSE 1 - (pa.tag_embedding <=> ${queryVector}::vector)
+          END AS tag_similarity
+        FROM "photo_ai_analyses" AS pa
+        WHERE pa.embedding IS NOT NULL OR pa.tag_embedding IS NOT NULL
+      ),
+      scored AS (
+        SELECT
+          photo_id,
+          description_similarity,
+          tag_similarity,
+          CASE
+            WHEN description_similarity IS NOT NULL AND tag_similarity IS NOT NULL
+              THEN description_similarity * 0.8 + tag_similarity * 0.2
+            ELSE COALESCE(description_similarity, tag_similarity)
+          END AS similarity
+        FROM similarities
+      )
+      SELECT
+        photo_id AS "photoId",
+        description_similarity AS "descriptionSimilarity",
+        tag_similarity AS "tagSimilarity",
+        similarity,
+        (COUNT(*) OVER())::int AS total
+      FROM scored
+      WHERE similarity >= ${minSimilarity}
+      ORDER BY similarity DESC, photo_id ASC
+      LIMIT ${limit}
+    `;
   }
 
   async upsert(

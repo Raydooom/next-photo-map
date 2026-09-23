@@ -12,6 +12,10 @@ export type Message = {
     total: number;
     list: PhotoItem[];
   };
+  /** 当前流式回复的照片已缓存，但需等待文字结束后才展示。 */
+  photoResultsVisible?: boolean;
+  /** 仅当前流式回复首次揭示照片时播放出现动画。 */
+  animatePhotoResults?: boolean;
 };
 
 export type ChatHistory = {

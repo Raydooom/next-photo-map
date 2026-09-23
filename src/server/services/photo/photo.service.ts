@@ -119,6 +119,24 @@ function normalizeTerms(values?: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+/**
+ * Agent 选择的字段是查询提示，不是严格的物理列限定。
+ * 同一个视觉词应同时命中标签、主题或描述，避免模型传 theme 时漏掉标签中的同词。
+ */
+function createAiMetadataTermFilter(
+  term: string
+): Prisma.PhotoAiAnalysisWhereInput {
+  const textFilter = { contains: term, mode: 'insensitive' } as const;
+
+  return {
+    OR: [
+      { tags: { has: term } },
+      { theme: textFilter },
+      { description: textFilter }
+    ]
+  };
+}
+
 function createAiMetadataFilter(
   input: AiMetadataSearchFilter
 ): Prisma.PhotoAiAnalysisWhereInput | null {
@@ -129,18 +147,20 @@ function createAiMetadataFilter(
   const descriptionKeyword = normalizeLocationTerm(input.descriptionKeyword);
   const conditions: Prisma.PhotoAiAnalysisWhereInput[] = [];
 
-  if (tagsAny.length > 0) conditions.push({ tags: { hasSome: tagsAny } });
-  if (tagsAll.length > 0) conditions.push({ tags: { hasEvery: tagsAll } });
+  if (tagsAny.length > 0) {
+    conditions.push({ OR: tagsAny.map(createAiMetadataTermFilter) });
+  }
+  if (tagsAll.length > 0) {
+    conditions.push({ AND: tagsAll.map(createAiMetadataTermFilter) });
+  }
   if (tagsExclude.length > 0) {
-    conditions.push({ NOT: { tags: { hasSome: tagsExclude } } });
-  }
-  if (theme) {
-    conditions.push({ theme: { contains: theme, mode: 'insensitive' } });
-  }
-  if (descriptionKeyword) {
     conditions.push({
-      description: { contains: descriptionKeyword, mode: 'insensitive' }
+      NOT: { OR: tagsExclude.map(createAiMetadataTermFilter) }
     });
+  }
+  if (theme) conditions.push(createAiMetadataTermFilter(theme));
+  if (descriptionKeyword) {
+    conditions.push(createAiMetadataTermFilter(descriptionKeyword));
   }
 
   return conditions.length > 0 ? { AND: conditions } : null;
@@ -570,14 +590,16 @@ class PhotoService {
       }
     });
 
-    // 保持输入 ID 的顺序
-    const result = await Promise.all(
-      photos.map(async (p) => {
-        return await this.transformPhoto(p);
-      })
+    const transformedPhotos = await Promise.all(
+      photos.map((photo) => this.transformPhoto(photo))
+    );
+    const photoById = new Map(
+      transformedPhotos.map((photo) => [photo.id, photo])
     );
 
-    return result;
+    return ids
+      .map((photoId) => photoById.get(photoId))
+      .filter((photo): photo is PhotoItem => Boolean(photo));
   }
 
   /**

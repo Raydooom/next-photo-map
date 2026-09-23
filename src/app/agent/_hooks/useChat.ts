@@ -59,7 +59,9 @@ function fromStoredMessage(message: AgentConversationMessage): Message {
           data: {
             total: message.photoTotal ?? photos.length,
             list: photos
-          }
+          },
+          photoResultsVisible: true,
+          animatePhotoResults: false
         }
       : {})
   };
@@ -141,7 +143,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
                 data: {
                   total: result.total,
                   list: result.photos.map(revivePhoto)
-                }
+                },
+                photoResultsVisible: false,
+                animatePhotoResults: false
               }
             : message
         )
@@ -150,20 +154,41 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     []
   );
 
+  const revealPhotoResults = useCallback((id: string) => {
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === id && message.data?.list.length
+          ? {
+              ...message,
+              photoResultsVisible: true,
+              animatePhotoResults: true
+            }
+          : message
+      )
+    );
+  }, []);
+
   const reconcileMessage = useCallback(
     (localId: string, storedMessage: AgentConversationMessage) => {
       const persisted = fromStoredMessage(storedMessage);
 
       setMessages((prev) =>
-        prev.map((message) =>
-          message.id === localId
-            ? {
-                ...persisted,
-                // SSE done 的正文为空时，保留已逐字显示的内容，避免视觉跳动。
-                content: message.content || persisted.content
-              }
-            : message
-        )
+        prev.map((message) => {
+          if (message.id !== localId) return message;
+
+          const hasPhotos = Boolean(persisted.data?.list.length);
+          return {
+            ...persisted,
+            // SSE done 的正文为空时，保留已逐字显示的内容，避免视觉跳动。
+            content: message.content || persisted.content,
+            ...(hasPhotos
+              ? {
+                  photoResultsVisible: true,
+                  animatePhotoResults: true
+                }
+              : {})
+          };
+        })
       );
     },
     []
@@ -278,6 +303,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
               receivedTerminalEvent = true;
               if (eventData?.assistantMessage) {
                 reconcileMessage(localAssistantId, eventData.assistantMessage);
+              } else {
+                revealPhotoResults(localAssistantId);
               }
               finishCurrentRequest();
               onConversationUpdated?.();
@@ -291,6 +318,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
               if (eventData?.assistantMessage) {
                 reconcileMessage(localAssistantId, eventData.assistantMessage);
               } else {
+                revealPhotoResults(localAssistantId);
                 failAssistantMessage(localAssistantId, errorMessage);
               }
               finishCurrentRequest();
@@ -312,6 +340,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
               !receivedTerminalEvent &&
               !requestController.signal.aborted
             ) {
+              revealPhotoResults(localAssistantId);
               onError?.(new Error('Agent 响应流意外结束'));
             }
           }
@@ -319,6 +348,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       } catch (error) {
         finishCurrentRequest();
         if (!requestController.signal.aborted) {
+          revealPhotoResults(localAssistantId);
           failAssistantMessage(
             localAssistantId,
             error instanceof Error ? error.message : '发送消息失败'
@@ -333,6 +363,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       ensureAssistantMessage,
       appendAssistantText,
       applyPhotoResult,
+      revealPhotoResults,
       reconcileMessage,
       failAssistantMessage,
       onConversationCreated,

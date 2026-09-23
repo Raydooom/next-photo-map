@@ -48,6 +48,27 @@ class AnalysisEmbeddingService {
       );
     }
   }
+
+  async createQueryVector(query: string): Promise<string> {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      throw new ImageAnalysisError('EMBEDDING_FAILED', '语义查询内容不能为空');
+    }
+
+    try {
+      const vector = await generateEmbeddingVector(
+        `search_query: ${normalizedQuery}`
+      );
+      return toPgVector(vector);
+    } catch (error) {
+      if (error instanceof ImageAnalysisError) throw error;
+      throw new ImageAnalysisError(
+        'EMBEDDING_FAILED',
+        '语义查询向量生成失败',
+        error
+      );
+    }
+  }
 }
 
 export const analysisEmbeddingService = new AnalysisEmbeddingService();

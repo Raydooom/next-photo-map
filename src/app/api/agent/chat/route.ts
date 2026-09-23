@@ -133,14 +133,11 @@ export async function POST(request: NextRequest) {
             photoResult.photoIds.push(photoId);
           }
         }
-        photoResult.total = Math.max(
-          photoResult.total,
-          event.total,
-          photoResult.photoIds.length
-        );
 
         const photos = await hydratePhotos(photoResult.photoIds);
         if (photos.length === 0) continue;
+
+        photoResult.total = photos.length;
 
         controller.sendMessage({
           status: 'photo-results',

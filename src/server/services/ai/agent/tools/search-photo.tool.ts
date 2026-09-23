@@ -7,6 +7,7 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { z } from 'zod';
 import type { PhotoItem } from '@/lib/types/photo';
+import { semanticPhotoSearchService } from '@/server/services/ai/image-analysis';
 import { photoService } from '@/server/services/photo/photo.service';
 
 dayjs.extend(utc);
@@ -16,6 +17,7 @@ dayjs.extend(customParseFormat);
 const ARCHIVE_TIME_ZONE = 'Asia/Shanghai';
 const CALENDAR_DATE_FORMAT = 'YYYY-MM-DD';
 const TEXT_TERM_MAX_LENGTH = 60;
+const SEMANTIC_QUERY_MAX_LENGTH = 400;
 
 const photoLimit = z
   .number()
@@ -23,7 +25,7 @@ const photoLimit = z
   .min(1)
   .max(20)
   .default(12)
-  .describe('最多返回的代表照片数量，默认 12，最大 20');
+  .describe('最多返回 20 张代表照片，默认 12 张；界面以九宫格展示前 9 张。')
 
 const dateSearchInput = z.object({
   startDate: z
@@ -110,6 +112,16 @@ const aiMetadataSearchInput = z
     { message: '至少提供一个 AI 元数据条件' }
   );
 
+const semanticPhotoSearchInput = z.object({
+  query: z
+    .string()
+    .trim()
+    .min(2, '语义查询内容至少需要两个字符')
+    .max(SEMANTIC_QUERY_MAX_LENGTH)
+    .describe('保留用户原意的中文画面描述，可包含主体关系、动作、空间、氛围或抽象风格'),
+  limit: photoLimit
+});
+
 const positiveNumber = z.number().finite().positive();
 const isoNumber = z.number().int().finite().min(1);
 
@@ -169,6 +181,7 @@ const exifSearchInput = z
 type DateSearchInput = z.infer<typeof dateSearchInput>;
 type LocationSearchInput = z.infer<typeof locationSearchInput>;
 type AiMetadataSearchInput = z.infer<typeof aiMetadataSearchInput>;
+type SemanticPhotoSearchInput = z.infer<typeof semanticPhotoSearchInput>;
 type ExifSearchInput = z.infer<typeof exifSearchInput>;
 
 /**
@@ -255,7 +268,7 @@ export const dateSearchTool = tool(
 
     return {
       query: { startDate, endDate, timeZone: ARCHIVE_TIME_ZONE },
-      total: result.total,
+      total: result.list.length,
       photos: result.list.map(toPhotoSummary)
     };
   },
@@ -278,7 +291,7 @@ export const locationSearchTool = tool(
 
     return {
       query: { province, city, district, township, keyword },
-      total: result.total,
+      total: result.list.length,
       photos: result.list.map(toPhotoSummary)
     };
   },
@@ -312,17 +325,129 @@ export const aiMetadataSearchTool = tool(
       withAiAnalysis: true
     });
 
+    const fallbackQuery = [
+      ...(tagsAll ?? []),
+      ...(tagsAny ?? []),
+      theme,
+      descriptionKeyword
+    ]
+      .filter((term): term is string => Boolean(term))
+      .join('，');
+
+    // 排除标签属于硬条件，当前向量查询无法保持该约束，不能兜底放宽。
+    if (result.total > 0 || tagsExclude?.length || !fallbackQuery) {
+      return {
+        query: { tagsAny, tagsAll, tagsExclude, theme, descriptionKeyword },
+        total: result.list.length,
+        photos: result.list.map(toPhotoSummary)
+      };
+    }
+
+    console.info('[Agent] 视觉标签无结果，启动向量兜底', {
+      query: fallbackQuery,
+      primaryTool: 'ai_metadata_search'
+    });
+
+    const fallback = await semanticPhotoSearchService.search(
+      fallbackQuery,
+      limit
+    );
+    const fallbackPhotoIds = fallback.matches.map((match) => match.photoId);
+    const fallbackPhotos = await photoService.getPhotosByIds(fallbackPhotoIds);
+    const fallbackPhotoById = new Map(
+      fallbackPhotos.map((photo) => [photo.id, photo])
+    );
+    const similarityByPhotoId = new Map(
+      fallback.matches.map((match) => [match.photoId, match.similarity])
+    );
+    const orderedFallbackPhotos = fallbackPhotoIds
+      .map((photoId) => fallbackPhotoById.get(photoId))
+      .filter((photo): photo is PhotoItem => Boolean(photo));
+
+    console.info('[Agent] 向量兜底排序', {
+      query: fallback.query,
+      rankedScores: fallback.matches.map((match) => ({
+        photoId: match.photoId,
+        descriptionSimilarity: match.descriptionSimilarity,
+        tagSimilarity: match.tagSimilarity,
+        similarity: match.similarity
+      }))
+    });
+
     return {
-      query: { tagsAny, tagsAll, tagsExclude, theme, descriptionKeyword },
-      total: result.total,
-      photos: result.list.map(toPhotoSummary)
+      query: {
+        tagsAny,
+        tagsAll,
+        tagsExclude,
+        theme,
+        descriptionKeyword,
+        fallback: {
+          type: 'semantic',
+          text: fallback.query,
+          minSimilarity: fallback.minSimilarity
+        }
+      },
+      total: orderedFallbackPhotos.length,
+      photos: orderedFallbackPhotos.map((photo) => ({
+        ...toPhotoSummary(photo),
+        similarity: Number(
+          (similarityByPhotoId.get(photo.id) ?? 0).toFixed(3)
+        )
+      }))
     };
   },
   {
     name: 'ai_metadata_search',
     description:
-      '根据 AI 已生成的标签、主题或图片描述查询照片。用户提到逆光、雪山、夜景、人像、暖色调、对称、建筑、画面主题或其他视觉特征时必须使用；优先传入具体标准标签 tagsAny，不确定标签时使用 theme 或 descriptionKeyword。',
+      '根据 AI 已生成的明确标签、主题或图片描述关键词查询照片。用户提出标准视觉词（如逆光、雪山、夜景、人像、暖色调、对称、建筑）时使用；优先传入具体标准标签 tagsAny。纯视觉条件无结果时工具会自动使用语义向量兜底；若用户用自然语言描述主体关系、动作、空间或复杂氛围，改用 semantic_photo_search。',
     schema: aiMetadataSearchInput
+  }
+);
+
+export const semanticPhotoSearchTool = tool(
+  async ({ query, limit }: SemanticPhotoSearchInput) => {
+    const result = await semanticPhotoSearchService.search(query, limit);
+    const photoIds = result.matches.map((match) => match.photoId);
+    const photos = await photoService.getPhotosByIds(photoIds);
+    const photoById = new Map(photos.map((photo) => [photo.id, photo]));
+    const similarityByPhotoId = new Map(
+      result.matches.map((match) => [match.photoId, match.similarity])
+    );
+    const orderedPhotos = photoIds
+      .map((photoId) => photoById.get(photoId))
+      .filter((photo): photo is PhotoItem => Boolean(photo));
+
+    console.info('[Agent] 语义搜索候选', {
+      query: result.query,
+      matchedTotal: result.total,
+      rankedScores: result.matches.map((match) => ({
+        photoId: match.photoId,
+        descriptionSimilarity: match.descriptionSimilarity,
+        tagSimilarity: match.tagSimilarity,
+        similarity: match.similarity
+      })),
+      returnedPhotoIds: orderedPhotos.map((photo) => photo.id)
+    });
+
+    return {
+      query: {
+        text: result.query,
+        minSimilarity: result.minSimilarity
+      },
+      total: orderedPhotos.length,
+      photos: orderedPhotos.map((photo) => ({
+        ...toPhotoSummary(photo),
+        similarity: Number(
+          (similarityByPhotoId.get(photo.id) ?? 0).toFixed(3)
+        )
+      }))
+    };
+  },
+  {
+    name: 'semantic_photo_search',
+    description:
+      '按自然语言的画面语义查找照片。用户描述人物与物件关系、动作、空间层次、复杂氛围、抽象风格或同义表达，且无法可靠落为明确标签时使用。保留用户原意写入 query，不要虚构照片没有出现的地点、时间或拍摄参数。',
+    schema: semanticPhotoSearchInput
   }
 );
 
@@ -366,7 +491,7 @@ export const exifSearchTool = tool(
         focalLengthMax,
         flashMode
       },
-      total: result.total,
+      total: result.list.length,
       photos: result.list.map(toExifPhotoSummary)
     };
   },

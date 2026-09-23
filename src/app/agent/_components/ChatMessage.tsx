@@ -62,7 +62,13 @@ function PhotoCardMessage({ message }: { message: Message }) {
           {message.content}
         </p>
       )}
-      <AgentPhotoGrid photos={photos} total={total} />
+      {message.photoResultsVisible !== false && (
+        <AgentPhotoGrid
+          photos={photos}
+          total={total}
+          animate={message.animatePhotoResults === true}
+        />
+      )}
     </div>
   );
 }

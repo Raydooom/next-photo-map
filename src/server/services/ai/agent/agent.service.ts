@@ -7,7 +7,8 @@ import {
   aiMetadataSearchTool,
   dateSearchTool,
   exifSearchTool,
-  locationSearchTool
+  locationSearchTool,
+  semanticPhotoSearchTool
 } from './tools/search-photo.tool';
 
 const ARCHIVE_TIME_ZONE = 'Asia/Shanghai';
@@ -15,6 +16,7 @@ const PHOTO_SEARCH_TOOL_NAMES = new Set([
   'date_search',
   'location_search',
   'ai_metadata_search',
+  'semantic_photo_search',
   'exif_search'
 ]);
 
@@ -68,6 +70,15 @@ function getPhotoToolResult(message: ToolMessage) {
   const photoIds = [
     ...new Set(parsed.data.photos.map((photo) => photo.id))
   ];
+
+  console.info('[Agent] 工具调用完成', {
+    toolName: message.name,
+    toolCallId: message.tool_call_id,
+    query: parsed.data.query,
+    total: parsed.data.total,
+    returnedPhotoIds: photoIds
+  });
+
   if (photoIds.length === 0) return null;
 
   return {
@@ -94,16 +105,18 @@ class AgentService {
 当前日期（${ARCHIVE_TIME_ZONE}）：${currentDate}。
 当用户的问题包含明确日期、相对日期、月份、季度或年份时，必须调用 date_search。
 当用户提到省、市、区县、街道、镇乡、景区、地标、附近或详细地址时，必须调用 location_search。
-当用户提到逆光、雪山、夜景、人像、暖色调、冷色调、对称、建筑、构图、画面元素或视觉主题时，必须调用 ai_metadata_search。
+当用户提到逆光、雪山、夜景、人像、暖色调、冷色调、对称、建筑等明确视觉标签或主题时，必须调用 ai_metadata_search；纯视觉条件无结果时该工具会自动进行语义向量兜底。
+当用户以自然语言描述主体关系、动作、空间层次、复杂氛围、抽象风格或同义表达，且不能可靠落为明确标签时，必须调用 semantic_photo_search；保留用户原意，不得补充不存在的拍摄信息。
 当用户提到相机、机身、镜头、焦段、长焦、广角、光圈、ISO 或闪光灯时，必须调用 exif_search；大光圈对应较小的 f-number。
 工具返回的拍摄时间均按 ${ARCHIVE_TIME_ZONE} 表示，回答时不要改标为 UTC。
 回答使用自然、生活化的中文。避免使用“档案、检索、命中、元数据、工具”等技术词；优先说“照片里”“找到”“拍下”“这几张照片”。
-调用工具前不要输出面向用户的解释。照片找到后，最终回答只用一到两句话总结，不要逐项罗列照片、参数或标签，因为界面会展示照片九宫格。
+调用工具前不要输出面向用户的解释。照片找到后，最终回答只用一到两句话总结，不要逐项罗列照片、参数或标签，因为界面会展示照片九宫格。最后一句必须提出扩展类型追问：从拍摄时间、地点、画面风格或相机参数中选择一到两个当前尚未使用的维度，例如“还想换个时间、地点，还是按画面风格继续找？”。绝不询问“需要看具体哪张吗”或要求用户指定照片，因为界面可直接点击查看详情。
 如果工具没有返回照片，明确说明在照片里暂时没找到符合条件、且已经有相关信息的照片。`,
       tools: [
         dateSearchTool,
         locationSearchTool,
         aiMetadataSearchTool,
+        semanticPhotoSearchTool,
         exifSearchTool
       ],
       openCheckpointer: true
@@ -144,6 +157,7 @@ class AgentService {
     );
 
     const processedToolCalls = new Set<string>();
+    const requestedToolCallIds = new Set<string>();
 
     for await (const [message] of stream) {
       if (signal?.aborted) return;
@@ -158,8 +172,31 @@ class AgentService {
       }
 
       if (!AIMessageChunk.isInstance(message)) continue;
+
+      for (const toolCall of message.tool_calls ?? []) {
+        if (!toolCall.name) continue;
+
+        const toolCallId =
+          toolCall.id ?? `${toolCall.name}:${JSON.stringify(toolCall.args)}`;
+        if (requestedToolCallIds.has(toolCallId)) continue;
+
+        requestedToolCallIds.add(toolCallId);
+        console.info('[Agent] 工具决策：调用工具', {
+          decision: 'call_tool',
+          toolName: toolCall.name,
+          toolCallId,
+          arguments: toolCall.args
+        });
+      }
+
       const delta = getTextDelta(message.content);
       if (delta) yield { type: 'text', delta };
+    }
+
+    if (requestedToolCallIds.size === 0) {
+      console.info('[Agent] 工具决策：直接回答', {
+        decision: 'answer_directly'
+      });
     }
   }
 }
