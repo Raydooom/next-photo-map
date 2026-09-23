@@ -1,7 +1,7 @@
 'use client';
 
 import { ScrollShadow } from '@heroui/scroll-shadow';
-import { Camera, Plus, Trash2, X } from 'lucide-react';
+import { Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { useEffect } from 'react';
 import clsx from 'clsx';
@@ -81,7 +81,7 @@ export function MobileHistoryDrawer({
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-lab-line-strong">
-                    <Camera className="h-4 w-4 text-lab-muted" />
+                    <Sparkles className="h-4 w-4 text-lab-accent" />
                   </span>
                   <span className="min-w-0">
                     <span className="lab-action block truncate text-lab-paper">照片小助手</span>

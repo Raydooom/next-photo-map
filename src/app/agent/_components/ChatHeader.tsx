@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, History } from 'lucide-react';
 import { ThemeSwitch } from '@/components/layout/ThemeSwitch';
 
@@ -21,16 +21,33 @@ export function ChatHeader({
   subtitle = '帮你找回拍下的瞬间',
   onOpenHistory
 }: ChatHeaderProps) {
+  const router = useRouter();
+
+  /**
+   * 退回上一页。
+   *
+   * history 只有当前这一条时（外部链接直接打开本页、或新标签页打开），
+   * back() 会把人带出站点，此时退到首页更合适。
+   */
+  const goBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push('/');
+  };
+
   return (
     <header className="flex shrink-0 items-center justify-between gap-4 border-b border-lab-line px-5 py-3.5">
       <div className="flex min-w-0 items-center gap-4">
-        <Link
-          href="/"
-          aria-label="返回首页"
+        <button
+          type="button"
+          aria-label="返回上一页"
+          onClick={goBack}
           className="shrink-0 cursor-pointer p-1 text-lab-muted transition-colors duration-300 hover:text-lab-paper focus-visible:outline-1 focus-visible:outline-lab-accent"
         >
           <ArrowLeft size={16} />
-        </Link>
+        </button>
 
         <span className="h-8 w-px shrink-0 bg-lab-line" aria-hidden />
 

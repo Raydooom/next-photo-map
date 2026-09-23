@@ -1,10 +1,12 @@
 'use client';
 
 import { ScrollShadow } from '@heroui/scroll-shadow';
-import { Camera, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Sparkles, Trash2 } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import clsx from 'clsx';
 import { Eyebrow, LabButton } from '@/components/ui';
+import { Logo } from '@/components/Icons/custom';
 import { ChatHistory } from './types';
 
 interface ChatSidebarProps {
@@ -33,13 +35,27 @@ export function ChatSidebar({
   return (
     <aside className="hidden w-[272px] shrink-0 flex-col border-r border-lab-line bg-lab-raised md:flex">
       <div className="border-b border-lab-line p-5">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-lab-line-strong">
-            <Camera className="h-4 w-4 text-lab-muted" />
+        {/* 站点标识 | 助手标识。间距收到 2.5：侧栏只有 272px，
+            多一档 gap 就会把右侧那行 mono 挤到换行 */}
+        <div className="mb-5 flex items-center gap-2.5">
+          <Link
+            href="/"
+            aria-label="返回首页"
+            className="shrink-0 cursor-pointer transition-opacity duration-300 hover:opacity-75 focus-visible:outline-1 focus-visible:outline-lab-accent"
+          >
+            {/* 取 Logo 的 32px 原始输出，缩放会让它发虚 */}
+            <Logo className="h-8 w-8" />
+          </Link>
+
+          <span className="h-8 w-px shrink-0 bg-lab-line" aria-hidden />
+
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+            <Sparkles className="h-4 w-4 text-lab-accent" />
           </span>
+
           <span className="min-w-0">
             <span className="lab-action block truncate text-lab-paper">照片小助手</span>
-            <Eyebrow className="mt-1 block">Photo Companion</Eyebrow>
+            <Eyebrow className="mt-1 block truncate">Photo Companion</Eyebrow>
           </span>
         </div>
 
