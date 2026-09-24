@@ -2,6 +2,7 @@
 
 import NextLink from 'next/link';
 import clsx from 'clsx';
+import { SiGithub } from 'react-icons/si';
 
 import { siteConfig } from '@/config/site';
 import { Eyebrow } from '@/components/ui';
@@ -43,7 +44,16 @@ export const Footer = ({ className }: { className?: string }) => {
           {/* 关于：备案号与版权归在一处 */}
           <div className="col-span-full md:col-span-3 md:col-start-10">
             <Eyebrow className="block">About</Eyebrow>
-            <p className="lab-mono mt-5 text-lab-muted">Power by Next.js</p>
+            <NextLink
+              href={siteConfig.links.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lab-mono mt-5 inline-flex min-h-9 items-center gap-2 text-lab-muted transition-colors hover:text-lab-accent"
+            >
+              <SiGithub className="h-3.5 w-3.5 shrink-0" />
+              Source
+            </NextLink>
+            <p className="lab-mono mt-1 text-lab-muted">Power by Next.js</p>
             {/* 以下含中文与全角符号，不套 lab-mono 的大写与宽字距 */}
             <p className="mt-2 text-xs text-lab-faint">
               © {new Date().getFullYear()} {siteConfig.address} · All rights

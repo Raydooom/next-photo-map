@@ -1,7 +1,10 @@
 'use client';
 
+import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, History } from 'lucide-react';
+import { SiGithub } from 'react-icons/si';
+import { siteConfig } from '@/config/site';
 import { ThemeSwitch } from '@/components/layout/ThemeSwitch';
 
 interface ChatHeaderProps {
@@ -68,6 +71,17 @@ export function ChatHeader({
         >
           <History size={17} />
         </button>
+
+        <NextLink
+          href={siteConfig.links.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="在 GitHub 查看源码"
+          className="p-1 text-lab-muted transition-colors duration-200 hover:text-lab-paper focus-visible:outline-1 focus-visible:outline-lab-accent"
+        >
+          <SiGithub className="h-[17px] w-[17px]" />
+        </NextLink>
+
         <ThemeSwitch />
       </div>
     </header>

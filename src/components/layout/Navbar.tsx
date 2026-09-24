@@ -11,6 +11,7 @@ import {
 } from '@heroui/navbar';
 import NextLink from 'next/link';
 import clsx from 'clsx';
+import { SiGithub } from 'react-icons/si';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
@@ -124,8 +125,22 @@ export const Navbar = ({ className }: { className?: string }) => {
         })}
       </NavbarContent>
 
-      {/* 右侧：主题切换 + 移动端汉堡按钮 */}
+      {/* 右侧：源码、主题切换 + 移动端汉堡按钮 */}
       <NavbarContent className="gap-2 sm:gap-4" justify="end">
+        {/* 尺寸对齐 44px 触控目标，与汉堡按钮一致 */}
+        <NextLink
+          href={siteConfig.links.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="在 GitHub 查看源码"
+          className={clsx(
+            'flex h-11 w-11 items-center justify-center',
+            'text-lab-muted transition-colors duration-200 hover:text-lab-paper',
+            'focus-visible:outline-1 focus-visible:outline-lab-accent'
+          )}
+        >
+          <SiGithub className="h-4 w-4" />
+        </NextLink>
         <ThemeSwitch className="scale-85" />
         <NavbarMenuToggle
           className="h-11 w-11 text-lab-muted sm:hidden"
