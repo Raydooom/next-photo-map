@@ -93,7 +93,7 @@ export async function getImageBase64(
 
 // ============ 签名 URL（走外网） ============
 
-export async function getImageUrl(key: string): Promise<string> {
+export function getImageUrl(key: string): string {
   // 使用代理接口 + Token（支持长期缓存）
   const token = generateImageToken(key);
   const baseUrl = process.env.APP_URL || '';

@@ -175,7 +175,7 @@ class LocationService {
           ? {
               ...item.photo,
               thumbSmallUrl: item.photo.thumbSmallKey
-                ? await getImageUrl(item.photo.thumbSmallKey)
+                ? getImageUrl(item.photo.thumbSmallKey)
                 : null
             }
           : null

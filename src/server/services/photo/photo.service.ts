@@ -193,7 +193,9 @@ function createExifFilter(
   }
   if (lens) {
     const textFilter = { contains: lens, mode: 'insensitive' } as const;
-    conditions.push({ OR: [{ lensMake: textFilter }, { lensModel: textFilter }] });
+    conditions.push({
+      OR: [{ lensMake: textFilter }, { lensModel: textFilter }]
+    });
   }
   if (fNumber) conditions.push({ fNumber });
   if (iso) conditions.push({ iso });
@@ -291,9 +293,7 @@ class PhotoService {
    */
   async listAllWithFileStatus() {
     const photos = await this.getAllPhotos();
-    const items = await Promise.all(
-      photos.map((photo) => this.transformPhoto(photo as PhotoRow))
-    );
+    const items = photos.map((photo) => this.transformPhoto(photo as PhotoRow));
     return await this.batchCheckFileExists(items);
   }
 
@@ -513,9 +513,7 @@ class PhotoService {
     ]);
 
     // 转换数据，生成完整 URL
-    const transformedList = await Promise.all(
-      list.map((photo) => this.transformPhoto(photo))
-    );
+    const transformedList = list.map((photo) => this.transformPhoto(photo));
 
     return { total, list: transformedList };
   }
@@ -532,7 +530,7 @@ class PhotoService {
 
     if (!photo) return null;
 
-    return await this.transformPhoto(photo);
+    return this.transformPhoto(photo);
   }
 
   async getExifByPhotoId(photoId: number) {
@@ -590,8 +588,8 @@ class PhotoService {
       }
     });
 
-    const transformedPhotos = await Promise.all(
-      photos.map((photo) => this.transformPhoto(photo))
+    const transformedPhotos = photos.map((photo) =>
+      this.transformPhoto(photo)
     );
     const photoById = new Map(
       transformedPhotos.map((photo) => [photo.id, photo])
@@ -605,9 +603,7 @@ class PhotoService {
   /**
    * 转换照片数据，处理 URL
    */
-  private async transformPhoto(
-    photo: PhotoRow
-  ): Promise<PhotoItem> {
+  private transformPhoto(photo: PhotoRow): PhotoItem {
     const {
       thumbSmallKey,
       thumbLargeKey,
@@ -626,12 +622,12 @@ class PhotoService {
     // 而这个函数在列表查询里对每一行都要跑一次
     const item: PhotoItem = {
       ...(rest as Omit<PhotoItem, 'thumbSmallUrl' | 'thumbLargeUrl'>),
-      thumbSmallUrl: await getImageUrl(thumbSmallKey),
-      thumbLargeUrl: await getImageUrl(thumbLargeKey)
+      thumbSmallUrl: getImageUrl(thumbSmallKey),
+      thumbLargeUrl: getImageUrl(thumbLargeKey)
     };
 
     if (videoKey) {
-      item.videoUrl = await getImageUrl(videoKey);
+      item.videoUrl = getImageUrl(videoKey);
     }
 
     if (photoExif) {
@@ -665,8 +661,7 @@ class PhotoService {
         location: _aiLoc,
         ...aiRest
       } = photoAiAnalysis as Record<string, unknown>;
-      item.photoAiAnalysis =
-        aiRest as unknown as PhotoItem['photoAiAnalysis'];
+      item.photoAiAnalysis = aiRest as unknown as PhotoItem['photoAiAnalysis'];
     }
 
     return item;

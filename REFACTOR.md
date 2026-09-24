@@ -25,13 +25,6 @@
 - **现有缓解**：NPM 的 Advanced 里配了 `proxy_read_timeout 600s` 与 `proxy_buffering off`；代码已发 `X-Accel-Buffering: no`。
 - **处理**：每 15 秒发一行 SSE 注释 `: ping`，`close()` 时清掉定时器。注释行不触发客户端 `onmessage`，但能让代理看到字节流动，从此不依赖运维配置。Cloudflare 免费版约 100s 的响应超时也只有这个办法能绕。
 
-### 1.7 `getImageUrl` 的无谓 async 传染
-
-- **位置**：`src/server/infra/storage.ts`
-- **问题**：内部只有 HMAC 签名与字符串拼接，没有 IO，却声明为 `async`。
-- **影响**：`transformPhoto` 被迫 async，每个列表方法都要包一层 `Promise.all`，整条链路的异步是虚假的。
-- **处理**：去掉 `async`，连带简化 `transformPhoto` 与所有调用方。
-
 ### 1.2 `getPhotosInBounds` 缺少 `Promise.all`
 
 - **位置**：`src/server/services/photo/photo.service.ts`
