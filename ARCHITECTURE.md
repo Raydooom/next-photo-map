@@ -1,471 +1,232 @@
-# 项目架构图
+# 项目架构
 
-> 使用 [Mermaid](https://mermaid.js.org/) 绘制，支持 GitHub、VS Code 等渲染。
-
----
-
-## 1. 系统总览架构
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-graph TB
-    subgraph Browser["🌐 浏览器"]
-        NextApp["Next.js 应用<br/>(React Server Components)"]
-    end
-
-    subgraph VPS["☁️ 云服务器 (公网)"]
-        FRPS["FRP Server (frps)<br/>端口 80/443"]
-        DNS["DNS: raydom.wang<br/>sso.raydom.wang<br/>map.raydom.wang"]
-    end
-
-    subgraph NUC["💻 NUC (Debian 内网)"]
-        FRPC["FRP Client (frpc)"]
-
-        subgraph NPM_["Nginx Proxy Manager<br/>80/443 → SSL 终结"]
-            NPM["jc21/nginx-proxy-manager"]
-        end
-
-        subgraph Docker["🐳 Docker 服务 (同一网络 photo_map_network)"]
-            NPM["nginx-proxy-manager<br/>端口 80 / 443 / 81"]
-            Next["photo-map-next<br/>Next.js 15 (端口 3000)"]
-            DB[("photo-map-db<br/>PostgreSQL + PostGIS<br/>+ pgvector (5432)")]
-            MinIO[("photo-map-minio<br/>S3 对象存储 (9000)")]
-            Tile["photo-map-tileserver<br/>地图瓦片服务 (8080)"]
-        end
-
-        subgraph Host["🏠 宿主机"]
-            Ollama["Ollama<br/>bge-m3 / qwen2.5 / moondream<br/>(端口 11434)"]
-            Photos["📁 /mnt/map-photos<br/>照片文件"]
-        end
-    end
-
-    subgraph External["🔗 外部服务"]
-        ModelScope["ModelScope<br/>(视觉模型)"]
-        Amap["高德地图 API<br/>(逆地理编码)"]
-        Baidu["百度统计"]
-        Git["Git (CI/CD)"]
-    end
-
-    DNS -->|"域名解析"| VPS
-    Browser -->|"HTTPS raydom.wang"| VPS
-    VPS -->|"FRP 隧道<br/>80/443 → NUC"| FRPC
-    FRPC -->|"localhost:80/443"| NPM
-    NPM -->|"raydom.wang"| Next
-    NPM -->|"sso.raydom.wang"| MinIO
-    NPM -->|"map.raydom.wang"| Tile
-    Next -->|"Server Actions"| Services
-    Next -->|"Prisma ORM (内网)"| DB
-    Next -->|"S3 SDK (内网)"| MinIO
-    Next -->|"Ollama SDK"| Ollama
-    Next -->|"读取照片文件"| Photos
-    Next -->|"SSE 流"| Browser
-    Next -->|"OpenAI SDK"| ModelScope
-    Next -->|"REST API"| Amap
-    Next -->|"next/script"| Baidu
-    Next -->|"Git CLI / Docker CLI"| Git
-
-    subgraph Services["⚙️ 服务层 (src/server/)"]
-        PS["Photo Service"]
-        LS["Location Service"]
-        ES["EXIF Service"]
-        AS["AI Service"]
-        CS["Chat Service"]
-        SS["Scanner Service"]
-        DS["Deploy Service"]
-        FS["File Manage Service"]
-    end
-```
+> Mermaid 图，GitHub / VS Code 可直接渲染。
+> 每张图只画一个关注点、节点控制在十个上下 —— 合成一张大图渲染出来字会小到看不清。
 
 ---
 
-## 2. 前端组件树
+## 1. 部署拓扑
 
-### 2a. 布局层级
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    Root["RootLayout (Server)"]
-    Prov["Providers (Client)"]
-    HW["HeroUIProvider"]
-    TP["ToastProvider"]
-    NTP["NextThemesProvider"]
-    LW["LayoutWrapper (Client)"]
-    NB["Navbar"]
-    Page["&lt;main&gt;{children}&lt;/main&gt;"]
-
-    Root --> Prov --> HW
-    HW --> TP & NTP
-    NTP --> LW
-    LW --> NB & Page
-```
-
-### 2b. 首页 (/)
+公网请求怎么进到内网。
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    HS["HeroSection (Server)"]
-    Banner["Banner"]
-    Carousel["Carousel (Embla)"]
-    AreaMap["AreaMap"]
-    Stats["Stats Bar"]
-    Recently["Recently"]
-    Masonry["MasonryGrid (Masonic)"]
-    PCard["PhotoCard"]
-
-    HS --> Banner & AreaMap & Stats
-    Banner --> Carousel
-    Recently --> Masonry --> PCard
-```
-
-### 2c. 照片页 (/photos)
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    MG["MasonryGrid"]
-    PC["PhotoCard"]
-    PP["PhotoPreview<br/>(HeroUI Modal)"]
-    CV["Carousel<br/>(Full-screen Embla)"]
-
-    MG --> PC --> PP --> CV
-```
-
-### 2d. 足迹地图 (/footprint)
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    MapBase["useMapBase Hook<br/>MapLibre 初始化"]
-    MapCluster["useMapClusters Hook<br/>GeoJSON 聚类"]
-    ClusterM["ClusterMarker"]
-    SingleM["SingleMarker"]
-    MapMarker["MapMarker<br/>(React Portal)"]
-    MapCtrl["MapControls"]
-    PD["PointDetail Panel"]
-
-    MapBase --> MapCtrl
-    MapCluster --> ClusterM & SingleM & MapMarker
-    PD
-```
-
-### 2e. AI 聊天 (/chat)
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    Sidebar["ChatSidebar"]
-    Header["ChatHeader"]
-    MsgList["ChatMessageList"]
-    Msg["ChatMessage"]
-    Input["ChatInput"]
-    Welcome["WelcomeScreen"]
-
-    Sidebar & Header & MsgList & Input
-    MsgList --> Msg
-    Welcome
-```
-
-### 2f. 管理后台 (/admin/*)
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0ea5e9', 'lineColor': '#0ea5e9', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-flowchart TD
-    subgraph Overview["/admin"]
-        SC["Stats Cards"]
-        QL["Quick Links"]
-    end
-    subgraph Photos["/admin/photos"]
-        PT["Photo Table"]
-        LM["LocationModal (Map)"]
-    end
-    subgraph Scan["/admin/scan"]
-        SV["Scan View (SSE)"]
-        RealTime["实时统计 + 日志"]
-    end
-    subgraph Deploy["/admin/deploy"]
-        DV["Deploy View (SSE)"]
-        Pipeline["Git → Prisma → Build → Up"]
-    end
-```
-
----
-
-## 3. 请求与数据流
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#10b981', 'lineColor': '#10b981', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-sequenceDiagram
-    actor U as 用户
-    participant B as 浏览器
-    participant N as Next.js Server
-    participant S as 服务层 (src/server/)
-    participant DB as PostgreSQL
-    participant M as MinIO
-    participant E as 外部服务
-
-    %% 正常页面加载
-    U->>B: 访问页面
-    B->>N: HTTP GET
-    N->>S: Server Action (RSC)
-    S->>DB: Prisma Query
-    DB-->>S: 数据
-    S->>M: getImageUrl() → 签名 URL
-    M-->>S: 返回
-    S-->>N: 序列化 props
-    N-->>B: HTML + RSC Payload
-    B->>M: 加载图片 (通过 /api/image 代理)
-    M-->>B: 图片数据 (缓存 7 天)
-
-    %% 客户端交互 (照片页)
-    B->>N: 点击照片 → 打开 Lightbox
-    N->>S: getPhotoDetail Action
-    S->>DB: Prisma Query (带 EXIF/Location)
-    DB-->>S: 
-    S-->>N: 照片详情
-    N-->>B: 客户端状态更新
-
-    %% SSE 扫描流程
-    B->>N: GET /api/admin/scan (SSE)
-    N->>S: ScannerService.startScanner()
-    S->>M: 读取文件系统
-    S->>M: 上传缩略图 (Sharp)
-    S->>E: 逆地理编码 (高德)
-    E-->>S: 地址
-    S->>DB: 创建 Photo + EXIF + Location
-    S-->>N: SSE: progress event
-    N-->>B: SSE: progress stream
-
-    %% SSE AI 分析流程
-    B->>N: GET /api/ai/analysis (SSE)
-    N->>S: AIService.analyzeAll()
-    S->>M: 读取原图
-    S->>E: 视觉模型分析 (ModelScope)
-    E-->>S: Desctiption + Tags
-    S->>E: 生成 Embedding (Ollama)
-    E-->>S: Vector(1024)
-    S->>DB: 更新 PhotoAiAnalysis
-    N-->>B: SSE: progress stream
-
-    %% AI 聊天流程
-    U->>B: 输入问题
-    B->>N: POST /api/ai/chat (SSE)
-    N->>S: 意图分析 (Ollama)
-    S->>E: Ollama 推理
-    E-->>S: 意图类型
-    alt PHOTO_SEARCH
-        S->>DB: 向量相似度搜索 (pgvector <=>)
-        DB-->>S: Top-K 照片
-        S->>M: 获取图片 URL
-    end
-    S-->>N: SSE: streaming tokens
-    N-->>B: SSE: chat stream
-```
-
----
-
-## 4. 后端服务依赖关系
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#f59e0b', 'lineColor': '#f59e0b', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
 graph LR
-    subgraph Actions["📮 Server Actions (入口)"]
-        Public["src/server/actions/index.ts<br/>getPhotoList / countAllPhotos<br/>getPhotoDetail / getLocations"]
-        Admin["src/server/actions/admin.ts<br/>startScan / deletePhoto / updateLocation<br/>rebuildThumb / checkFileExists"]
-        AI["src/server/actions/ai.ts<br/>analyzeAll / updateEmbedding"]
-    end
+    User["用户"]
+    VPS["云服务器<br/>frps 80/443"]
+    FRPC["frpc<br/>NUC 宿主机"]
+    NPM["Nginx Proxy Manager<br/>SSL 终结 + 域名路由"]
+    App["photo-map-next<br/>:3000"]
+    S3["photo-map-minio<br/>:9000"]
+    Tile["photo-map-tileserver<br/>:8080"]
 
-    subgraph Services["⚙️ Services (业务逻辑)"]
-        PS["Photo Service"]
-        LS["Location Service"]
-        ES["EXIF Service"]
-        FS["File Manage Service"]
-        AS["AI Service"]
-        CS["Chat Service"]
-        SS["Scanner Service"]
-        GS["Geocoding Service"]
-    end
-
-    subgraph Lib["📚 Lib (基础设施)"]
-        DB["db.ts<br/>PrismaClient + pg Pool"]
-        OSS["oss.ts<br/>S3Client × 2<br/>upload / delete / getUrl"]
-        TOKEN["image-token.ts<br/>HMAC 签名"]
-        AI_LIB["ai.ts<br/>Ollama + ModelScope + OpenAI"]
-        SSE["sse.ts<br/>SSE 工具"]
-    end
-
-    subgraph External["🌍 外部依赖"]
-        PG[("PostgreSQL<br/>PostGIS + pgvector")]
-        MINIO[("MinIO<br/>S3 Bucket")]
-        OLLAMA["Ollama<br/>bge-m3 / qwen2.5"]
-        MSCOPE["ModelScope<br/>视觉模型"]
-        AMAP["高德 API<br/>逆地理编码"]
-    end
-
-    Public --> PS
-    Public --> LS
-    Admin --> SS
-    Admin --> FS
-    Admin --> PS
-    AI --> AS
-    AI --> CS
-
-    PS --> DB
-    PS --> OSS
-    LS --> DB
-    ES --> DB
-    FS --> OSS
-    AS --> DB
-    AS --> AI_LIB
-    AS --> OSS
-    CS --> DB
-    CS --> AI_LIB
-    CS --> OSS
-    SS --> PS
-    SS --> FS
-    SS --> LS
-    SS --> ES
-    SS --> GS
-    GS --> AMAP
-
-    DB --> PG
-    OSS --> MINIO
-    AI_LIB --> OLLAMA
-    AI_LIB --> MSCOPE
+    User -->|HTTPS| VPS -->|FRP 隧道| FRPC --> NPM
+    NPM -->|raydom.wang| App
+    NPM -->|sso.raydom.wang| S3
+    NPM -->|map.raydom.wang| Tile
 ```
 
----
+NPM 与后端容器同属 `photo_map_network`，所以反代目标直接写容器名。
+本仓库的 `docker-compose.yml` 只编排 `photo-map-next`，其余容器单独管理。
 
-## 5. 照片扫描处理流程
+## 2. 运行时依赖
+
+应用容器往外连什么。
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#ef4444', 'lineColor': '#ef4444', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
+graph LR
+    App["photo-map-next"]
+    DB[("PostgreSQL<br/>PostGIS + pgvector")]
+    S3[("MinIO")]
+    Ollama["Ollama<br/>host.docker.internal:11434"]
+    Amap["高德 API"]
+    Files["/mnt/map-photos"]
+
+    App -->|Prisma| DB
+    App -->|S3 SDK| S3
+    App -->|LangChain| Ollama
+    App -->|逆地理编码| Amap
+    App -->|扫描读取| Files
+```
+
+Ollama 跑在宿主机，容器经 `host.docker.internal` 访问（compose 里配 `extra_hosts: host-gateway`），且宿主机需监听 `0.0.0.0`。
+模型也可切云端：`*_API_TYPE=openai` 时走 OpenAI 兼容端点，此时不经过 Ollama。
+
+## 3. 代码分层
+
+```mermaid
+graph TD
+    Page["app/**/page.tsx<br/>Server Component"]
+    Route["app/api/**/route.ts<br/>HTTP / SSE"]
+    Action["server/actions.ts<br/>admin/_actions.ts"]
+    Svc["server/services/**<br/>业务逻辑"]
+    Infra["server/infra/**<br/>db / storage / chat-model / sse"]
+
+    Page --> Svc
+    Route --> Svc
+    Action --> Svc
+    Svc --> Infra
+```
+
+单向依赖，`services` 不反向依赖 `route` 或前端。
+
+Server Component 直接调 service，不走 Server Action —— 后者会被编译成公开 POST 端点，而两者本就同进程。
+客户端组件只能走 `server/actions.ts`（公开读取）、`admin/_actions.ts`（管理操作，逐个 `requireAdmin()`）或 API Route（需要流式响应时）。
+
+## 4. 路由
+
+| 路径 | 类型 | 说明 |
+|---|---|---|
+| `/` | 页面 | 首页，带导航栏与页脚 |
+| `/photos` | 页面 | 照片墙 |
+| `/footprint` | 页面 | 足迹地图 |
+| `/agent` | 页面 | AI 检索，全屏三栏，不挂站点导航 |
+| `/admin` `/admin/photos` `/admin/scan` `/admin/upload` | 页面 | 管理后台，layout 中鉴权后渲染 |
+| `/api/agent/chat` | SSE | Agent 对话 |
+| `/api/agent/conversations[/:id]` | JSON | 会话列表、详情、删除 |
+| `/api/admin/scan` `/api/admin/scan/discover` | SSE / JSON | 扫描入库 |
+| `/api/admin/upload` | JSON | 手动上传 |
+| `/api/ai/analysis` | SSE | 批量图片分析，`requireAdminResponse` |
+| `/api/image` | 二进制 | 图片代理 + HMAC token |
+
+middleware 的 matcher 覆盖 `/admin/*`、`/api/admin/*`、`/api/ai/analysis`；`/api/agent/chat` 不在其中。
+
+## 5. 服务模块
+
+| 模块 | 文件 | 职责 |
+|---|---|---|
+| 照片 | `services/photo/photo.service.ts` | 列表、详情、签名 URL、脱敏 |
+| 地点 | `services/photo/location.service.ts` | 地点、区划聚合 |
+| EXIF | `services/photo/exif.service.ts` | 拍摄参数 |
+| 入库 | `services/ingestion/scanner.service.ts` | 扫描、缩略图、上传、写库 |
+| 地理编码 | `services/ingestion/geocoding.service.ts` | 坐标 → 行政区 |
+| 图片分析 | `services/ai/image-analysis/**` | 视觉分析、向量、语义检索、查询改写 |
+| Agent | `services/ai/agent/**` | 编排、会话持久化、检索工具 |
+
+`infra/` 放技术设施：`db` / `storage` / `chat-model` / `agent` / `ai-client` / `image-token` / `sse` / `logger` / `env`。
+判定规则是「文件里有没有照片、扫描、AI 这类业务概念」—— 有就进 `services/<域>/`，没有就进 `infra/`。
+
+## 6. 页面渲染流程
+
+```mermaid
+sequenceDiagram
+    participant B as 浏览器
+    participant N as Next.js
+    participant S as photo.service
+    participant DB as PostgreSQL
+
+    B->>N: GET /photos
+    N->>S: listPhotos()
+    S->>DB: Prisma 查询
+    DB-->>S: 照片行
+    S-->>N: PhotoItem[]（含签名 URL）
+    N-->>B: HTML + RSC Payload
+    B->>N: GET /api/image?key=&token=
+    N-->>B: 图片（缓存 7 天）
+```
+
+图片不发 presigned URL，统一走 `/api/image` 代理加 HMAC token，因此可长期缓存。
+
+## 7. 扫描入库流程
+
+```mermaid
 flowchart TD
-    S(["开始扫描"]) --> G["glob 扫描目录<br/>图片 + 视频"]
-    G --> Grp["文件分组<br/>照片 ↔ 配套视频"]
-    Grp --> Ck{"已存在?"}
-    Ck -->|是| Skip["跳过"]
-    Ck -->|否/强制| P
-
-    subgraph P["处理流水线"]
-        H{"HEIC?"}
-        H -->|是| Conv["heic-convert"]
-        H -->|否| Load["fs.readFile"]
-        Conv & Load --> Exif["exifr 解析 EXIF"]
-        Exif --> Thumb["Sharp 缩略图<br/>200px + 1400px"]
-        Thumb --> Color["提取主色调"]
-        Color --> Up["上传 MinIO<br/>raw/small/large/video"]
-        Up --> Geo["高德逆地理编码"]
-        Geo --> DB["写入 DB<br/>Photo+Exif+Location"]
-    end
-
-    P --> Log["日志记录"]
-    Log & Skip --> E(["完成"])
+    Scan["glob 扫描目录"] --> Group["照片与配套视频分组"]
+    Group --> Exists{"已入库?"}
+    Exists -->|是| Skip["跳过"]
+    Exists -->|否| Decode["HEIC 转码 / 直接读取"]
+    Decode --> Exif["exifr 解析 EXIF"]
+    Exif --> Thumb["Sharp 生成 200px / 1400px"]
+    Thumb --> Upload["上传 MinIO"]
+    Upload --> Geo["高德逆地理编码"]
+    Geo --> Write["写入 photos + exif + location"]
 ```
 
----
+AI 分析是独立流程，由 `/api/ai/analysis` 触发，不在扫描链路里。
 
-## 6. 网络拓扑与部署架构
-
-### 6a. 网络拓扑 (FRP + NPM + Docker)
+## 8. Agent 对话流程
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#fff', 'primaryBorderColor': '#8b5cf6', 'lineColor': '#8b5cf6', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
-graph TB
-    subgraph Internet["🌍 公网"]
-        DNS["DNS 解析"]
-        User["用户"]
-        VPS["云服务器<br/>IP: 1.2.3.4"]
-        FRPS["FRP Server (frps)<br/>监听 80 / 443"]
-    end
+sequenceDiagram
+    participant B as 浏览器
+    participant R as route.ts
+    participant A as agent.service
+    participant T as 检索工具
+    participant M as 模型
 
-    subgraph LocalNet["🔒 内网 (NUC - Debian)"]
-        subgraph HostLevel["宿主机层"]
-            FRPC["FRP Client (frpc)<br/>连接 VPS 隧道"]
-            Ollama["Ollama<br/>host.docker.internal:11434"]
-            Photos["照片目录<br/>/mnt/map-photos"]
-        end
-
-        subgraph DockerLevel["🐳 Docker 容器层"]
-            subgraph PhotoNet["photo_map_network (同一网络)"]
-                NPM["nginx-proxy-manager<br/>jc21/nginx-proxy-manager<br/>端口 80 / 443 / 81"]
-                Next["photo-map-next<br/>Next.js 15<br/>端口 3000"]
-                MinIO["photo-map-minio<br/>MinIO S3<br/>端口 9000 (API)<br/>端口 9001 (Console)"]
-                PG[("photo-map-db<br/>PostgreSQL + PostGIS<br/>+ pgvector<br/>端口 5432")]
-                Tile["photo-map-tileserver<br/>TileServer-GL<br/>端口 8080"]
-            end
-        end
-    end
-
-    User -->|"raydom.wang"| DNS
-    DNS -->|"→ VPS IP"| User
-    User -->|"HTTPS 443"| VPS
-    VPS -->|"FRP 隧道<br/>80→80, 443→443"| FRPC
-    FRPC -->|"localhost:80/443"| NPM
-
-    NPM -->|"raydom.wang →<br/>容器名:3000"| Next
-    NPM -->|"sso.raydom.wang →<br/>容器名:9000"| MinIO
-    NPM -->|"map.raydom.wang →<br/>容器名:8080"| Tile
-
-    Next -->|"S3 SDK (内网容器名)"| MinIO
-    Next -->|"Prisma (内网容器名)"| PG
-    Next -->|"Ollama SDK<br/>host.docker.internal"| Ollama
-    Next -->|"读取照片"| Photos
-    Next -->|"Docker CLI / Git"| HostLevel
-
-    subgraph Domains["📌 域名路由"]
-        D1["raydom.wang<br/>→ photo-map-next:3000<br/>主应用"]
-        D2["sso.raydom.wang<br/>→ photo-map-minio:9000<br/>MinIO 对象存储"]
-        D3["map.raydom.wang<br/>→ photo-map-tileserver:8080<br/>地图瓦片服务"]
-    end
-
-    NPM --> Domains
+    B->>R: POST /api/agent/chat
+    R->>R: 落库 user 消息
+    R-->>B: SSE loading
+    R->>A: stream()
+    A->>M: 系统提示词 + 问题
+    M-->>A: tool_call
+    A->>T: 执行检索
+    T-->>A: id / theme / tags
+    A-->>R: photo-results
+    R-->>B: SSE photo-results
+    A->>M: 工具结果回填
+    M-->>A: 正文（服务端改写）
+    A-->>R: text
+    R-->>B: SSE streaming → done
 ```
----
 
-## 7. Docker 服务一览
+细节见 `AGENT_DEVELOPMENT_PLAN.md`：五个工具的入参、正文接管的三个分支、相似度阈值、性能实测。
 
-| 容器 | 镜像 | 端口 | 网络 | 作用 |
-|------|------|------|------|------|
-| `nginx-proxy-manager` | `jc21/nginx-proxy-manager` | 80, 443, 81 | `photo_map_network` | 反向代理 + SSL 终结 |
-| `photo-map-next` | 自构建 (Dockerfile) | 3000 | `photo_map_network` | Next.js 全栈应用 |
-| `photo-map-db` | 自构建 (db.Dockerfile) | 5432 | `photo_map_network` | PostgreSQL + PostGIS + pgvector |
-| `photo-map-minio` | `minio/minio` | 9000, 9001 | `photo_map_network` | S3 兼容对象存储 |
-| `photo-map-tileserver` | `maptiler/tileserver-gl` | 8080 | `photo_map_network` | 离线地图瓦片服务 |
+## 9. 数据模型
 
-### 域名 → 服务映射
+```mermaid
+erDiagram
+    photos ||--o| photo_exifs : ""
+    photos ||--o| locations : ""
+    photos ||--o| photo_ai_analyses : ""
+    locations }o--|| regions : ""
+    photos ||--o{ agent_message_photos : ""
+```
 
-NPM 与所有后端容器同属 `photo_map_network`，可直接通过 **容器名** 反代：
+```mermaid
+erDiagram
+    agent_conversations ||--o{ agent_messages : ""
+    agent_messages ||--o{ agent_message_photos : ""
+```
 
-| 域名 | NPM 代理目标 | 说明 |
-|------|-------------|------|
-| `raydom.wang` | `http://photo-map-next:3000` | 主应用 (照片足迹) |
-| `sso.raydom.wang` | `http://photo-map-minio:9000` | MinIO S3 API (图片托管) |
-| `map.raydom.wang` | `http://photo-map-tileserver:8080` | 地图瓦片服务 (MapLibre 样式) |
+三张一对一表拆开的理由见 `REFACTOR.md` 附录 A。
+`photo_ai_analyses` 存两个 `vector(1024)`（描述向量、标签向量）。
+LangGraph 的 `checkpoint*` 四张表由 `PostgresSaver` 维护，不在 Prisma schema 内。
 
-### Docker 网络
+## 10. Docker 与域名
 
-| 网络 | 类型 | 包含容器 |
-|------|------|---------|
-| `photo_map_network` | `external: true` | NPM + Next + DB + MinIO + Tile 全部在同一个网络中 |
+| 容器 | 镜像 | 端口 | 作用 |
+|---|---|---|---|
+| `nginx-proxy-manager` | `jc21/nginx-proxy-manager` | 80 / 443 / 81 | 反代 + SSL |
+| `photo-map-next` | 自构建 | 3000 | 应用 |
+| `photo-map-db` | 自构建 | 5432 | PostgreSQL + PostGIS + pgvector |
+| `photo-map-minio` | `minio/minio` | 9000 / 9001 | 对象存储 |
+| `photo-map-tileserver` | `maptiler/tileserver-gl` | 8080 | 地图瓦片 |
 
-## 8. 技术栈一览
+| 域名 | 代理目标 |
+|---|---|
+| `raydom.wang` | `photo-map-next:3000` |
+| `sso.raydom.wang` | `photo-map-minio:9000` |
+| `map.raydom.wang` | `photo-map-tileserver:8080` |
 
-| 分类 | 技术 | 用途 |
-|------|------|------|
-| **框架** | Next.js 15 (App Router, Turbopack) | 全栈框架 |
-| **语言** | TypeScript 5.6 (strict) | 开发语言 |
-| **UI** | HeroUI (NextUI) + Tailwind CSS 4 | 组件库 + 样式 |
-| **动画** | Framer Motion 11 | 动效 |
-| **地图** | MapLibre GL JS 5 + Turf.js 7 | 地图渲染 + 空间分析 |
-| **数据库** | PostgreSQL + PostGIS + pgvector | 数据存储 + 地理 + 向量 |
-| **ORM** | Prisma 7 + @prisma/adapter-pg | 数据库 ORM |
-| **对象存储** | MinIO (S3) + @aws-sdk/client-s3 | 图片/视频存储 |
-| **图片处理** | Sharp + exifr + heic-convert | 缩略图 + EXIF + 格式转换 |
-| **AI** | Ollama + ModelScope + Vercel AI SDK | 向量嵌入 + 视觉分析 + 聊天 |
-| **流式传输** | ReadableStream (SSE) | 扫描/分析/聊天/部署进度 |
-| **地理编码** | 高德地图 API | 坐标→地址 |
-| **容器化** | Docker + docker-compose | 部署运行 |
-| **内网穿透** | FRP (frps + frpc) | 公网 → 内网隧道 |
-| **反向代理** | Nginx Proxy Manager | SSL 终结 + 域名路由 |
+全部在 `photo_map_network`（`external: true`）。
+
+SSE 接口需在 NPM 的 Advanced 里放宽读超时：`proxy_read_timeout 600s` + `proxy_buffering off`，否则 Agent 的静默期会被判超时断连。
+
+## 11. 技术栈
+
+| 分类 | 选型 |
+|---|---|
+| 框架 | Next.js 15.3（App Router、standalone 产物） |
+| 语言 | TypeScript 5.6 strict |
+| UI | HeroUI + Tailwind CSS 4 |
+| 动效 | motion 13 |
+| 地图 | MapLibre GL 5 + Turf 7 |
+| 数据库 | PostgreSQL + PostGIS + pgvector |
+| ORM | Prisma 7 + `@prisma/adapter-pg` |
+| 对象存储 | MinIO + `@aws-sdk/client-s3` |
+| 图片处理 | Sharp + exifr + heic-convert |
+| AI 编排 | LangChain 1.5 / LangGraph 1.4 + `@langchain/langgraph-checkpoint-postgres` |
+| 模型接入 | `@langchain/ollama`、`@langchain/openai`（兼容端点，覆盖百炼与魔搭） |
+| 流式 | `ReadableStream` SSE（扫描、分析、对话） |
+| 校验 | zod 4 |
+| 部署 | Docker + FRP 内网穿透 + Nginx Proxy Manager |
