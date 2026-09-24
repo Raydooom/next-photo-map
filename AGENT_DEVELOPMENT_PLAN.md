@@ -1,8 +1,8 @@
 # 摄影档案 Agent：产品与开发计划
 
-> 状态：规划中  
-> 定位：基于个人照片库的**可追溯影像档案助手**，而不是泛聊天机器人。  
-> 范围：产品能力、数据与服务架构、工具体系、会话与证据模型、分批交付计划。  
+> 状态：批次 0 至批次 2 已上线；批次 3 至批次 5 规划中。
+> 定位：基于个人照片库的**可追溯影像档案助手**，而不是泛聊天机器人。
+> 范围：产品能力、数据与服务架构、工具体系、会话与证据模型、分批交付计划。
 > 原则：先做单一 Agent 与可验证工具；只读能力先行；写操作必须显式确认；不因“看起来像 Agent”而过早引入多 Agent。
 
 ---
@@ -47,41 +47,36 @@
 
 ### 2.1 五类能力，而非五个 Agent
 
-下面是用户感知到的能力域。运行时仍由一个 `ArchiveAgentService` 编排，能力域通过工具集合与提示词约束实现。
+下面是用户感知到的能力域。运行时由一个 `AgentService` 编排 LangGraph Agent，能力域通过工具集合与提示词约束实现。
 
-| 能力域 | 用户获得的价值 | 示例问题 | 首要数据依据 | 首次交付批次 |
+| 能力域 | 用户获得的价值 | 示例问题 | 首要数据依据 | 状态 |
 | --- | --- | --- | --- | --- |
-| 找到（Find） | 从大量照片中找出候选 | “故宫附近拍过什么”“找雪山照片” | 向量、标签、地点、时间 | 批次 1 |
-| 读懂（Read） | 理解单张或一组照片的事实与画面 | “第二张什么时候拍的”“这组用了什么镜头” | Photo、EXIF、Location、AI 分析 | 批次 1 |
-| 连接（Connect） | 发现地点、时间、主题、参数之间的关系 | “我去年秋天都去了哪里”“哪些照片是逆光” | 时间、Region、EXIF、标签 | 批次 2 |
-| 策展（Curate） | 形成可保存、可复看的叙事和候选集 | “挑 12 张做杭州秋天相册” | 检索结果、偏好、用户确认 | 批次 3 |
-| 维护（Steward） | 补齐或修复档案信息 | “重新分析这张”“哪些照片没有地点” | 后台任务、扫描与 AI 分析 | 批次 4，仅管理员 |
+| 找到（Find） | 从大量照片中找出候选 | “故宫附近拍过什么”“找雪山照片” | 向量、标签、地点、时间、EXIF | 已上线 |
+| 读懂（Read） | 理解单张或一组照片的事实与画面 | “第二张什么时候拍的”“这组用了什么镜头” | Photo、EXIF、Location、AI 分析 | 部分：照片详情由前端查看器承担，Agent 侧无单图工具 |
+| 连接（Connect） | 发现地点、时间、主题、参数之间的关系 | “我去年秋天都去了哪里”“哪些照片是逆光” | 时间、Region、EXIF、标签 | 未开始（批次 3） |
+| 策展（Curate） | 形成可保存、可复看的叙事和候选集 | “挑 12 张做杭州秋天相册” | 检索结果、偏好、用户确认 | 未开始（批次 4） |
+| 维护（Steward） | 补齐或修复档案信息 | “重新分析这张”“哪些照片没有地点” | 后台任务、扫描与 AI 分析 | 未开始（批次 5，仅管理员） |
 
 ### 2.2 典型用户旅程
 
-#### A. 查找：从模糊记忆到具体照片
+#### A. 查找：从模糊记忆到具体照片（已上线）
 
 ```text
-“去年秋天我去哪儿拍过？”
-  → Agent 解析为时间范围与地点聚合需求
-  → 查询时间、Region 与照片数量
-  → 返回地点时间线、代表照片和“继续展开”的入口
+“哪些照片是在北京拍的”
+  → 模型选择 location_search，填入 province / city
+  → 服务端查询照片并生成画面概述
+  → SSE 下发照片网格与一句概述
 ```
 
-回答不应只说“你去过杭州”，而应附带：时间范围、照片数量、代表照片 id / 卡片；如数据不足，要说明仅基于有地点或有拍摄时间的照片。
+当前回答形态是「一句画面概述 + 照片网格」。地点时间线、照片数量口径说明属于批次 3 的聚合能力。
 
-#### B. 读图：从单张照片到拍摄上下文
+#### B. 读图：从单张照片到拍摄上下文（部分）
 
-```text
-“第二张是什么时候拍的？用什么镜头？”
-  → 从本回合照片引用中解析“第二张”
-  → 读取照片详情与脱敏 EXIF
-  → 返回拍摄时间、地点、镜头与画面说明
-```
+用户点击照片网格中的任意一张，由 `PhotoPreview` 展示拍摄时间、地点、EXIF 与 AI 描述。Agent 侧尚无单图工具，因此「第二张是什么时候拍的」这类会话内指代还不能回答。
 
-“第二张”是会话引用语义，属于 Agent 上下文；`photoService` 只接收明确 `photoId`，不应知道 UI 中的相对序号。
+引用语义属于 Agent 上下文；领域服务只接收明确 `photoId`，不应知道 UI 中的相对序号。
 
-#### C. 复盘：从一组照片到摄影习惯
+#### C. 复盘：从一组照片到摄影习惯（批次 3）
 
 ```text
 “我最常在什么时间拍夜景？”
@@ -92,7 +87,7 @@
 
 此类结论必须标明样本范围与数据缺失情况，不能将少量已分析照片当作整个档案的统计事实。
 
-#### D. 策展：从检索结果到可保存成果
+#### D. 策展：从检索结果到可保存成果（批次 4）
 
 ```text
 “从这批照片里选 12 张做杭州秋天相册”
@@ -107,7 +102,7 @@ Agent 先生成建议，持久化和任何写操作必须经过明确确认。
 
 ## 3. 体验原则
 
-当前 `/agent` 已采用单栏、记录式的消息流，而不是普通 IM 的左右气泡。这和产品定位一致：它应更像一份可查阅的档案研究记录。
+`/agent` 采用单栏、记录式的消息流，而不是普通 IM 的左右气泡。这和产品定位一致：它应更像一份可查阅的档案研究记录。
 
 ### 3.1 回答必须有证据
 
@@ -118,7 +113,11 @@ Agent 先生成建议，持久化和任何写操作必须经过明确确认。
 - 声明是基于哪些检索结果的归纳；
 - 明确告知数据缺失、置信度不足或未找到结果。
 
-示例：
+当前实现采取的做法是**服务端接管正文**：命中照片时输出由 `getPhotoResultSummary()` 依据工具返回的 `theme` 生成的画面概述，照片网格承担引用；未命中时输出固定文案并给出可调整的方向。模型正文只在本轮没有调用任何照片工具时才回放，且会先剔除指向界面操作的引导语。
+
+这样做的原因是模型不稳定：它会复述照片数量、编号、拍摄参数，或让用户「点击查看详细信息」，而界面上并没有对应的东西。把事实性叙述收回服务端，比反复调提示词更可靠。
+
+示例（批次 3 的目标形态）：
 
 ```text
 你在 2025 年秋天有 38 张带地点记录的照片，主要集中在杭州与黄山。
@@ -134,14 +133,9 @@ Agent 先生成建议，持久化和任何写操作必须经过明确确认。
 
 ### 3.2 过程可解释，但不暴露思维链
 
-前端应看到简短、可验证的过程状态，而不是模型内部推理：
+前端应看到简短、可验证的过程状态，而不是模型内部推理。当前等待态是一个统一的「正在检索照片档案」指示（竖条波形 + 文案高光 + 不定进度游标），阶段化的过程记录属于后续批次。
 
-```text
-正在理解问题
-→ 正在检索照片档案
-→ 找到 24 张杭州相关照片
-→ 正在整理时间与地点
-```
+服务端已有结构化日志可供排查：`[Agent] 工具决策：调用工具`、`[Agent] 工具调用完成`、`[Agent] 自动查询规划`、`[Agent] 语义候选收敛`。这些不下发到前端。
 
 需要展示的是**执行事实**：调用了什么工具、返回多少结果、依据哪些照片；不展示 prompt、模型思维链、SQL 或原始工具参数。
 
@@ -153,54 +147,112 @@ Agent 先生成建议，持久化和任何写操作必须经过明确确认。
 2. **证据**：照片卡片、数量、时间、地点、参数或统计；
 3. **继续探索**：例如“按城市展开”“查看夜景样本”“生成候选相册”。
 
-先让用户获得答案，再按需展开证据和后续动作。照片卡片不是装饰，而是可追溯引用。
+当前实现了前两层。第三层依赖聚合与策展能力。
 
 ### 3.4 Agent 不确定时应如何回答
 
-- 未找到：说明未在当前已索引照片中找到，而非断言不存在；
+- 未找到：说明未在当前已索引照片中找到，并给出可放宽的方向（时间、地点、画面描述）；
 - 数据不完整：区分“无 EXIF”“无地点”“未进行 AI 分析”；
 - 结果歧义：提供两三个澄清选项，而非机械返回固定兜底；
 - 工具失败：说明当前无法检索并给出可重试的下一步。
 
+其中「未找到」已实现为固定文案 `NO_PHOTO_RESULT_REPLY`；数据完整性说明与澄清选项尚未实现。
+
 ---
 
-## 4. 当前实现与主要缺口
+## 4. 当前实现
 
-当前调用链：
+### 4.1 调用链
 
 ```text
-src/app/agent/_hooks/useChat.ts
-  → POST /api/ai/chat
-    → src/app/api/ai/chat/route.ts
-      → aiChatService.queryIntention()
-        → PHOTO_SEARCH 时生成 embedding
-          → pgvector 查询 photo_ai_analyses
-            → photoService.listPhotos()
-      → SSE 返回 text / photoCard
+src/app/agent/_hooks/useChat.ts                       # fetchEventSource，单条消息原地更新
+  → POST /api/agent/chat
+    → resolveAgentVisitor()                           # HTTP-only cookie 提供 visitorId
+    → conversationService.startTurn()                 # 落库 user 消息，必要时建会话
+    → agentService.stream()                           # LangGraph createAgent，streamMode: 'messages'
+      → 五个照片检索工具                                # date / location / ai_metadata / semantic / exif
+      → photoService.getPhotosByIds()                 # 补全照片并生成签名 URL
+    → conversationService.appendAssistantMessage()    # 落库 assistant 消息与照片引用
+    → SSE: loading → photo-results → streaming → done
 ```
 
-关键事实：
+会话历史另有两个只读接口：`GET /api/agent/conversations` 列表、`GET|DELETE /api/agent/conversations/[conversationId]` 详情与删除。
 
-| 已有资产 | 当前状态 | 对 Agent 的价值 |
+### 4.2 已落地的模块
+
+| 模块 | 位置 | 职责 |
 | --- | --- | --- |
-| `photoService` | 已提供列表、详情、签名 URL 与脱敏 | 所有照片工具的统一输出入口 |
-| `locationService` | 已提供地点详情、范围查询、区域统计 | 地点、足迹与地图能力基础 |
-| `photoExifService` | 已提供 EXIF 查询 | 设备、镜头、曝光与摄影习惯问答基础 |
-| `aiService` | 已提供图片分析与 embedding 写入 | 管理员维护、索引补齐能力 |
-| `aiChatService` | 固定意图 + 语义检索 | 过渡期兼容入口，应抽出检索能力 |
-| `createSSE` | 已提供 SSE 编码 | HTTP 传输基础，不应承载 Agent 业务 |
-| `/agent` 页面 | 已有记录式消息流和照片卡片位 | 可承接过程事件、引用和行动项 |
+| HTTP / SSE 适配 | `src/app/api/agent/chat/route.ts` | 校验输入、建立 SSE、补全照片、落库、编码事件 |
+| 访客身份 | `src/app/api/agent/_lib/visitor.ts` | 随机 cookie 提供 `visitorId`，会话按此隔离 |
+| Agent 编排 | `src/server/services/ai/agent/agent.service.ts` | 系统提示词、工具集、流事件、正文接管 |
+| 检索工具 | `src/server/services/ai/agent/tools/search-photo.tool.ts` | 五个只读工具及入参 schema |
+| 会话持久化 | `src/server/services/ai/agent/conversation.service.ts` | 会话、消息、照片引用的唯一入口 |
+| 共享契约 | `src/lib/contracts/agent-conversation.ts` | 会话与消息 DTO，前后端共用 |
+| 语义检索 | `src/server/services/ai/image-analysis/semantic-search.service.ts` | 查询规划、向量召回、相似度收敛 |
+| 模型接入 | `src/server/infra/chat-model.ts` | 按用途分组的模型配置与客户端缓存 |
+| Agent 工厂 | `src/server/infra/agent.ts` | LangGraph Agent 与 PostgresSaver checkpoint |
 
-主要缺口：
+### 4.3 模型配置
 
-1. 当前不是工具调用 Agent，只是固定意图分支；普通问题会落到固定兜底。
-2. SSE 的 `status`、`type` 与 `data: any` 没有前后端共享契约。
-3. 现有 Hook 可能出现照片卡片与 AI 文本复用同一 id、最终状态未收束的问题。
-4. 浏览器 abort 没有完整传给服务端执行链，断连后模型与检索可能继续运行。
-5. `queryPhotosByEmbedding()` 的 `_params` 没有参与筛选；向量排序会被 `listPhotos` 的时间排序覆盖；新实现不能复制 `$queryRawUnsafe`。
-6. 没有真实会话、照片引用、候选集或 Agent 产物的持久化模型。
-7. 没有访问策略、工具级权限、写操作确认和审计边界。
-8. 照片的 AI 分析、地点与 EXIF 覆盖率尚未成为可观测的数据质量指标。
+模型按**用途**配置，不按平台配置。三组环境变量，每组四项：
+
+| 组 | 用途 | 说明 |
+| --- | --- | --- |
+| `CHAT_*` | Agent 对话与语义查询规划 | 模型必须支持 function calling |
+| `VISION_*` | 入库时的图片分析 | 与对话独立，可落在不同平台 |
+| `EMBEDDING_*` | 向量嵌入 | 输出维度须为 1024，与 `vector(1024)` 对应 |
+
+`*_API_TYPE` 取 `ollama`（本地原生接口）或 `openai`（兼容端点，覆盖百炼、魔搭等），只区分调用协议。接入新平台只改环境变量，不改代码。
+
+### 4.4 会话与引用模型
+
+三张表已落地：
+
+| 模型 | 用途 |
+| --- | --- |
+| `AgentConversation` | 标题、`visitorId`、创建与最后活动时间 |
+| `AgentMessage` | 角色、`kind`（TEXT / PHOTO_RESULTS）、`status`（COMPLETED / INTERRUPTED / ERROR）、正文、`photoTotal`、会话内 `sequence` |
+| `AgentMessagePhoto` | 一条消息引用的照片及其顺序，按 `(messageId, position)` 唯一 |
+
+落库只存 `photoId` 与顺序，签名 URL 在读取时重新生成。完整 prompt、思维链、原始工具结果、向量都不持久化。
+
+LangGraph 的对话上下文由 `PostgresSaver` 独立维护，`thread_id` 为 `conversation:${conversationId}`。它服务于模型记忆，不作为界面历史的数据源——界面历史一律来自上面三张表。
+
+### 4.5 已实施的稳定性与性能约束
+
+| 约束 | 位置 | 目的 |
+| --- | --- | --- |
+| 命中照片后丢弃后续检索结果 | `agent.service.ts` | 模型会拿返回的 `theme` 另编查询二次检索，各次结果并集后会混入未经原条件筛选的照片 |
+| 工具只回 `id` / `theme` / `tags` | `search-photo.tool.ts` | 12 张照片的 `description` 约 3K token，是工具回填那一轮耗时的主体 |
+| `think: false`（仅 Ollama） | `chat-model.ts` | qwen3 默认先产出大段思考，本 Agent 只需一次工具决策 |
+| 缓冲模型正文至收尾 | `agent.service.ts` | 避免工具调用前的规划 JSON 抢先流向界面 |
+| checkpoint 建表懒初始化 | `agent.ts` | 模块顶层连库会让 `next build` 的 collect page data 阶段失败 |
+| 语义结果相对收敛 | `semantic-search.service.ts` | 绝对下限 0.55，再只保留与最佳结果差距 0.08 以内的，上限 6 条 |
+
+### 4.6 实测性能与瓶颈
+
+NUC 第 6 代、8G 内存、纯 CPU、`qwen3:4b-q4_K_M` 的实测数据：
+
+```text
+生成速度        5.23 tokens/s
+LangSmith 单轮  42.45s = 首轮 8.00s + 工具 0.07s + 工具回填轮 33.83s
+两轮输入量      1.762K token → 4.865K token
+```
+
+结论是瓶颈在工具回填那一轮的输入量，而非系统提示词，也不在数据库或工具本身（工具只花了 0.07s）。已据此精简工具返回。若仍不达预期，按收益排序的后续手段是：换更小的对话模型、把 `CHAT_*` 指向云端、压缩系统提示词。
+
+### 4.7 主要缺口
+
+1. 没有单图详情与 EXIF 问答工具，「第二张是什么时候拍的」这类会话内指代无法回答。
+2. 没有服务端聚合能力，统计类问题（时间分布、城市分布、设备习惯）无法给出带样本范围的结论。
+3. 照片引用未参与模型上下文，跨轮指代（“这组”“上一批”）不可靠。
+4. 上下文完全交给 LangGraph checkpoint，没有有限历史与会话摘要策略，长会话成本会持续增长。
+5. 复合条件查询退化为单条件：多次工具结果做并集而非交集，因此只保留第一组。
+6. 没有身份体系，只有 `visitorId` 隔离；无登录、无角色、无字段级可见性策略。
+7. 没有 artifact / 候选集，也没有任何写工具与确认流程。
+8. 数据覆盖率（有时间、有地点、有 EXIF、有 AI 分析、有向量的照片比例）尚未成为可观测指标。
+9. 没有离线评测集，提示词与模型变更缺少回归依据。
+10. 流式是「缓冲后一次性下发」，不是 token 级流。
 
 ---
 
@@ -208,18 +260,19 @@ src/app/agent/_hooks/useChat.ts
 
 ### 5.1 单 Agent、多个工具
 
-首期只引入一个服务端编排器：`ArchiveAgentService`。
+服务端只有一个编排器 `AgentService`，基于 LangChain 的 `createAgent` 构建 LangGraph Agent。
 
 ```text
 app/api
-  → ArchiveAgentService
-    → ToolRegistry
-      → AgentTool
-        → photo / location / exif / semantic-search / analysis services
-          → infra
+  → AgentService
+    → tools（LangChain tool + zod schema）
+      → photo / location / exif / semantic-search / analysis services
+        → infra
 ```
 
 模型负责决定“需要哪种已允许的能力”；服务端负责决定“这个能力能否执行、以何种权限和参数执行”。
+
+工具白名单由 `createAgent({ tools })` 的入参与 `PHOTO_SEARCH_TOOL_NAMES` 共同界定：前者决定模型能看到什么，后者决定哪些工具的结果会被识别为照片结果。
 
 不要建立：
 
@@ -229,61 +282,51 @@ SearchAgent → CuratorAgent → MapAgent → AnalysisAgent
 
 除非未来某个工作流真的需要独立的长任务、不同权限、不同模型或不同队列。即使如此，优先拆为确定性的后台工作流，而不是让多个模型互相对话。
 
-### 5.2 推荐目录
+### 5.2 当前目录
 
 ```text
 src/
 ├── app/
-│   ├── agent/                                      # 浏览器页面、组件、Hook
+│   ├── agent/
+│   │   ├── page.tsx                                # 全屏三栏布局，走根 layout
+│   │   ├── _components/                            # 消息流、侧栏、输入、照片网格
+│   │   └── _hooks/useChat.ts                       # SSE 消费与消息状态机
 │   └── api/
-│       └── ai/
-│           └── chat/
-│               └── route.ts                        # HTTP / SSE 适配层
+│       └── agent/
+│           ├── chat/route.ts                       # HTTP / SSE 适配层
+│           ├── conversations/                      # 会话列表、详情、删除
+│           └── _lib/visitor.ts                     # 访客 cookie
 │
 ├── lib/
 │   └── contracts/
-│       └── agent.ts                                # 前后端共享、可序列化 DTO
+│       └── agent-conversation.ts                   # 前后端共享、可序列化 DTO
 │
 └── server/
+    ├── infra/
+    │   ├── agent.ts                                # LangGraph Agent 与 checkpointer
+    │   ├── chat-model.ts                           # 按用途分组的模型接入
+    │   └── sse.ts                                  # SSE 编码
     └── services/
-        ├── photo/
-        │   ├── photo.service.ts                    # 已有：照片读取、URL、脱敏
-        │   ├── location.service.ts                 # 已有：地点和区域
-        │   ├── exif.service.ts                     # 已有：EXIF
-        │   └── collection.service.ts               # 批次 3：候选集与相册
-        │
+        ├── photo/                                  # photo / location / exif / region
         └── ai/
-            ├── analysis.service.ts                 # 已有：图片分析和索引写入
-            ├── chat.service.ts                     # 旧固定意图入口，过渡期保留
-            ├── semantic-photo-search.service.ts    # 批次 1：embedding + 混合检索
-            ├── archive-insight.service.ts          # 批次 2：可验证聚合与统计
-            │
+            ├── image-analysis/                     # 视觉分析、向量、语义检索、查询规划
             └── agent/
-                ├── archive-agent.service.ts        # 单回合编排、工具循环、领域事件
-                ├── agent.types.ts                  # 仅服务端内部上下文与类型
-                ├── agent.prompt.ts                 # 系统提示词、回答与引用规则
-                ├── tool.types.ts                   # 工具统一接口
-                ├── tool-registry.ts                # 白名单注册、权限与策略
-                ├── conversation.service.ts         # 批次 2：会话与引用上下文
-                ├── evaluation.service.ts           # 批次 5：离线评测与质量回归
+                ├── agent.service.ts                # 编排、提示词、流事件、正文接管
+                ├── conversation.service.ts         # 会话与消息持久化
                 └── tools/
-                    ├── search-photos.tool.ts
-                    ├── get-photo-detail.tool.ts
-                    ├── get-photo-exif.tool.ts
-                    ├── query-locations.tool.ts
-                    ├── summarize-photo-set.tool.ts
-                    ├── draft-collection.tool.ts
-                    └── request-photo-analysis.tool.ts
+                    └── search-photo.tool.ts        # 五个只读检索工具
 ```
+
+后续批次预计新增：`archive-insight.service.ts`（聚合）、`collection.service.ts`（候选集）、`evaluation.service.ts`（评测），以及独立的 `agent.prompt.ts`（当前提示词内联在 `agent.service.ts`）。
 
 ### 5.3 严格依赖边界
 
 - `src/app/agent` 只处理浏览器状态和渲染；不得 import Prisma、存储客户端、服务端 service 或工具。
-- `route.ts` 只校验 HTTP 输入、建立 SSE、传入认证与取消信号、编码 Agent 事件；不得拥有 prompt、业务分支或工具实现。
-- `ArchiveAgentService` 不认识 `NextRequest`、`NextResponse`、SSE、React `Message` 或 Prisma。
-- `tools/*` 只做工具描述、schema 校验、工具级授权、结果投影与 service 调用；不得写 SSE 或复制领域查询。
-- `photoService`、`locationService`、`exif.service`、`analysis.service` 不得反向依赖 Agent、Route 或前端。
-- `src/server/infra/ai-client.ts` 只做模型供应商与 embedding 调用；不得 import 照片、地点或 Agent。
+- `route.ts` 只校验 HTTP 输入、建立 SSE、传入访客身份与取消信号、编码 Agent 事件；不得拥有 prompt、业务分支或工具实现。
+- `AgentService` 不认识 `NextRequest`、`NextResponse`、SSE、React `Message` 或 Prisma。
+- `tools/*` 只做工具描述、schema 校验、结果投影与 service 调用；不得写 SSE 或复制领域查询。
+- `photoService`、`locationService`、`photoExifService`、分析服务不得反向依赖 Agent、Route 或前端。
+- `src/server/infra/chat-model.ts` 只做模型接入；不得 import 照片、地点或 Agent。
 
 ---
 
@@ -291,26 +334,15 @@ src/
 
 ### 6.1 工具的统一约束
 
-```ts
-export interface AgentTool<TInput, TResult> {
-  name: string;
-  description: string;
-  readOnly: boolean;
-  inputSchema: unknown;
-  execute(
-    input: TInput,
-    context: AgentExecutionContext
-  ): Promise<TResult>;
-}
-```
+工具用 LangChain 的 `tool()` 定义，入参由 zod schema 校验，`.describe()` 承担模型可见的参数说明。
 
 工具必须：
 
-- 输入可由 schema 校验；
+- 输入可由 schema 校验，非法入参直接被拒；
 - 只访问明确声明的数据范围；
 - 返回最小、可引用、可序列化的结果；
-- 记录工具名、耗时、结果数量、错误码等可观测信息；
-- 接收服务端生成的权限与取消上下文。
+- 记录工具名、查询条件、结果数量等可观测信息；
+- 经领域服务读取数据，由服务层负责脱敏与签名 URL。
 
 工具不得：
 
@@ -322,59 +354,51 @@ export interface AgentTool<TInput, TResult> {
 
 ### 6.2 工具路线图
 
-| 工具 | 能力域 | 下层依赖 | 权限 | 批次 | 备注 |
-| --- | --- | --- | --- | --- | --- |
-| `search_photos` | 找到 | `semanticPhotoSearchService` | 只读 | 1 | 语义、时间、地点、标签等受限过滤 |
-| `get_photo_detail` | 读懂 | `photoService.getPhotoById()` | 只读 | 1 | 单图事实与可渲染引用 |
-| `get_photo_exif` | 读懂 | `photoExifService` | 只读 | 1 | 默认脱敏，支持参数问答 |
-| `query_locations` | 找到 / 连接 | `locationService` | 只读 | 1 | 地点、区域、范围与统计 |
-| `summarize_photo_set` | 连接 | `archiveInsightService` | 只读 | 2 | 受控聚合，不让模型直接猜统计结论 |
-| `compare_photo_sets` | 连接 | `archiveInsightService` | 只读 | 3 | 对比时间、地点、设备或主题 |
-| `draft_collection` | 策展 | `collectionService` | 草稿写入 | 3 | 先生成草稿，确认后持久化 |
-| `save_collection` | 策展 | `collectionService` | 确认后写入 | 3 | 单独确认，不由模型自动触发 |
-| `request_photo_analysis` | 维护 | `aiService` + 后台任务 | 管理员 | 4 | 高成本、可取消、可审计 |
-| `find_metadata_gaps` | 维护 | 管理 service | 管理员 | 4 | 找缺地点、缺 EXIF、缺 AI 分析照片 |
+| 工具 | 能力域 | 下层依赖 | 权限 | 状态 |
+| --- | --- | --- | --- | --- |
+| `date_search` | 找到 | `photoService.listPhotos()` | 只读 | 已上线 |
+| `location_search` | 找到 | `photoService.listPhotos()` | 只读 | 已上线 |
+| `ai_metadata_search` | 找到 | `photoService` + 语义兜底 | 只读 | 已上线 |
+| `semantic_photo_search` | 找到 | `semanticPhotoSearchService` | 只读 | 已上线 |
+| `exif_search` | 找到 | `photoService.listPhotos()` | 只读 | 已上线 |
+| `get_photo_detail` | 读懂 | `photoService.getPhotoById()` | 只读 | 批次 3 |
+| `get_photo_exif` | 读懂 | `photoExifService` | 只读 | 批次 3 |
+| `summarize_photo_set` | 连接 | `archiveInsightService` | 只读 | 批次 3 |
+| `compare_photo_sets` | 连接 | `archiveInsightService` | 只读 | 批次 4 |
+| `draft_collection` | 策展 | `collectionService` | 草稿写入 | 批次 4 |
+| `save_collection` | 策展 | `collectionService` | 确认后写入 | 批次 4 |
+| `find_metadata_gaps` | 维护 | 管理 service | 管理员 | 批次 5 |
+| `request_photo_analysis` | 维护 | 分析服务 + 后台任务 | 管理员 | 批次 5 |
 
-### 6.3 首期四个只读工具
+### 6.3 已上线的五个检索工具
 
-#### `search_photos`
+工具按**检索维度**划分，而不是按「一个通用搜索工具 + 多种过滤参数」。这样模型的选择更明确，每个工具的入参也能各自约束。
 
-处理：地点、时间、主题、光线、画面描述等照片检索。
+#### `date_search`
 
-```ts
-{
-  query: string;
-  limit?: number;
-  dateRange?: { from?: string; to?: string };
-  region?: { province?: string; city?: string; district?: string };
-  light?: 'backlit' | 'night' | 'golden_hour' | 'unknown';
-  tags?: string[];
-}
-```
+入参 `startDate` / `endDate`（`YYYY-MM-DD`）与 `limit`。用户说的是日历日，数据库按 `Asia/Shanghai` 的半开时刻区间筛选；结束日会加一天取次日零点。提示词中给出当前日期，相对时间由模型换算。
 
-实现要求：
+#### `location_search`
 
-- 从旧 `AiChatService.queryPhotosByEmbedding()` 抽出 `semantic-photo-search.service.ts`；
-- 参数化向量查询，不复制 `$queryRawUnsafe`；
-- 真正使用 `dateRange`、`region`、`light` 与 `tags`；
-- 保留语义相似度排序，不能在 `photoService.listPhotos({ ids })` 中被时间排序覆盖；
-- 结果通过 `photoService` 的脱敏与签名 URL 出口返回。
+入参为 `province` / `city` / `district` / `township` / `keyword` 与 `limit`，至少提供一项。行政区分级填写，景区、地标、详细地址片段走 `keyword`。
 
-长期演进为**混合检索**：先用明确结构条件缩小范围，再做向量召回；后续加入关键词、标签、地点、时间、EXIF 的可解释排序，而不是只依赖一个向量距离阈值。
+#### `ai_metadata_search`
 
-#### `get_photo_detail`
+按 AI 标签、主题、描述关键词检索，支持 `tagsAny` / `tagsAll` / `tagsExclude`。纯标签条件命中 0 条且没有 `tagsExclude` 时，自动把条件拼成文本转语义向量兜底——排除是硬条件，向量检索保不住它，因此有 `tagsExclude` 时不兜底。
 
-输入仅为明确的 `photoId`。若用户说“第二张”，Agent 根据本回合或会话保存的引用将其解析为 id。
+#### `semantic_photo_search`
 
-返回可引用的照片事实：文件名、拍摄时间、归一化地点、可见 EXIF 摘要、AI 描述、缩略图 URL。领域服务不应知道“第几张”的 UI 语义。
+处理无法落为明确标签的自然语言描述：主体关系、动作、空间层次、氛围、抽象风格。查询先经 `photoQueryPlannerService` 改写为 `semanticQuery` 与不超过 6 个关联词，三者拼成不超过 600 字符的文本再算向量。
 
-#### `get_photo_exif`
+筛选是两道：绝对下限 `SEMANTIC_SEARCH_MIN_SIMILARITY = 0.55`，再保留与最佳结果差距在 `SEMANTIC_SEARCH_MAX_SCORE_GAP = 0.08` 以内的候选，上限 `SEMANTIC_SEARCH_MAX_RESULTS = 6`。相似度由描述向量与标签向量加权得出。
 
-用于相机、镜头、焦距、曝光、ISO 等问题。默认使用脱敏结果；后续可扩展受限筛选能力，例如“找 35mm 拍的照片”“有哪些长曝光”。
+#### `exif_search`
 
-#### `query_locations`
+按相机、镜头、光圈、ISO、焦距区间、闪光灯状态检索。提示词中说明「大光圈对应较小的 f-number」，模型需把「大光圈」落成 `fNumberMax`。
 
-用于城市、区域、范围、照片足迹与地点统计。当前缺少按城市名、行政区名、半径查询照片的领域方法时，应先扩展 `location.service.ts` 或 `photo.service.ts`，再由工具调用；不得在工具内散落 Prisma 查询。
+#### 返回结构
+
+五个工具统一返回 `{ query, total, photos }`，其中 `photos` 每项只有 `id`、`theme`、`tags`。`theme` 供服务端生成画面概述；`description`、`filename`、`takenAt`、`location`、EXIF 都不回给模型。
 
 ---
 
@@ -382,7 +406,7 @@ export interface AgentTool<TInput, TResult> {
 
 ### 7.1 引用是 Agent 的基础对象
 
-Agent 的回答要可追溯，因此不能只保存纯文本。建议从批次 2 开始引入稳定的引用 DTO：
+持久化层已以 `AgentMessagePhoto` 记录「哪条消息引用了哪些照片、顺序如何」。尚未实现的是把引用喂回模型上下文，因此跨轮指代还不可用。批次 3 引入的引用 DTO 建议为：
 
 ```ts
 export type PhotoReference = {
@@ -397,131 +421,79 @@ export type PhotoReference = {
 
 ### 7.2 会话持久化
 
-当侧栏历史从 mock 转为真实能力时，新增 Prisma 模型：
+已落地 `AgentConversation`、`AgentMessage`、`AgentMessagePhoto`，见 4.4。批次 4 需要新增 `AgentArtifact` 承载候选相册、地点时间线、对比报告等可继续操作的成果。
 
-```text
-AgentConversation
-AgentMessage
-AgentMessagePhotoReference
-AgentArtifact
-```
+不要持久化：完整模型 prompt、思维链、原始工具结果、签名 URL、完整 EXIF 或 embedding。
 
-建议职责：
-
-| 模型 | 用途 |
-| --- | --- |
-| `AgentConversation` | 标题、所有者、归档状态、最后活动时间 |
-| `AgentMessage` | 用户消息、最终 Agent 回答、错误或系统摘要 |
-| `AgentMessagePhotoReference` | 一条消息引用哪些照片及引用理由 |
-| `AgentArtifact` | 候选相册、地点时间线、对比报告等可继续操作的成果 |
-
-不要默认持久化：完整模型 prompt、思维链、原始工具结果、签名 URL、完整 EXIF 或 embedding。持久化的是可恢复会话需要的最小事实。
+会话标题取首条用户输入的前 30 字，列表预览取最后一条消息的前 72 字。会话按 `visitorId` 过滤，所有读写都带该条件。
 
 ### 7.3 上下文窗口策略
 
-多轮会话不等于把全部历史发送给模型。建议上下文按优先级组成：
+当前上下文完全由 LangGraph checkpoint 累积，没有裁剪。这是已知缺口：长会话的输入量会持续增长，而在 CPU 推理下输入量直接等于等待时间。
+
+建议的组成优先级：
 
 1. 当前用户问题；
 2. 当前消息正在引用的照片；
 3. 最近有限轮的用户问题与最终回答摘要；
-4. 由 `AgentConversation` 保存的简短会话摘要；
+4. 会话级简短摘要；
 5. 必要时按需读取的档案事实。
-
-这能控制成本、避免旧结论污染新检索，并使“第二张”“这组照片”等指代有明确来源。
 
 ---
 
 ## 8. 流式事件与前端映射
 
-### 8.1 共享协议位置
+### 8.1 两层事件
 
-`src/lib/contracts/agent.ts` 只放前后端都需要、可 JSON 序列化的契约：请求 DTO、流式事件、结果摘要、引用和错误码。
-
-`src/server/services/ai/agent/agent.types.ts` 放服务端内部上下文、模型消息、工具执行结果、权限对象等；不让客户端 import。
-
-### 8.2 事件协议
+服务端内部事件由 `agent.service.ts` 定义，只有两种：
 
 ```ts
 export type AgentStreamEvent =
-  | {
-      type: 'status';
-      phase: 'planning' | 'searching' | 'reading' | 'summarizing' | 'answering';
-      message: string;
-    }
-  | {
-      type: 'tool-call';
-      callId: string;
-      tool: string;
-      label: string;
-    }
-  | {
-      type: 'tool-result';
-      callId: string;
-      tool: string;
-      summary: string;
-      count?: number;
-    }
-  | {
-      type: 'text-delta';
-      messageId: string;
-      delta: string;
-    }
+  | { type: 'text'; delta: string }
   | {
       type: 'photo-results';
-      messageId: string;
-      summary: string;
-      result: PhotoSearchResult;
-      references: PhotoReference[];
-    }
-  | {
-      type: 'artifact';
-      artifact: AgentArtifactSummary;
-    }
-  | {
-      type: 'error';
-      code:
-        | 'INVALID_INPUT'
-        | 'FORBIDDEN'
-        | 'TOOL_FAILED'
-        | 'MODEL_FAILED'
-        | 'CANCELLED';
-      message: string;
-      retryable: boolean;
-    }
-  | {
-      type: 'completed';
-      messageId: string;
+      toolCallId: string;
+      toolName: string;
+      query: Record<string, unknown>;
+      total: number;
+      photoIds: number[];
     };
 ```
 
-前端映射：
+对外的 SSE 事件由 `route.ts` 编码，形状为 `SSEMessage`，用 `status` 判别：
 
-| 领域事件 | 记录式对话界面行为 |
-| --- | --- |
-| `status` | 显示短暂状态：“正在检索照片档案” |
-| `tool-call` | 显示可折叠的执行记录：“正在读取拍摄参数” |
-| `tool-result` | 显示事实摘要：“找到 24 张杭州相关照片” |
-| `text-delta` | 追加正式回答；后续可支持 token 流 |
-| `photo-results` | 渲染照片卡片与可引用的编号 |
-| `artifact` | 显示候选相册、时间线或比较报告入口 |
-| `error` | 停止 loading，给出可重试、可理解的错误 |
-| `completed` | 统一收束状态、释放发送锁 |
+| status | 载荷 | 前端行为 |
+| --- | --- | --- |
+| `loading` | `conversationId`、`userMessage` | 用持久化版本替换乐观插入的用户消息，插入 assistant 占位并展示等待态 |
+| `photo-results` | `photoResult`（含 `photos` 与 `total`） | 照片进内存但先不显示，等文字到达后一起揭示 |
+| `streaming` | `message`（文本增量） | 追加正文，状态转为 `streaming` |
+| `done` | `assistantMessage` | 用持久化消息整体替换该条，揭示照片并播放一次出现动画 |
+| `error` | `message`，可能带 `assistantMessage` | 结束等待态，展示可理解的错误 |
+
+`photo-results` 先到、文字后到是常态，因此前端以 `status === 'loading'` 优先渲染等待态，避免照片先闪出来。
+
+### 8.2 前端消息状态机
+
+`useChat.ts` 中同一条 assistant 消息全程原地更新，本地 id 在 `done` 时被服务端 id 替换：
+
+```text
+乐观插入 user 消息
+  → loading：reconcile user，插入 assistant（status: 'loading'）
+  → photo-results：填入 data，photoResultsVisible: false
+  → streaming：status: 'streaming'，追加 content
+  → done：reconcile assistant，揭示照片（animatePhotoResults: true）
+```
+
+异常路径（`error` 事件、`onclose` 未收到终态、`catch`）都会先揭示已有照片，再把消息收束为 `done`，保证不会永久停在 `loading`。切换会话时，`activeConversationRef` 与请求所属会话不一致的事件一律丢弃。
+
+### 8.3 待补齐的协议能力
+
+- 阶段化 `status` 事件（planning / searching / reading / summarizing）与工具级 `tool-call` / `tool-result` 记录；
+- `artifact` 事件；
+- 结构化 `error.code` 与 `retryable`，当前错误只有文案；
+- token 级流式（服务端目前缓冲到收尾一次性下发）。
 
 展示工具调用事实，不展示模型思维链、完整 prompt、SQL 或敏感参数。
-
-### 8.3 API 与 Hook 的边界
-
-`src/app/api/ai/chat/route.ts`：校验请求、获取认证上下文、创建 SSE、传递 `request.signal`、将 `AgentStreamEvent` 编码为 SSE、清理资源。
-
-`src/app/agent/_hooks/useChat.ts`：维护浏览器状态、发起请求、消费可判别事件、处理 abort / retry / completed、映射照片卡片和过程记录。
-
-迁移时修复：
-
-- 文本与照片卡片使用独立且稳定的消息 id；
-- `completed` 统一结束 `streaming` 状态；
-- 清空会话和断连会取消服务端剩余执行；
-- 错误事件不再被当作普通文本拼接；
-- 前端不判断 `PHOTO_SEARCH` 等后端意图，只处理事件类型。
 
 ---
 
@@ -529,10 +501,9 @@ export type AgentStreamEvent =
 
 ### 9.1 权限与确认
 
-- `AgentExecutionContext` 中的身份、角色与可访问照片范围只来自服务端认证。
-- 默认仅注册只读工具。
-- 写工具必须满足：管理员权限、明确用户确认、可审计记录、可取消或可回滚策略。
-- 若照片档案不是公开内容，聊天入口必须与照片页使用一致的访问控制。
+当前身份只有 `visitorId`（HTTP-only 随机 cookie），会话按此隔离，没有登录与角色体系。所有已注册工具均为只读。
+
+引入写工具前必须先补齐：身份来源、角色、可访问照片范围、明确的用户确认、可审计记录、可取消或可回滚策略。若照片档案不是公开内容，聊天入口必须与照片页使用一致的访问控制。
 
 ### 9.2 数据质量是能力上限
 
@@ -544,15 +515,15 @@ Agent 的质量受档案覆盖率约束。需要在管理端持续观测：
 - 无法定位到 Region 的坐标记录；
 - 重复、疑似重复或无可用缩略图的照片。
 
-当用户问“去年秋天在哪拍的”时，Agent 应能说明“仅统计有拍摄日期和地点的 82% 照片”，而不是将缺失数据静默忽略。
+其中「有向量」尤其关键：`photo_ai_analyses.embedding` 为空的照片对语义检索等于不存在。
 
 ### 9.3 运行限制
 
-- 每回合限制最大工具调用次数、总耗时与最大结果数量。
-- 模型调用、向量检索、图片分析分别设置超时。
-- 将浏览器 `AbortSignal` 传入 Agent 与可取消工具。
-- 高成本图像分析与扫描/导入共享并发治理，避免争夺模型和对象存储资源。
-- 记录工具耗时、结果数量、错误码、取消率与匿名化评测指标。
+已有：单工具最多返回 20 张（默认 12），语义检索上限 6 条；浏览器 `AbortSignal` 经 `request.signal` 传入 Agent 执行链，中断时不再落库已发送内容以外的数据；命中照片后不再接受后续工具结果。
+
+待补：每回合最大工具调用次数与总耗时上限；模型调用、向量检索、图片分析的独立超时；与扫描/导入任务的并发治理；工具耗时、错误码、取消率的指标化。
+
+反向代理层需要放宽读超时（Nginx 的 `proxy_read_timeout` 默认 60s），否则模型静默期会被判为超时断连。更稳妥的做法是在 SSE 中加入周期性心跳，不依赖运维配置。
 
 ### 9.4 离线评测集
 
@@ -561,210 +532,102 @@ Agent 的质量受档案覆盖率约束。需要在管理端持续观测：
 ```text
 问题：去年秋天我在哪些城市拍过？
 依据：2025-09-01 至 2025-11-30、有地点的照片
-预期工具：query_locations / search_photos
+预期工具：location_search / date_search
 可接受答案：列城市、照片数、时间范围与至少一张代表照片
 不可接受答案：无依据地推测城市、遗漏数据覆盖率说明
 ```
 
-评测集用于提示词、工具、模型或排序策略变更后的回归，不用于替代线上权限控制。
+评测集用于提示词、工具、模型或排序策略变更后的回归。当前可直接复用的观测点是日志里的 `toolName` 与 `arguments`，比看最终答案更容易判断工具选择与参数抽取是否正确。
 
 ---
 
 ## 10. 分批开发计划
 
-每一批都应能够独立上线、观察和回滚。批次不是按“文件创建顺序”划分，而是按用户可获得的完整价值划分。
+每一批都应能够独立上线、观察和回滚。批次按用户可获得的完整价值划分。
 
-### 批次 0：基础盘点与验收基线
+### 批次 0：基础盘点与验收基线 —— 已完成
 
-**目标**：冻结现有行为，建立后续改造的事实基线。
+访问策略确定为访客 cookie 隔离；现有行为与失败方式已在改造中逐步固化为固定文案与状态机。数据覆盖率报表尚未建立，顺延到批次 5 的观测工作中。
 
-**范围**：
+### 批次 1：可上线的“找与读” Agent —— 已完成
 
-- 记录当前 `/api/ai/chat` 的输入、SSE 输出、照片卡片行为和失败方式；
-- 准备最小问题集：语义检索、空结果、普通问题、单图详情、模型失败、浏览器取消；
-- 明确 Agent 是公开入口、登录入口还是管理员入口；
-- 统计现有照片的时间、地点、EXIF、AI 分析与 embedding 覆盖率；
-- 明确哪些地点、EXIF 字段可以暴露给不同角色。
+**用户能做什么**：按时间、地点、AI 标签、画面语义、拍摄参数五个维度找到照片；看到统一的检索等待态；无结果时得到带调整建议的说明。
 
-**不做**：不重构 Route，不引入工具，不改数据库模型。
+**已交付**：五个只读检索工具；`AgentService` 基于 LangGraph 编排；`route.ts` 收敛为 SSE 适配层；语义检索独立为 `semantic-search.service.ts`，含查询规划与相似度收敛；`request.signal` 贯穿执行链；服务端接管正文以保证事实性表述。
 
-**完成标准**：有可重复的请求样本、数据覆盖率报表和访问策略决定。
+**未达成的原定目标**：单图详情与 EXIF 问答工具未实现（照片详情由前端查看器承担）。
 
-### 批次 1：可上线的“找与读” Agent
+### 批次 2：会话与历史 —— 已完成
 
-**目标**：让 Agent 真正回答档案问题，替代固定 `PHOTO_SEARCH` 分支。
+**用户能做什么**：侧栏查看真实历史会话，切换、删除；刷新后恢复消息与照片；移动端通过抽屉访问历史。
 
-**用户能做什么**：
+**已交付**：三张表与 `conversation.service.ts`；`src/lib/contracts/agent-conversation.ts` 共享 DTO；会话列表与详情接口；LangGraph checkpoint 独立承担模型记忆。
 
-- 按场景、地点、时间、标签、光线找到照片；
-- 查看指定照片的时间、地点、画面说明与相机参数；
-- 看到“正在检索”“找到多少张”的过程；
-- 在没有结果时得到基于索引范围的解释，而非固定抱歉文本。
+**未达成的原定目标**：照片引用未回流到模型上下文，「第 N 张」「这组」仍不可解析；没有有限历史与会话摘要策略；统计类回答缺席。这些顺延到批次 3。
 
-**后端工作**：
+### 批次 3：引用、聚合与“连接”能力
 
-- 新建 `src/lib/contracts/agent.ts`；
-- 抽出 `semantic-photo-search.service.ts`，修复过滤、排序与参数化查询；
-- 新建 `ArchiveAgentService`、工具接口、注册表与首期 prompt；
-- 实现 `search_photos`、`get_photo_detail`、`get_photo_exif`、`query_locations`；
-- 将 `route.ts` 收敛为 SSE 适配层；
-- 将 `request.signal` 传给 Agent 执行链；
-- 统一日志、超时、最大结果数和错误码。
-
-**前端工作**：
-
-- `useChat` 消费 `AgentStreamEvent`；
-- 修复消息 id、状态收束和 abort；
-- 增加紧凑的过程记录与结果数量摘要；
-- 照片卡片携带稳定引用 id。
-
-**完成标准**：
-
-- 所有首期问题均通过工具得到有依据的回答；
-- Route 内不再存在按 `PHOTO_SEARCH` 写死的业务分支；
-- 语义搜索结果保持相关度排序；
-- 前后端协议无 `any`；
-- 断连后可停止后续执行；
-- 不暴露原始数据与未授权字段。
-
-### 批次 2：会话、引用与“连接”能力
-
-**目标**：从单次检索升级为能理解“这张”“第二组”“去年秋天”的连续档案对话。
+**目标**：从单次检索升级为能理解会话内指代、并给出可验证统计的档案对话。
 
 **用户能做什么**：
 
-- 连续追问上一轮的照片与结果；
-- “第二张是什么时候拍的”“把这组按地点展开”；
+- “第二张是什么时候拍的”“这组用了什么镜头”；
 - “我去年秋天都去了哪里”“我常在哪些城市拍夜景”；
-- 刷新后恢复会话历史和被引用照片。
+- 对统计类回答看到样本数与筛选范围。
 
 **后端工作**：
 
-- 新增 `AgentConversation`、`AgentMessage`、`AgentMessagePhotoReference`；
-- 实现 `conversation.service.ts`；
-- 新增 `archive-insight.service.ts`，将分组、计数、时间范围、参数分布等统计固定在服务端，而不是交给模型猜；
-- 实现 `summarize_photo_set`，补充地点/时间/设备聚合；
-- 实施有限历史与会话摘要策略；
-- 支持 `PhotoReference` 解析和持久化。
+- 实现 `get_photo_detail`、`get_photo_exif`；
+- 新增 `archive-insight.service.ts`，把分组、计数、时间范围、参数分布固定在服务端；
+- 实现 `summarize_photo_set`；
+- 把 `AgentMessagePhoto` 的引用回流到模型上下文，支持 `position` 解析；
+- 引入有限历史与会话摘要，替代 checkpoint 全量累积。
 
-**前端工作**：
+**完成标准**：会话内指代可稳定解析；统计结论均含样本与范围说明；长会话的输入量不随轮数线性增长。
 
-- 侧栏接入真实历史会话；
-- 照片引用可展开、定位与继续追问；
-- 对统计类回答显示样本数、筛选范围和数据缺失说明。
-
-**完成标准**：
-
-- “第 N 张”“这组”“上一批结果”等指代可稳定解析；
-- 刷新后可恢复会话与引用；
-- 统计结论均包含样本与时间/地点范围；
-- 会话上下文不会无限增长。
-
-### 批次 3：策展产物与主动探索
+### 批次 4：策展产物与主动探索
 
 **目标**：把对话结果转化为用户可保存、可复用的档案成果。
 
-**用户能做什么**：
+**后端工作**：设计 `AgentArtifact` 与 collection 数据模型；新增 `collection.service.ts` 区分草稿与确认写入；实现 `compare_photo_sets`、`draft_collection`、`save_collection`；引入确认令牌防止模型自动保存；为候选集建立可解释的选择规则。
 
-- “从这批里选 12 张做杭州秋天相册”；
-- “对比 2024 和 2025 的秋天”；
-- “生成我的夜景拍摄时间线”；
-- 保存候选相册、时间线或对比报告，并在后续继续编辑。
+**前置条件**：写操作需要先有身份与权限体系，见 9.1。
 
-**后端工作**：
+**完成标准**：Agent 只能创建草稿；每个候选集说明筛选依据；artifact 可在会话外再次打开。
 
-- 设计 `AgentArtifact` 与 collection / album 数据模型；
-- 新增 `collection.service.ts`，区分候选草稿和已确认写入；
-- 实现 `compare_photo_sets`、`draft_collection`、`save_collection`；
-- 引入确认令牌或明确的二次请求，防止模型自动保存；
-- 为候选集建立可解释的选择规则：时间覆盖、地点多样性、重复度、主题相关性、用户偏好。
+### 批次 5：档案维护、评测与规模化
 
-**前端工作**：
-
-- 展示候选集、时间线、对比报告等 `artifact`；
-- 在保存、覆盖、发布前要求明确确认；
-- 支持从 artifact 回到照片浏览、地图或会话继续探索。
-
-**完成标准**：
-
-- Agent 只能创建草稿，用户确认后才落库；
-- 每个候选集说明筛选依据与照片来源；
-- artifact 可在会话外再次打开；
-- 不因策展功能破坏普通检索性能与权限边界。
-
-### 批次 4：档案维护与管理员协作
-
-**目标**：让 Agent 成为后台管理的辅助入口，但不成为无约束的管理执行器。
-
-**用户能做什么（管理员）**：
-
-- “哪些照片缺少地点或 AI 分析？”
-- “重新分析这 20 张夜景照片。”
-- “这些照片是否可能是同一地点？”
-- “查看本次扫描中分析失败的文件。”
+**目标**：让 Agent 成为后台管理的辅助入口，并在档案增长、模型变化后保持可验证质量。
 
 **后端工作**：
 
-- 实现 `find_metadata_gaps`；
-- 将 `request_photo_analysis` 接入明确的异步任务与进度状态；
-- 记录触发者、输入范围、任务状态、失败原因与可重试操作；
-- 与扫描/导入任务建立并发治理；
-- 对批量写操作设计确认、幂等和失败恢复。
-
-**前端工作**：
-
-- 管理员模式与普通档案问答明确区隔；
-- 展示任务状态、进度、取消和失败恢复入口；
-- 批量操作必须显示影响范围与确认信息。
-
-**完成标准**：
-
-- 普通用户无法看到或调用管理员工具；
-- 写操作全程可追踪，失败不会破坏既有索引；
-- Agent 不会在无确认的情况下改写档案。
-
-### 批次 5：检索质量、评测与规模化
-
-**目标**：让系统在档案增长、模型变化和工具增加后仍保持可验证质量。
-
-**后端工作**：
-
+- 实现 `find_metadata_gaps`、`request_photo_analysis`（接入可取消的异步任务）；
+- 建立数据覆盖率报表与工具级指标（耗时、零结果率、失败率、取消率）；
 - 演进混合检索：结构化过滤 + 关键词 + 向量召回 + 可解释重排；
-- 为 embedding、提示词、工具版本和索引版本建立可观测标记；
-- 建立离线评测集、自动回归与人工抽检流程；
-- 记录检索命中率、零结果率、工具失败率、取消率、延迟分位数与引用覆盖率；
-- 处理长期任务队列、缓存、限流和资源隔离；
-- 逐步做数据质量修复：重建 embedding、补 Region、检查无效媒体。
+- 建立离线评测集与回归流程；
+- 处理长期任务队列、缓存、限流与资源隔离。
 
-**长远但暂不默认实施的方向**：
-
-- 人物、相册、旅行、设备等专门实体模型；
-- 用户标注与偏好反馈对排序的影响；
-- 更精细的隐私区域和地点模糊策略；
-- 多模态重复图检测和相似组；
-- 只有当任务确实独立、长时且权限不同，才把后台工作流拆为独立 worker；仍优先确定性任务，不急于多 Agent。
-
-**完成标准**：每次模型、提示词、工具或索引变更都能在评测集上比较效果；数据规模与后台任务增长不显著影响前台检索体验。
+**长远但暂不默认实施的方向**：人物、相册、旅行、设备等专门实体模型；用户偏好反馈影响排序；更精细的隐私区域策略；多模态重复图检测；仅当任务确实独立、长时且权限不同时才拆独立 worker。
 
 ---
 
 ## 11. 交付顺序与依赖
 
 ```text
-批次 0：访问策略 + 数据覆盖率 + 现有行为基线
+批次 0：访问策略 + 现有行为基线                                  ✅
   ↓
-批次 1：共享事件协议 + 语义搜索服务 + 首期只读工具 + 可上线 Agent
+批次 1：五个只读检索工具 + LangGraph 编排 + SSE 适配层            ✅
   ↓
-批次 2：真实会话 + 照片引用 + 可验证聚合
+批次 2：会话持久化 + 历史侧栏 + 共享 DTO                          ✅
   ↓
-批次 3：候选集 / 相册 / 时间线等策展产物
+批次 3：照片引用回流 + 单图工具 + 可验证聚合 + 上下文裁剪          ← 下一步
   ↓
-批次 4：管理员维护工具 + 异步任务治理
+批次 4：身份与权限 → 候选集 / 对比报告等策展产物
   ↓
-批次 5：混合检索、评测、观测、规模化与数据质量运营
+批次 5：管理员维护工具 + 评测 + 观测 + 混合检索
 ```
 
-不应跳过批次 0 和批次 1 直接实现会话、相册或写工具：没有稳定检索、引用、权限和事件协议，后续产物不可追溯且难以维护。
+批次 4 的写工具依赖身份与权限体系，不应在只有访客 cookie 的前提下开工。
 
 ---
 
@@ -772,47 +635,61 @@ Agent 的质量受档案覆盖率约束。需要在管理端持续观测：
 
 ### 产品与体验
 
-- [ ] 用户能从一句自然语言得到有证据的照片答案，而不是固定兜底文本。
-- [ ] 每个事实性结论可以追溯到照片、时间、地点、EXIF 或统计范围。
-- [ ] 无结果、数据缺失、权限不足和工具失败都有明确、可理解的反馈。
-- [ ] 过程记录展示执行事实，不泄露模型思维链和敏感内部信息。
-- [ ] 候选集、时间线等产物在用户确认前不会写入档案。
+- [x] 用户能从一句自然语言得到照片答案，而不是固定兜底文本。
+- [x] 未找到结果时给出基于检索条件的说明与可调整方向。
+- [x] 过程记录不泄露模型思维链和敏感内部信息。
+- [x] 照片结果可点击查看详情，作为回答的可追溯引用。
+- [ ] 每个事实性结论可以追溯到照片、时间、地点、EXIF 或统计范围（统计类结论缺席）。
+- [ ] 数据缺失、权限不足有明确反馈。
+- [ ] 候选集、时间线等产物在用户确认前不会写入档案（尚无写能力）。
 
 ### 架构
 
-- [ ] `app/api → Agent → tools → services → infra` 保持单向依赖。
-- [ ] 所有可调用工具在 `tool-registry.ts` 显式注册。
-- [ ] Route 不含 prompt、工具定义、业务查询或固定意图分支。
-- [ ] 工具不复制 Prisma 查询、签名 URL 和脱敏逻辑。
-- [ ] `src/lib/contracts/agent.ts` 只含共享序列化契约，内部服务类型不泄露到客户端。
+- [x] `app/api → Agent → tools → services → infra` 保持单向依赖。
+- [x] 所有可调用工具在 `createAgent({ tools })` 显式注册。
+- [x] Route 不含 prompt、工具定义、业务查询或固定意图分支。
+- [x] 工具不复制 Prisma 查询、签名 URL 和脱敏逻辑。
+- [x] `src/lib/contracts/agent-conversation.ts` 只含共享序列化契约。
+- [ ] 提示词独立为 `agent.prompt.ts`（当前内联在 `agent.service.ts`）。
 
 ### 协议与数据
 
-- [ ] 前后端事件协议无 `any`。
-- [ ] 文本、照片结果、过程记录、artifact、错误和完成事件有可判别类型。
-- [ ] 文本与照片卡片具有独立、稳定的消息 id。
-- [ ] 会话引用使用稳定 `photoId`，而非 UI 中的临时顺序。
-- [ ] 查询结果保留相关度排序，筛选条件实际参与检索。
-- [ ] 工具输出不包含 rawData、embedding、对象存储 key 或未授权字段。
+- [x] 前后端会话契约无 `any`。
+- [x] 文本与照片结果在同一条消息上携带独立字段，消息 id 稳定。
+- [x] 会话引用使用稳定 `photoId`，而非 UI 中的临时顺序。
+- [x] 查询结果保留相关度排序，筛选条件实际参与检索。
+- [x] 工具输出不包含 rawData、embedding、对象存储 key 或未授权字段。
+- [ ] SSE 事件有结构化错误码与可判别的过程事件类型（`data` 仍为宽类型）。
 
 ### 安全、质量与运行
 
-- [ ] 身份、角色与照片访问范围只来自服务端认证。
-- [ ] 默认工具集只读；写工具有权限、确认、审计、限流和取消能力。
-- [ ] 浏览器取消会停止后续模型和工具执行。
-- [ ] 模型、检索、图片分析都有超时、结果数量和并发限制。
-- [ ] 数据覆盖率、工具耗时、失败率、零结果率与引用覆盖率可观测。
-- [ ] 评测集覆盖检索、单图、统计、无结果、权限和取消等关键场景。
+- [x] 会话按服务端签发的 `visitorId` 隔离，客户端不能指定归属。
+- [x] 默认工具集只读。
+- [x] 浏览器取消会停止后续模型和工具执行。
+- [x] 单次检索有结果数量上限。
+- [ ] 身份、角色与照片访问范围来自完整认证体系。
+- [ ] 模型、检索、图片分析都有独立超时与并发限制。
+- [ ] 数据覆盖率、工具耗时、失败率、零结果率可观测。
+- [ ] 评测集覆盖检索、单图、统计、无结果、取消等关键场景。
 
 ---
 
-## 13. 实施前的决策项
+## 13. 决策记录与待定项
 
-1. Agent 是公开照片档案入口、登录用户入口，还是仅管理员能力？
-2. 不同角色可见的地点精度、EXIF 字段与照片范围分别是什么？
-3. 会话、候选集和相册是否需要长期保存与分享？
-4. 批次 1 是先返回完整回答，还是同时实现模型 token 流？建议先保障工具阶段事件和完整回答，再逐步补 token 流。
-5. 重新分析图片是同步执行、后台队列执行，还是跳转到既有后台任务？建议使用可取消的后台任务。
-6. 首批需要支持哪些明确的时间、地点、光线和设备筛选条件？这些条件决定领域查询与索引优先级。
+### 已决定
 
-在上述访问与隐私决策未确定前，可以开始批次 0 的数据盘点和批次 1 的只读工具底座；写工具、会话分享和持久化 artifact 应等待边界明确后再进入实现。
+1. **身份**：当前为访客 cookie 隔离，不要求登录。引入写工具前需重新评估。
+2. **编排框架**：采用 LangChain / LangGraph 的 `createAgent`，而非自研工具循环。会话记忆由 `PostgresSaver` 承担，界面历史由应用表承担，两者不混用。
+3. **工具划分**：按检索维度拆成五个工具，而非一个通用搜索工具带多种过滤参数。
+4. **正文归属**：命中照片时的事实性叙述由服务端生成，模型正文不直接呈现。
+5. **流式粒度**：先保障工具阶段事件与完整回答，token 级流式顺延。
+6. **模型接入**：按用途分三组配置，平台由 `*_API_TYPE` 区分协议，不在代码里枚举平台。
+
+### 待定
+
+1. 不同角色可见的地点精度、EXIF 字段与照片范围分别是什么？
+2. 会话、候选集和相册是否需要长期保存与分享？
+3. 复合条件查询（“去年在杭州拍的逆光照片”）采用哪种形态：让模型一次性输出全部条件交由单个工具组合查询，还是实现多工具结果的交集？当前实现只保留第一组结果。
+4. 重新分析图片是同步执行、后台队列执行，还是跳转到既有后台任务？建议使用可取消的后台任务。
+5. 语义查询规划是否需要独立于 `CHAT_*` 的模型配置？当前与对话共用，云端配置下该步骤同样出网。
+6. 低配部署的长期方案：本地小模型、云端推理，还是把推理放到局域网内另一台机器？
