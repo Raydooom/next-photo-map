@@ -214,10 +214,10 @@ function createTakenAtRange({ startDate, endDate }: DateSearchInput) {
 /**
  * 工具结果只给模型 id 与一组短标签，不含描述、文件名、时间、地点与 EXIF。
  *
- * 这些字段模型一个都用不到：界面靠 id 取照片，回答正文在有照片时会被服务端
- * 换成固定摘要，system prompt 也禁止它输出时间、地点、参数与文件名。
- * 但它们要占掉工具回填那一轮的绝大部分输入 —— 12 张照片的 description
- * 约 3K token，在纯 CPU 推理下就是几十秒的等待。
+ * 模型用不到这些字段：界面靠 id 取照片，有照片时回答正文由服务端的固定摘要
+ * 承担，system prompt 也禁止它输出时间、地点、参数与文件名。而它们会占掉
+ * 工具回填那一轮的绝大部分输入 —— 12 张照片的 description 约 3K token，
+ * 在纯 CPU 推理下就是几十秒的等待。
  *
  * theme 保留：服务端据此生成画面概述（getPhotoResultSummary 的 summaryTerms）。
  */

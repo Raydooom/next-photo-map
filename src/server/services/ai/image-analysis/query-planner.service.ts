@@ -2,7 +2,7 @@ import 'server-only';
 
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
-import { getFoundationChatModel } from '@/server/infra/chat-model';
+import { getChatModel } from '@/server/infra/chat-model';
 
 const MAX_RELATED_TERMS = 6;
 const MAX_SEMANTIC_QUERY_LENGTH = 400;
@@ -93,7 +93,8 @@ class PhotoQueryPlannerService {
     const fallback = createFallbackPlan(normalizedQuery);
 
     try {
-      const response = await getFoundationChatModel('ollama').invoke([
+      // 与 Agent 对话共用 CHAT_* 配置，换平台时两处一起生效
+      const response = await getChatModel().invoke([
         new SystemMessage(PHOTO_QUERY_PLANNER_PROMPT),
         new HumanMessage(`原始查询：${normalizedQuery}`)
       ]);

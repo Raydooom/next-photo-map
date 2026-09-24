@@ -3,7 +3,6 @@ import 'server-only';
 import { AIMessageChunk, ToolMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { createAgent } from '@/server/infra/agent';
-import { getAgentModelName } from '@/server/infra/chat-model';
 import {
   aiMetadataSearchTool,
   dateSearchTool,
@@ -200,8 +199,6 @@ class AgentService {
     }).format(new Date());
 
     return createAgent({
-      // 默认本地 ollama，AGENT_PROVIDER=qw 时切云端，见 chat-model.ts
-      model: getAgentModelName(),
       systemPrompt: `你是帮用户翻照片、找回拍下瞬间的照片小助手，只能依据工具返回的照片资料回答，不得编造照片、时间、地点或拍摄参数。
 当前日期（${ARCHIVE_TIME_ZONE}）：${currentDate}。
 当用户的问题包含明确日期、相对日期、月份、季度或年份时，必须调用 date_search。
@@ -251,7 +248,7 @@ class AgentService {
     userMsg: string;
     signal?: AbortSignal;
   }): AsyncGenerator<AgentStreamEvent> {
-    // createArchiveAgent 现在是异步的：checkpoint 建表改为首次调用时完成
+    // createArchiveAgent 是异步的：首次调用时才建 checkpoint 表
     const agent = await this.createArchiveAgent();
     const stream = await agent.stream(
       {
@@ -336,8 +333,8 @@ class AgentService {
     } else if (hasPhotoToolRun) {
       yield { type: 'text', delta: NO_PHOTO_RESULT_REPLY };
     } else {
-      // 没有照片时也要保证有一句话可发：原先正文为空就什么都不发，
-      // 落库会退成「没有生成可展示的回答」，界面上等同于一句故障提示
+      // 正文为空时兜底一句：什么都不发会落库成「没有生成可展示的回答」，
+      // 界面上等同于一句故障提示
       yield {
         type: 'text',
         delta: stripPhotoUiHints(bufferedText) || NO_CONTENT_REPLY

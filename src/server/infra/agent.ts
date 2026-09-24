@@ -2,10 +2,7 @@ import 'server-only';
 
 import { createAgent as cAgent } from 'langchain';
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
-import {
-  getFoundationChatModel,
-  type FoundationModelName
-} from './chat-model';
+import { getChatModel } from './chat-model';
 
 let checkpointerPromise: Promise<PostgresSaver> | undefined;
 
@@ -40,18 +37,17 @@ function getCheckpointer() {
  * 应使用 chat-model.ts 的无 checkpoint 基础模型入口。
  */
 export const createAgent = async ({
-  model = 'qw',
   systemPrompt,
   tools = [],
   openCheckpointer = true
 }: {
-  model?: FoundationModelName;
   systemPrompt: string;
   tools?: any[];
   openCheckpointer?: boolean;
 }) => {
   return cAgent({
-    model: getFoundationChatModel(model),
+    // 对话模型由 CHAT_* 环境变量决定
+    model: getChatModel(),
     checkpointer: openCheckpointer ? await getCheckpointer() : false,
     tools,
     systemPrompt
