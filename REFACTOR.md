@@ -5,11 +5,10 @@
 
 ## 阻塞关系
 
-只有三处硬依赖，其余条目互不影响，可任意穿插：
+只有两处硬依赖，其余条目互不影响，可任意穿插：
 
 ```text
 5.1 migration 对齐  →  1.5 向量索引、1.6 向量前缀
-1.7 去掉 async      →  1.2 自动消失
 5.6 时区            →  5.7 太阳角度
 ```
 
@@ -25,20 +24,6 @@
 - **现有缓解**：NPM 的 Advanced 里配了 `proxy_read_timeout 600s` 与 `proxy_buffering off`；代码已发 `X-Accel-Buffering: no`。
 - **处理**：每 15 秒发一行 SSE 注释 `: ping`，`close()` 时清掉定时器。注释行不触发客户端 `onmessage`，但能让代理看到字节流动，从此不依赖运维配置。Cloudflare 免费版约 100s 的响应超时也只有这个办法能绕。
 
-### 1.2 `getPhotosInBounds` 缺少 `Promise.all`
-
-- **位置**：`src/server/services/photo/photo.service.ts`
-- **问题**：`return photos.map((photo) => this.transformPhoto(photo))` 返回的是 Promise 数组。同文件的 `getPhotosByIds`、`listAllWithFileStatus` 写法正确。
-- **影响**：当前无调用方，属潜在缺陷。
-- **处理**：做完 1.7 后 `transformPhoto` 变同步，本条自动消失。若先单独修，补 `Promise.all`；或直接删除（5.3 的 PostGIS 落地后会用 `ST_DWithin` 重写）。
-
-### 5.15 `exifImageWidth` 被前端误用
-
-- **位置**：`components/photo/ExifInfo.tsx`（两处）、`lib/photoMeta.ts`
-- **问题**：`photos.width/height` 来自 `metadata.autoOrient.width`（sharp 解码并应用旋转后的实际尺寸），`photo_exifs.exifImageWidth/Height` 是 EXIF 原始值（不含旋转）。这两处展示都用了后者。`PhotoLightbox/InfoPanel.tsx` 已不再引用它。
-- **影响**：竖拍照片的详情面板显示成横向尺寸。
-- **处理**：展示改用 `photos.width/height`，`exifImageWidth` 仅作原始记录保留。
-
 ### 5.10 两处 schema 层面的小 bug
 
 **`Photo.updatedAt` 不会自动更新** —— 缺 `@updatedAt`（`PhotoAiAnalysis` 有）。后果是它永远等于 `createdAt`，改置顶、重建缩略图、改位置都不会更新。
@@ -46,13 +31,6 @@
 **`takenAt` 可空，但它是唯一排序字段** —— 所有列表查询都 `orderBy: { takenAt: 'desc' }`，PG 在 DESC 排序时 NULL 排最前，没有拍摄时间的照片会跑到列表最顶端。scanner 里有兜底（取不到 EXIF 时间就用 `stats.birthtime`），实际永不为 null，字段应改为非空让约束反映真实情况。
 
 # 二｜安全：多数与代码无关，拖着风险持续存在
-
-### 0.4 git 历史含明文凭据
-
-- **问题**：早期提交过 `.env.production`，`docker-compose.yml` 的 `build.args` 写过完整 `DATABASE_URL`，`ai-client.ts` 曾把 ModelScope key 作为硬编码默认值。
-- **已泄露**：Postgres 密码、MinIO access / secret key、高德 API key、`JWT_SECRET`、ModelScope key。
-- **现状**：被跟踪的文件里已无明文凭据，但上述值仍在已推送到 `origin/main` 与 `origin/refactor-v1` 的历史中。
-- **处理**：**先在各服务端更换这些凭据**，这是唯一能真正解除风险的动作 —— 重写历史只影响新克隆，已拉过仓库的人本地副本不受影响。换完再决定是否用 `git filter-repo` 清理（需 force push，所有提交 SHA 会变，其他克隆必须重新克隆）。
 
 ### 0.3 `admin_auth` cookie 直接存密码明文
 
@@ -172,7 +150,7 @@ UPDATE locations SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326):
 CREATE INDEX ON locations USING gist (geom);
 ```
 
-  这是「搜索附近照片」的前提，也是 1.2 重写的依据。
+  这是「搜索附近照片」的前提；`getPhotosInBounds` 也应随之改用 `ST_DWithin` 重写，当前的经纬度区间查询只是矩形近似。
 
 ### 5.13 `photo_exifs` 与 `locations` 没有时间戳
 
