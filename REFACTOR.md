@@ -5,12 +5,18 @@
 
 ## 阻塞关系
 
-只有两处硬依赖，其余条目互不影响，可任意穿插：
+只有一处硬依赖，其余条目互不影响，可任意穿插：
 
 ```text
-5.1 migration 对齐  →  1.5 向量索引、1.6 向量前缀
-5.6 时区            →  5.7 太阳角度
+5.6 时区  →  5.7 太阳角度
 ```
+
+## 数据层的两个前提
+
+改表或加索引前需要知道：
+
+- **迁移历史已重建为单个 baseline**（`20260924000000_baseline`），由 `migrate diff --from-empty --to-schema` 生成，空库跑一遍再 diff 为空，即能精确重建当前 schema。本地库与生产库的 `_prisma_migrations` 都只有这一条记录，`migrate status` 均为 up to date。
+- **`migrate diff` 的输出永远非空**，它总会包含 `DROP TABLE checkpoint_blobs / checkpoint_migrations / checkpoint_writes / checkpoints`。这四张表由 LangGraph 的 `PostgresSaver` 维护、不在 Prisma schema 里。**直接把 diff 输出当 migration 执行会抹掉 Agent 的对话记忆。** 另有一处 `agent_conversations_visitor_id_updated_at_idx` 的排序方向差异，同样忽略即可。
 
 ---
 
@@ -47,29 +53,7 @@
 
 ---
 
-# 三｜数据层前置：阻塞后续所有表结构与索引改动
-
-### 5.1 migration 与 schema 仍有漂移
-
-- **成因**：早期用过 `prisma db push` 绕过 migration 记录。那两个脚本已从 `package.json` 移除，现在只有 `db:migrate:local` / `db:migrate:prod` / `db:status:prod`。
-- **仍存在的差异**：
-
-| 项 | migration | schema | 生产库实际 |
-|---|---|---|---|
-| `embedding` / `tag_embedding` | `vector(768)` | `vector(1024)` | 无维度 `vector` |
-| `photos.description` / `tags` | 有 | 无 | — |
-| `chineseDescription` | 有 | 无 | — |
-| `theme` / `tagEmbedding` | 无 | 有 | 有 |
-| `photo_ai_analyses.location` | 有（geography） | 无 | 残留空列 |
-
-- **影响**：现有 migration 无法从零重建出与 schema 一致的库；1.5 的 HNSW 索引要求列有固定维度，直接被这条卡住。
-- **生产库状态**：迁移**记录**已对齐 —— 用 `migrate resolve --applied` 对 `init` 与 `add_field` 做了 baseline，随后 `migrate deploy` 应用了 `extract_regions`、`add_agent_conversations`、`add_agent_message_photos`，`migrate status` 报 up to date。但**结构**漂移仍在。
-- **处理**：写一个对齐 migration，内容为：两个向量列改 `vector(1024)`、删 `photos` 的遗留列与 `chineseDescription`、删 `photo_ai_analyses.location`（原 5.4，该列写入端从未赋值，位置数据都在 `locations` 表）。改维度前需抽查历史向量确实都是 1024 维 —— `EMBEDDING_DIMENSION` 校验只保证新写入的。
-- **附**：`agent_conversations_visitor_id_updated_at_idx` 的排序方向差异（migration 建的是 `updated_at DESC`，schema 未声明）不必处理，侧栏历史按倒序取，带 DESC 更贴合。
-
----
-
-# 四｜检索质量：依赖 5.1
+# 三｜检索质量
 
 ### 1.5 向量检索是全表扫描
 
@@ -83,7 +67,7 @@ CREATE INDEX ON photo_ai_analyses USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX ON photo_ai_analyses USING hnsw (tag_embedding vector_cosine_ops);
 ```
 
-  算子必须与查询一致 —— 代码用 `<=>`（余弦距离），所以是 `vector_cosine_ops`。**前置**：HNSW 要求固定维度，需先完成 5.1 的维度对齐。
+  算子必须与查询一致 —— 代码用 `<=>`（余弦距离），所以是 `vector_cosine_ops`。HNSW 要求列有固定维度，两个库的向量列都已是 `vector(1024)`（本地 35 行、生产 38 行实测全为 1024 维），无前置条件。
 
 ### 1.6 向量化仍带 nomic 的指令前缀
 
@@ -99,11 +83,11 @@ generateEmbeddingVector(`search_query: ${normalizedQuery}`)
   这套约定属于 nomic-embed-text，而项目用的是 bge-m3。bge-m3 是 instruction-free 的，检索任务不需要前缀。当前做法相当于在 query 端与 document 端掺入不同噪声，人为拉大两者距离。
 
 - **处理**：去掉两处前缀，全量重跑分析对齐历史向量，并重新校准 `semantic-search.service.ts` 的 `SEMANTIC_SEARCH_MIN_SIMILARITY = 0.55` 与 `SEMANTIC_SEARCH_MAX_SCORE_GAP = 0.08` —— 这两个阈值是在带前缀的分布上调出来的。
-- **建议**：与 5.1 的维度对齐同批做，历史向量只重算一次。
+- **注意**：改完必须全量重跑分析，否则库里会同时存在带前缀与不带前缀两种分布的向量，检索质量反而更差。
 
 ---
 
-# 五｜表结构改造：都要动表，一次 migration 做完
+# 四｜表结构改造：都要动表，一次 migration 做完
 
 ### 5.9 GPS 字段在 `photo_exifs` 与 `locations` 重复
 
@@ -183,7 +167,7 @@ exposureTimeStr = `1/${Math.round(1 / exifData.ExposureTime)}`;
 
 ---
 
-# 六｜按需推进：由功能需求或规模触发
+# 五｜按需推进：由功能需求或规模触发
 
 ### 5.6 `takenAt` 的时区问题
 
