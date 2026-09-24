@@ -95,7 +95,9 @@ export function extractPhotoMeta(photo: PhotoItem): PhotoMeta {
     formatExposurebias(exif?.exposureBias)
   ].filter((item): item is string => Boolean(item));
   const fileDetails = [
-    formatDimension(exif?.exifImageWidth || 0, exif?.exifImageHeight || 0),
+    // 取 photos.width/height：解码并应用旋转后的实际尺寸。
+    // EXIF 的 exifImageWidth 不含旋转，竖拍照片会显示成横向
+    formatDimension(photo.width || 0, photo.height || 0),
     formatFileSize(photo.size || 0)
   ].filter((item): item is string => Boolean(item));
 
