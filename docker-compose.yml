@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: postgresql://photo_user:***REMOVED***@photo-map-db:5432/photomap_db
+      # 构建期的 DATABASE_URL 由 npm run build:docker 经 dotenv -e .env.docker 注入，
+      # 不在此处传 build arg：Dockerfile 未声明对应 ARG，且构建参数会留在镜像历史里
     container_name: photo-map-next
     env_file:
       - .env.docker
