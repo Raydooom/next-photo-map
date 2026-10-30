@@ -1,8 +1,9 @@
 # 第一阶段：安装依赖
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json ./
-RUN npm i -d
+# 连同 lockfile 一起拷贝，npm ci 严格按 lockfile 安装，保证构建可复现
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # 第二阶段：构建源码
 FROM node:22-alpine AS builder
@@ -21,9 +22,9 @@ ENV NODE_ENV=production
 # 禁用 Next.js 遥测数据收集
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 创建非 root 用户提高安全性
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# 创建非 root 用户提高安全性（合并为一层）
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
 # 仅拷贝构建好的独立运行文件
 COPY --from=builder /app/public ./public
