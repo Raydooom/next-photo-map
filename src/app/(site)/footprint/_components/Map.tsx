@@ -177,6 +177,9 @@ export default function Map({
       if (!city) {
         if (features.length === 0) return;
         const bounds = bbox(featureCollection(features));
+        // 坐标异常时 bbox 会含 NaN/Infinity，fitBounds 据此算出 NaN 中心会崩图；
+        // 非有限则放弃本次取景、保持当前视野。
+        if (!bounds.every((v) => Number.isFinite(v))) return;
         mapInstance.fitBounds(
           [
             [bounds[0], bounds[1]],

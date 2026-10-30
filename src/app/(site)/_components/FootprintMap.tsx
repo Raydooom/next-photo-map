@@ -75,6 +75,17 @@ function fitToPoints(map: maplibreGl.Map, points: [number, number][]) {
   }
 
   const bounds = bbox(featureCollection(points.map((p) => turfPoint(p))));
+  // 点位坐标异常时 bbox 会出现 NaN/Infinity，fitBounds 会据此算出 NaN 中心
+  // 并让 MapLibre 抛错崩页；此处退回以首个点居中的单点取景。
+  if (!bounds.every((v) => Number.isFinite(v))) {
+    map.flyTo({
+      center: points[0],
+      zoom: SINGLE_POINT_ZOOM,
+      duration: FLY_DURATION,
+      padding: getFitPadding()
+    });
+    return;
+  }
   map.fitBounds(
     [
       [bounds[0], bounds[1]],

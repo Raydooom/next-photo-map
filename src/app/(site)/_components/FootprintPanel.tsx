@@ -36,7 +36,9 @@ function groupByCity(locations: LocationRow[]): CityGroup[] {
   >();
 
   locations.forEach(({ city, adcode, latitude, longitude }) => {
-    if (!city || latitude == null || longitude == null) return;
+    // 用 Number.isFinite 而非 == null：后者挡不住 NaN（NaN == null 为 false），
+    // 而 NaN 坐标会让下方 getCenter 的求和变 NaN，最终使相机中心纬度为 NaN 崩图。
+    if (!city || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
 
     let group = grouped.get(city);
     if (!group) {

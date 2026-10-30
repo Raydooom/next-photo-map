@@ -51,6 +51,10 @@ export async function getRegionBounds(
   if (matched.length === 0) return null;
 
   const bounds = bbox(featureCollection(matched as any));
+  // turf 对含空/损坏几何的要素会返回带 Infinity/NaN 的包围盒，
+  // 直接喂给 fitBounds 会让 MapLibre 在算中心点时得到 NaN 纬度并抛错，
+  // 进而触发整页错误边界。此处拦下非有限值，返回 null 让调用方走点位兜底。
+  if (!bounds.every((v) => Number.isFinite(v))) return null;
   return [bounds[0], bounds[1], bounds[2], bounds[3]];
 }
 

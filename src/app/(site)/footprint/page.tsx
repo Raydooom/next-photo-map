@@ -34,6 +34,9 @@ function buildCityIndex(list: PhotoLocation[]): CityIndexItem[] {
   list.forEach((item) => {
     const city = item.city?.trim();
     if (!city) return;
+    // 非有限坐标（null/NaN/Infinity）会污染下面的求和，使城市中心纬度变 NaN，
+    // 传给地图 flyTo 后 MapLibre 抛错并触发整页错误边界，故在累加前剔除。
+    if (!Number.isFinite(item.longitude) || !Number.isFinite(item.latitude)) return;
 
     if (!groups[city]) {
       groups[city] = {
