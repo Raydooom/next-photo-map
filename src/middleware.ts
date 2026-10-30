@@ -13,6 +13,13 @@ export function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+
+  // 上传接口自带共享密钥鉴权（Authorization: Bearer），不走管理端 cookie。
+  // 放行给路由内的 requireUploadResponse() 处理，否则手机 App 会被这里先拦成 401。
+  if (pathname === '/api/admin/upload') {
+    return NextResponse.next();
+  }
+
   const authCookie = request.cookies.get('admin_auth')?.value;
   const secret = process.env.ADMIN_PASSWORD;
 

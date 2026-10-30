@@ -5,18 +5,27 @@ import path from 'path';
 import { PHOTO_BASE_DIR } from '@/server/infra/env';
 import { ScannerService } from '@/server/services/ingestion/scanner.service';
 import { groupFiles, isImageExt, isVideoExt } from '@/server/services/ingestion/photo-files';
-import { requireAdminResponse } from '@/server/auth';
+import { isAdmin, isUploadAuthorized } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';
+
+// 单文件大小上限（字节）。原始照片/实况视频较大，给到 200MB
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
 /**
  * 上传图片 API
  * 支持手动上传 Live Photo（同名图片和视频）
  * 上传完成后自动扫描入库并进行 AI 分析
+ *
+ * 鉴权双通道，任一通过即可：
+ *   - 后台网页：浏览器自带的管理端登录 cookie（isAdmin）
+ *   - 手机 App：请求头 Authorization: Bearer <UPLOAD_TOKEN>（isUploadAuthorized）
  */
 export async function POST(request: NextRequest) {
-  const denied = await requireAdminResponse();
-  if (denied) return denied;
+  const authorized = isUploadAuthorized(request) || (await isAdmin());
+  if (!authorized) {
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
+  }
 
   try {
     const formData = await request.formData();
@@ -50,6 +59,13 @@ export async function POST(request: NextRequest) {
 
       const ext = path.extname(file.name).toLowerCase();
       if (!isImageExt(ext) && !isVideoExt(ext)) continue;
+
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `文件过大: ${file.name}（上限 ${MAX_FILE_SIZE / 1024 / 1024}MB）` },
+          { status: 413 }
+        );
+      }
 
       const buffer = await file.arrayBuffer();
       const filePath = path.join(PHOTO_BASE_DIR, file.name);
