@@ -11,7 +11,7 @@ import clsx from "clsx";
  * 照片标记的直径（像素）。与聚合点的中间档位相当，密集时才不会一大一小地跳。
  * 角标与视角锥的尺寸都按这个直径配，改动时需一并调。
  */
-const FRAME_SIZE = 42;
+const FRAME_SIZE = 36;
 
 /**
  * 相纸的纸色，固定浅色、不随主题翻转。
@@ -27,10 +27,10 @@ const PAPER_BG = "bg-lab-on-media/92";
  * 不做连续插值 —— 数量接近时连续尺寸反而分辨不出差别。
  */
 const CLUSTER_STEPS: { min: number; size: number; fontSize: number }[] = [
-  { min: 30, size: 54, fontSize: 17 },
-  { min: 10, size: 48, fontSize: 16 },
-  { min: 4, size: 42, fontSize: 15 },
-  { min: 0, size: 36, fontSize: 13 },
+  { min: 30, size: 46, fontSize: 16 },
+  { min: 10, size: 40, fontSize: 15 },
+  { min: 4, size: 34, fontSize: 14 },
+  { min: 0, size: 30, fontSize: 12 },
 ];
 
 /** 进场延迟的散布区间（秒），标记在这个窗口内先后冒出 */

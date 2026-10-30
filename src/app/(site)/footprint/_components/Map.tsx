@@ -45,7 +45,11 @@ export default function Map({
   stats = { points: 0, cities: 0, provinces: 0 }
 }: MapProps) {
   const { mapRef, mapInstance } = useMapBase({ config: { zoom: 6 } });
-  const { clusters, updateMarkers } = useMapClusters(mapInstance!);
+  // 聚合半径收到 24px（小于标记直径 36px）：允许相邻标记轻微重叠而各自独立显示，
+  // 只有圆心挨得很近、缩放级别很小时才聚合，避免放大后点仍粘成一团
+  const { clusters, updateMarkers } = useMapClusters(mapInstance!, {
+    clusterRadius: 24
+  });
 
   /** 当前视图，两者互斥。默认点位 —— 照片是主体，区县是概览 */
   const [view, setView] = useState<FootprintView>('points');
